@@ -1,13 +1,25 @@
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import {
   Form,
   FormControl,
@@ -16,42 +28,48 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { toast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
+} from '@/components/ui/form';
+import { toast } from '@/hooks/use-toast';
+import { Progress } from '@/components/ui/progress';
+import { apiService, endpoints } from '@/lib/api';
 
 const applicationSchema = z.object({
   // Personal Information
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
-  age: z.number().min(16, "Must be at least 16 years old").max(100, "Invalid age"),
-  location: z.string().min(2, "Please enter your city"),
-  
+  firstName: z.string().min(2, 'First name must be at least 2 characters'),
+  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email address'),
+  phone: z.string().min(10, 'Please enter a valid phone number'),
+  age: z
+    .number()
+    .min(16, 'Must be at least 16 years old')
+    .max(100, 'Invalid age'),
+  location: z.string().min(2, 'Please enter your city'),
+
   // Education Background
-  educationLevel: z.string().min(1, "Please select your education level"),
+  educationLevel: z.string().min(1, 'Please select your education level'),
   fieldOfStudy: z.string().optional(),
   institutionName: z.string().optional(),
-  
+
   // Technical Background
-  programmingExperience: z.string().min(1, "Please select your programming experience"),
+  programmingExperience: z
+    .string()
+    .min(1, 'Please select your programming experience'),
   programmingLanguages: z.string().optional(),
   techInterests: z.string().optional(),
-  
+
   // Motivation & Goals
-  motivation: z.string().min(50, "Please provide at least 50 characters"),
-  careerGoals: z.string().min(50, "Please provide at least 50 characters"),
-  availableHours: z.string().min(1, "Please select your available hours"),
-  
+  motivation: z.string().min(50, 'Please provide at least 50 characters'),
+  careerGoals: z.string().min(50, 'Please provide at least 50 characters'),
+  availableHours: z.string().min(1, 'Please select your available hours'),
+
   // Additional Information
   portfolioLinks: z.string().optional(),
-  hearAboutUs: z.string().min(1, "Please tell us how you heard about us"),
+  hearAboutUs: z.string().min(1, 'Please tell us how you heard about us'),
   additionalInfo: z.string().optional(),
-  
+
   // Agreements
-  agreeTerms: z.boolean().refine(val => val === true, {
-    message: "You must agree to the terms and conditions"
+  agreeTerms: z.boolean().refine((val) => val === true, {
+    message: 'You must agree to the terms and conditions',
   }),
   receiveUpdates: z.boolean().optional(),
 });
@@ -61,7 +79,7 @@ type ApplicationFormData = z.infer<typeof applicationSchema>;
 export function ApplicationForm() {
   const [step, setStep] = useState(1);
   const totalSteps = 5;
-  
+
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
@@ -70,16 +88,72 @@ export function ApplicationForm() {
     },
   });
 
-  const onSubmit = (data: ApplicationFormData) => {
-    toast({
-      title: "Application Submitted!",
-      description: "Thank you for applying to TechAI Foundation. We'll review your application and get back to you soon.",
-    });
-    console.log("Application data:", data);
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      toast({
+        title: 'Error',
+        description: 'User ID not found. Please complete step 1 first.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const data = form.getValues();
+
+    const profileData = {
+      userId,
+      educationLevel: data.educationLevel,
+      fieldOfStudy: data.fieldOfStudy,
+      institutionName: data.institutionName,
+      programmingExperience: data.programmingExperience,
+      programmingLanguages: data.programmingLanguages,
+      techInterests: data.techInterests,
+      motivation: data.motivation,
+      careerGoals: data.careerGoals,
+      availableHours: data.availableHours,
+      portfolioLinks: data.portfolioLinks,
+      hearAboutUs: data.hearAboutUs,
+      additionalInfo: data.additionalInfo,
+      agreeTerms: data.agreeTerms,
+      receiveUpdates: data.receiveUpdates,
+    };
+
+    try {
+      const res = await apiService.post(endpoints.createProfile, profileData);
+      if (res.status === 201) {
+        toast({
+          title: 'Profile Created!',
+          description: 'Your profile has been successfully created.',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Submission Error',
+        description: 'There was a problem submitting your profile.',
+        variant: 'destructive',
+      });
+      console.error(error);
+    }
   };
 
-  const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1);
+  const nextStep = async () => {
+    if (step === 1) {
+      const isValid = await form.trigger([
+        'firstName',
+        'lastName',
+        'email',
+        'phone',
+        'age',
+        'location',
+      ]);
+      if (isValid) {
+        await handleSaveStepOne(form.getValues());
+        setStep(step + 1);
+      }
+    } else if (step < totalSteps) {
+      setStep(step + 1);
+    }
   };
 
   const prevStep = () => {
@@ -87,6 +161,45 @@ export function ApplicationForm() {
   };
 
   const progress = (step / totalSteps) * 100;
+
+  const handleSaveStepOne = async (data: any) => {
+    /**{
+  "email": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "username": "string",
+  "phoneNumber": "string",
+  "age": "string",
+  "location": "string",
+  "password": "string",
+  "profilePicture": "string",
+  "status": "string",
+} */
+    try {
+      const applicationData = {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        // username: data.username,
+        phoneNumber: data.phoneNumber,
+        age: data.age,
+        location: data.location,
+        password: data.password,
+        // profilePicture: data.profilePicture,
+      };
+
+      const res = await apiService.post(endpoints.register, applicationData);
+      if (res.status === 200) {
+        localStorage.setItem('userId', res.data.id);
+        toast({
+          title: 'Step 1 Saved',
+          description: 'Your personal information has been saved successfully.',
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-subtle py-12">
@@ -110,11 +223,11 @@ export function ApplicationForm() {
         <Card className="shadow-elegant">
           <CardHeader>
             <CardTitle>
-              {step === 1 && "Personal Information"}
-              {step === 2 && "Education Background"}
-              {step === 3 && "Technical Background"}
-              {step === 4 && "Motivation & Goals"}
-              {step === 5 && "Additional Information & Agreements"}
+              {step === 1 && 'Personal Information'}
+              {step === 2 && 'Education Background'}
+              {step === 3 && 'Technical Background'}
+              {step === 4 && 'Motivation & Goals'}
+              {step === 5 && 'Additional Information & Agreements'}
             </CardTitle>
             <CardDescription>
               Please fill out all required fields to continue
@@ -122,8 +235,10 @@ export function ApplicationForm() {
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                
+              <form
+                // onSubmit={onSubmit}
+                className="space-y-6"
+              >
                 {/* Step 1: Personal Information */}
                 {step === 1 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -160,7 +275,11 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Email Address *</FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="john.doe@example.com" {...field} />
+                            <Input
+                              type="email"
+                              placeholder="john.doe@example.com"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -173,7 +292,11 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Phone Number *</FormLabel>
                           <FormControl>
-                            <Input type="tel" placeholder="+1 (555) 123-4567" {...field} />
+                            <Input
+                              type="tel"
+                              placeholder="+1 (555) 123-4567"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -186,11 +309,13 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Age *</FormLabel>
                           <FormControl>
-                            <Input 
-                              type="number" 
-                              placeholder="25" 
+                            <Input
+                              type="number"
+                              placeholder="25"
                               {...field}
-                              onChange={(e) => field.onChange(parseInt(e.target.value))}
+                              onChange={(e) =>
+                                field.onChange(parseInt(e.target.value))
+                              }
                             />
                           </FormControl>
                           <FormMessage />
@@ -222,17 +347,26 @@ export function ApplicationForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Highest Education Level *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select your education level" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="high-school">High School</SelectItem>
+                              <SelectItem value="high-school">
+                                High School
+                              </SelectItem>
                               <SelectItem value="diploma">Diploma</SelectItem>
-                              <SelectItem value="bachelor">Bachelor's Degree</SelectItem>
-                              <SelectItem value="master">Master's Degree</SelectItem>
+                              <SelectItem value="bachelor">
+                                Bachelor's Degree
+                              </SelectItem>
+                              <SelectItem value="master">
+                                Master's Degree
+                              </SelectItem>
                               <SelectItem value="phd">PhD</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
@@ -249,7 +383,10 @@ export function ApplicationForm() {
                           <FormItem>
                             <FormLabel>Field of Study</FormLabel>
                             <FormControl>
-                              <Input placeholder="Computer Science" {...field} />
+                              <Input
+                                placeholder="Computer Science"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -262,7 +399,10 @@ export function ApplicationForm() {
                           <FormItem>
                             <FormLabel>Institution Name</FormLabel>
                             <FormControl>
-                              <Input placeholder="University of Technology" {...field} />
+                              <Input
+                                placeholder="University of Technology"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -281,7 +421,10 @@ export function ApplicationForm() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Programming Experience *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select your programming experience" />
@@ -290,7 +433,9 @@ export function ApplicationForm() {
                             <SelectContent>
                               <SelectItem value="none">None</SelectItem>
                               <SelectItem value="beginner">Beginner</SelectItem>
-                              <SelectItem value="intermediate">Intermediate</SelectItem>
+                              <SelectItem value="intermediate">
+                                Intermediate
+                              </SelectItem>
                               <SelectItem value="advanced">Advanced</SelectItem>
                             </SelectContent>
                           </Select>
@@ -305,7 +450,10 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Programming Languages</FormLabel>
                           <FormControl>
-                            <Input placeholder="Python, JavaScript, Java" {...field} />
+                            <Input
+                              placeholder="Python, JavaScript, Java"
+                              {...field}
+                            />
                           </FormControl>
                           <FormDescription>
                             List any programming languages you're familiar with
@@ -321,7 +469,10 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Areas of Interest in Tech/AI</FormLabel>
                           <FormControl>
-                            <Input placeholder="Data Analytics, Machine Learning, Mobile Apps" {...field} />
+                            <Input
+                              placeholder="Data Analytics, Machine Learning, Mobile Apps"
+                              {...field}
+                            />
                           </FormControl>
                           <FormDescription>
                             What areas of technology and AI interest you most?
@@ -341,12 +492,14 @@ export function ApplicationForm() {
                       name="motivation"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Why do you want to join the program? *</FormLabel>
+                          <FormLabel>
+                            Why do you want to join the program? *
+                          </FormLabel>
                           <FormControl>
-                            <Textarea 
+                            <Textarea
                               placeholder="Tell us about your motivation for joining TechAI Foundation..."
                               className="min-h-[120px]"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormDescription>
@@ -361,12 +514,14 @@ export function ApplicationForm() {
                       name="careerGoals"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Career goals after completing the program *</FormLabel>
+                          <FormLabel>
+                            Career goals after completing the program *
+                          </FormLabel>
                           <FormControl>
-                            <Textarea 
+                            <Textarea
                               placeholder="Describe your career aspirations after completing the program..."
                               className="min-h-[120px]"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormDescription>
@@ -381,15 +536,22 @@ export function ApplicationForm() {
                       name="availableHours"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Hours per week available for program *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>
+                            Hours per week available for program *
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select your available hours" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="<5">Less than 5 hours</SelectItem>
+                              <SelectItem value="<5">
+                                Less than 5 hours
+                              </SelectItem>
                               <SelectItem value="5-10">5-10 hours</SelectItem>
                               <SelectItem value="10-20">10-20 hours</SelectItem>
                               <SelectItem value="20+">20+ hours</SelectItem>
@@ -412,13 +574,14 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Portfolio/GitHub/LinkedIn links</FormLabel>
                           <FormControl>
-                            <Textarea 
+                            <Textarea
                               placeholder="https://github.com/username&#10;https://linkedin.com/in/username&#10;https://portfolio.com"
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            Optional: Share your online presence (one link per line)
+                            Optional: Share your online presence (one link per
+                            line)
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -429,16 +592,25 @@ export function ApplicationForm() {
                       name="hearAboutUs"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>How did you hear about the program? *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormLabel>
+                            How did you hear about the program? *
+                          </FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select how you heard about us" />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="friend-referral">Friend/Referral</SelectItem>
-                              <SelectItem value="social-media">Social Media</SelectItem>
+                              <SelectItem value="friend-referral">
+                                Friend/Referral
+                              </SelectItem>
+                              <SelectItem value="social-media">
+                                Social Media
+                              </SelectItem>
                               <SelectItem value="website">Website</SelectItem>
                               <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
@@ -452,18 +624,20 @@ export function ApplicationForm() {
                       name="additionalInfo"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Anything else you'd like us to know?</FormLabel>
+                          <FormLabel>
+                            Anything else you'd like us to know?
+                          </FormLabel>
                           <FormControl>
-                            <Textarea 
+                            <Textarea
                               placeholder="Share any additional information that might be relevant..."
-                              {...field} 
+                              {...field}
                             />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                    
+
                     <div className="space-y-4 p-6 bg-accent-light rounded-lg">
                       <FormField
                         control={form.control}
@@ -478,7 +652,8 @@ export function ApplicationForm() {
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-sm font-medium">
-                                I agree to the terms and conditions and understand the program requires commitment *
+                                I agree to the terms and conditions and
+                                understand the program requires commitment *
                               </FormLabel>
                               <FormMessage />
                             </div>
@@ -510,21 +685,28 @@ export function ApplicationForm() {
 
                 {/* Navigation Buttons */}
                 <div className="flex justify-between pt-6">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={prevStep}
                     disabled={step === 1}
                   >
                     Previous
                   </Button>
-                  
+
                   {step < totalSteps ? (
                     <Button type="button" variant="gradient" onClick={nextStep}>
                       Next Step
                     </Button>
                   ) : (
-                    <Button type="submit" variant="hero" size="lg">
+                    <Button
+                      type="submit"
+                      variant="hero"
+                      size="lg"
+                      onClick={(e) => {
+                        onSubmit(e);
+                      }}
+                    >
                       Submit Application
                     </Button>
                   )}
