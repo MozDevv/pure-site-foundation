@@ -32,6 +32,9 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { apiService, endpoints } from '@/lib/api';
+import { CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { ApplicationSuccess } from './application-success';
 
 const applicationSchema = z.object({
   // Personal Information
@@ -78,6 +81,9 @@ type ApplicationFormData = z.infer<typeof applicationSchema>;
 
 export function ApplicationForm() {
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submittedData, setSubmittedData] = useState<ApplicationFormData | null>(null);
   const totalSteps = 5;
 
   const form = useForm<ApplicationFormData>({
@@ -88,8 +94,9 @@ export function ApplicationForm() {
     },
   });
 
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = async (data: ApplicationFormData) => {
+    setIsSubmitting(true);
+    
     const userId = localStorage.getItem('userId');
     if (!userId) {
       toast({
@@ -97,9 +104,9 @@ export function ApplicationForm() {
         description: 'User ID not found. Please complete step 1 first.',
         variant: 'destructive',
       });
+      setIsSubmitting(false);
       return;
     }
-    const data = form.getValues();
 
     const profileData = {
       userId,
@@ -120,39 +127,53 @@ export function ApplicationForm() {
     };
 
     try {
+      // Simulate API call delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       const res = await apiService.post(endpoints.createProfile, profileData);
       if (res.status === 201) {
+        setSubmittedData(data);
+        setIsSubmitted(true);
         toast({
-          title: 'Profile Created!',
-          description: 'Your profile has been successfully created.',
+          title: 'Application Submitted!',
+          description: 'Your application has been successfully submitted.',
         });
       }
     } catch (error) {
       toast({
         title: 'Submission Error',
-        description: 'There was a problem submitting your profile.',
+        description: 'There was a problem submitting your application.',
         variant: 'destructive',
       });
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const nextStep = async () => {
+    let fieldsToValidate: (keyof ApplicationFormData)[] = [];
+    
     if (step === 1) {
-      const isValid = await form.trigger([
-        'firstName',
-        'lastName',
-        'email',
-        'phone',
-        'age',
-        'location',
-      ]);
-      if (isValid) {
+      fieldsToValidate = ['firstName', 'lastName', 'email', 'phone', 'age', 'location'];
+    } else if (step === 2) {
+      fieldsToValidate = ['educationLevel'];
+    } else if (step === 3) {
+      fieldsToValidate = ['programmingExperience'];
+    } else if (step === 4) {
+      fieldsToValidate = ['motivation', 'careerGoals', 'availableHours'];
+    } else if (step === 5) {
+      fieldsToValidate = ['hearAboutUs', 'agreeTerms'];
+    }
+    
+    const isValid = await form.trigger(fieldsToValidate);
+    if (isValid) {
+      if (step === 1) {
         await handleSaveStepOne(form.getValues());
+      }
+      if (step < totalSteps) {
         setStep(step + 1);
       }
-    } else if (step < totalSteps) {
-      setStep(step + 1);
     }
   };
 
@@ -201,6 +222,11 @@ export function ApplicationForm() {
     }
   };
 
+  // Success page after submission
+  if (isSubmitted && submittedData) {
+    return <ApplicationSuccess data={submittedData} onReturnHome={() => setIsSubmitted(false)} />;
+  }
+
   return (
     <div className="min-h-screen bg-gradient-subtle py-12">
       <div className="container max-w-4xl mx-auto">
@@ -236,7 +262,7 @@ export function ApplicationForm() {
           <CardContent>
             <Form {...form}>
               <form
-                // onSubmit={onSubmit}
+                onSubmit={form.handleSubmit(onSubmit)}
                 className="space-y-6"
               >
                 {/* Step 1: Personal Information */}
@@ -703,11 +729,16 @@ export function ApplicationForm() {
                       type="submit"
                       variant="hero"
                       size="lg"
-                      onClick={(e) => {
-                        onSubmit(e);
-                      }}
+                      disabled={isSubmitting}
                     >
-                      Submit Application
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Submitting...
+                        </>
+                      ) : (
+                        'Submit Application'
+                      )}
                     </Button>
                   )}
                 </div>
