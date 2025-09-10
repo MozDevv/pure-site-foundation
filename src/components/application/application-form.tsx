@@ -83,7 +83,8 @@ export function ApplicationForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [submittedData, setSubmittedData] = useState<ApplicationFormData | null>(null);
+  const [submittedData, setSubmittedData] =
+    useState<ApplicationFormData | null>(null);
   const totalSteps = 5;
 
   const form = useForm<ApplicationFormData>({
@@ -96,7 +97,7 @@ export function ApplicationForm() {
 
   const onSubmit = async (data: ApplicationFormData) => {
     setIsSubmitting(true);
-    
+
     const userId = localStorage.getItem('userId');
     if (!userId) {
       toast({
@@ -128,10 +129,10 @@ export function ApplicationForm() {
 
     try {
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       const res = await apiService.post(endpoints.createProfile, profileData);
-      if (res.status === 201) {
+      if (res.status === 201 || res.status === 200) {
         setSubmittedData(data);
         setIsSubmitted(true);
         toast({
@@ -153,9 +154,16 @@ export function ApplicationForm() {
 
   const nextStep = async () => {
     let fieldsToValidate: (keyof ApplicationFormData)[] = [];
-    
+
     if (step === 1) {
-      fieldsToValidate = ['firstName', 'lastName', 'email', 'phone', 'age', 'location'];
+      fieldsToValidate = [
+        'firstName',
+        'lastName',
+        'email',
+        'phone',
+        'age',
+        'location',
+      ];
     } else if (step === 2) {
       fieldsToValidate = ['educationLevel'];
     } else if (step === 3) {
@@ -165,7 +173,7 @@ export function ApplicationForm() {
     } else if (step === 5) {
       fieldsToValidate = ['hearAboutUs', 'agreeTerms'];
     }
-    
+
     const isValid = await form.trigger(fieldsToValidate);
     if (isValid) {
       if (step === 1) {
@@ -224,7 +232,12 @@ export function ApplicationForm() {
 
   // Success page after submission
   if (isSubmitted && submittedData) {
-    return <ApplicationSuccess data={submittedData} onReturnHome={() => setIsSubmitted(false)} />;
+    return (
+      <ApplicationSuccess
+        data={submittedData}
+        onReturnHome={() => setIsSubmitted(false)}
+      />
+    );
   }
 
   return (
