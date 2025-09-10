@@ -721,7 +721,7 @@ export function ApplicationForm() {
                   </Button>
 
                   {step < totalSteps ? (
-                    <Button type="button" variant="gradient" onClick={nextStep}>
+                    <Button type="button" variant="hero" onClick={nextStep}>
                       Next Step
                     </Button>
                   ) : (

@@ -75,10 +75,10 @@ export default {
         },
       },
       backgroundImage: {
-        'gradient-primary': 'var(--gradient-primary)',
-        'gradient-accent': 'var(--gradient-accent)',
-        'gradient-hero': 'var(--gradient-hero)',
-        'gradient-subtle': 'var(--gradient-subtle)',
+        'primary': 'var(--bg-primary)',
+        'secondary': 'var(--bg-secondary)',
+        'accent': 'var(--bg-accent)',
+        'subtle': 'var(--bg-subtle)',
       },
       boxShadow: {
         'primary': 'var(--shadow-primary)',

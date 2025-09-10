@@ -249,7 +249,7 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
             Return to Homepage
           </Button>
           <Button 
-            variant="gradient"
+            variant="hero"
             onClick={() => window.location.href = '/student-dashboard'}
           >
             Go to Dashboard

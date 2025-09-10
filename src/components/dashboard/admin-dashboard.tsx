@@ -359,7 +359,7 @@ export function AdminDashboard() {
                 <p className="text-muted-foreground mb-4">
                   Create, edit, and manage course content and modules
                 </p>
-                <Button variant="gradient">
+                <Button variant="hero">
                   Create New Course
                 </Button>
               </div>
@@ -386,7 +386,7 @@ export function AdminDashboard() {
                 <p className="text-muted-foreground mb-4">
                   Send important updates and messages to all students
                 </p>
-                <Button variant="gradient">
+                <Button variant="hero">
                   Create Announcement
                 </Button>
               </div>
@@ -413,7 +413,7 @@ export function AdminDashboard() {
                 <p className="text-muted-foreground mb-4">
                   Comprehensive reports on student engagement and course performance
                 </p>
-                <Button variant="gradient">
+                <Button variant="hero">
                   View Reports
                 </Button>
               </div>

@@ -156,7 +156,7 @@ export function StudentDashboard() {
                     </div>
                     <Button 
                       size="sm" 
-                      variant={course.status === 'completed' ? 'outline' : 'gradient'}
+                      variant={course.status === 'completed' ? 'outline' : 'hero'}
                       disabled={course.status === 'completed'}
                     >
                       {course.status === 'completed' ? 'View Certificate' : 'Continue'}
