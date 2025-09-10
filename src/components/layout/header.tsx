@@ -72,7 +72,7 @@ export function Header({ user, onLogout }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="gradient" size="sm">
+            <Button variant="hero" size="sm">
               Sign In
             </Button>
           )}

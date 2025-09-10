@@ -15,12 +15,11 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary-hover shadow-secondary",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        // New TechAI variants
-        hero: "bg-gradient-hero text-white hover:shadow-elegant transform hover:scale-[1.02] transition-bounce font-semibold",
+        // TechAI variants - solid colors only
+        hero: "bg-primary text-white hover:bg-primary-hover shadow-elegant transform hover:scale-[1.02] transition-bounce font-semibold",
         accent: "bg-accent text-accent-foreground hover:bg-accent-hover shadow-accent",
         success: "bg-success text-success-foreground hover:bg-success/90",
         warning: "bg-warning text-warning-foreground hover:bg-warning/90",
-        gradient: "bg-gradient-primary text-white hover:shadow-primary transform hover:scale-[1.02] transition-bounce",
       },
       size: {
         default: "h-11 px-6 py-2",
