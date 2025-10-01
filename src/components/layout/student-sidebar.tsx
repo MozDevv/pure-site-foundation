@@ -14,11 +14,9 @@ import {
 
 const navigationItems = [
   { title: "Dashboard", url: "/student", icon: Home },
-  { title: "My Courses", url: "/student/courses", icon: BookOpen },
-  { title: "Assignments", url: "/student/assignments", icon: Award },
-  { title: "Discussion Forum", url: "/student/forum", icon: MessageCircle },
-  { title: "Calendar", url: "/student/calendar", icon: Calendar },
-  { title: "Profile", url: "/student/profile", icon: User },
+  { title: "Courses", url: "/student/courses", icon: BookOpen },
+  { title: "Timetable", url: "/student/timetable", icon: Calendar },
+  { title: "Messages", url: "/student/messages", icon: MessageCircle },
   { title: "Settings", url: "/student/settings", icon: Settings },
 ];
 

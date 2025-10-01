@@ -1,4 +1,4 @@
-import { Users, BookOpen, MessageSquare, TrendingUp, Settings, Home, Calendar } from "lucide-react";
+import { Home, BookOpen, Calendar, MessageCircle, Settings, Users } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -9,19 +9,18 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 
 const navigationItems = [
-  { title: "Dashboard", url: "/admin", icon: Home },
-  { title: "Users", url: "/admin/users", icon: Users },
-  { title: "Courses", url: "/admin/courses", icon: BookOpen },
-  { title: "Timetable", url: "/admin/timetable", icon: Calendar },
-  { title: "Messages", url: "/admin/messages", icon: MessageSquare },
-  { title: "Settings", url: "/admin/settings", icon: Settings },
+  { title: "Dashboard", url: "/tutor", icon: Home },
+  { title: "Courses", url: "/tutor/courses", icon: BookOpen },
+  { title: "Timetable", url: "/tutor/timetable", icon: Calendar },
+  { title: "Students", url: "/tutor/students", icon: Users },
+  { title: "Messages", url: "/tutor/messages", icon: MessageCircle },
+  { title: "Settings", url: "/tutor/settings", icon: Settings },
 ];
 
-export function AdminSidebar() {
+export function TutorSidebar() {
   const getNavClass = ({ isActive }: { isActive: boolean }) =>
     isActive 
       ? "bg-primary text-primary-foreground font-medium shadow-primary" 
@@ -32,7 +31,7 @@ export function AdminSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-primary font-semibold">
-            Admin Panel
+            Tutor Portal
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

@@ -364,6 +364,14 @@ const Index = () => {
               className="border-white/30 text-white hover:bg-white/10"
               asChild
             >
+              <a href="/tutor">Tutor Portal</a>
+            </Button>
+            <Button
+              variant="outline"
+              size="xl"
+              className="border-white/30 text-white hover:bg-white/10"
+              asChild
+            >
               <a href="/admin">Admin Portal</a>
             </Button>
           </div>

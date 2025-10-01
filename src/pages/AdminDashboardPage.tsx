@@ -6,7 +6,8 @@ import { Header } from "@/components/layout/header";
 const mockAdmin = {
   name: "Admin User",
   email: "admin@techai.foundation",
-  avatar: "/placeholder.svg"
+  avatar: "/placeholder.svg",
+  role: "Admin"
 };
 
 export default function AdminDashboardPage() {
