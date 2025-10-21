@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TechAI Foundation LMS Design System - Modern tech/AI inspired theme */
+/* TechAI  LMS Design System - Modern tech/AI inspired theme */
 
 @layer base {
   :root {
@@ -74,9 +74,21 @@
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     /* Gradients for LMS UI */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(197 100% 28%) 0%, hsl(197 100% 38%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--muted)) 100%);
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent)) 100%
+    );
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(197 100% 28%) 0%,
+      hsl(197 100% 38%) 100%
+    );
+    --gradient-card: linear-gradient(
+      180deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--muted)) 100%
+    );
 
     --sidebar-background: 0 0% 98%;
 

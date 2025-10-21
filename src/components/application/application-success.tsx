@@ -27,25 +27,28 @@ type ApplicationSuccessProps = {
   onReturnHome: () => void;
 };
 
-export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessProps) {
+export function ApplicationSuccess({
+  data,
+  onReturnHome,
+}: ApplicationSuccessProps) {
   const formatEducationLevel = (level: string) => {
     const levels: Record<string, string> = {
       'high-school': 'High School',
-      'diploma': 'Diploma',
-      'bachelor': "Bachelor's Degree",
-      'master': "Master's Degree",
-      'phd': 'PhD',
-      'other': 'Other'
+      diploma: 'Diploma',
+      bachelor: "Bachelor's Degree",
+      master: "Master's Degree",
+      phd: 'PhD',
+      other: 'Other',
     };
     return levels[level] || level;
   };
 
   const formatProgrammingExperience = (exp: string) => {
     const experiences: Record<string, string> = {
-      'none': 'None',
-      'beginner': 'Beginner',
-      'intermediate': 'Intermediate',
-      'advanced': 'Advanced'
+      none: 'None',
+      beginner: 'Beginner',
+      intermediate: 'Intermediate',
+      advanced: 'Advanced',
     };
     return experiences[exp] || exp;
   };
@@ -55,7 +58,7 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
       '<5': 'Less than 5 hours',
       '5-10': '5-10 hours',
       '10-20': '10-20 hours',
-      '20+': '20+ hours'
+      '20+': '20+ hours',
     };
     return hoursMap[hours] || hours;
   };
@@ -64,8 +67,8 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
     const sourceMap: Record<string, string> = {
       'friend-referral': 'Friend/Referral',
       'social-media': 'Social Media',
-      'website': 'Website',
-      'other': 'Other'
+      website: 'Website',
+      other: 'Other',
     };
     return sourceMap[source] || source;
   };
@@ -82,7 +85,7 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
             🎉 Application Submitted Successfully!
           </h1>
           <p className="text-xl text-muted-foreground">
-            Thank you for applying to the TechAI Foundation Program
+            Thank you for applying to the TechAI Program
           </p>
         </div>
 
@@ -94,17 +97,19 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
               <div>
                 <h3 className="font-semibold text-green-800">Next Steps</h3>
                 <p className="text-green-700">
-                  We've captured your details. Please wait for a confirmation email with further instructions within 48 hours.
+                  We've captured your details. Please wait for a confirmation
+                  email with further instructions within 48 hours.
                 </p>
               </div>
             </div>
-            
+
             <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <Clock className="w-6 h-6 text-blue-600" />
               <div>
                 <h3 className="font-semibold text-blue-800">Processing Time</h3>
                 <p className="text-blue-700">
-                  Our team will review your application and get back to you soon.
+                  Our team will review your application and get back to you
+                  soon.
                 </p>
               </div>
             </div>
@@ -119,11 +124,15 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
           <CardContent className="space-y-6">
             {/* Personal Information */}
             <div>
-              <h3 className="font-semibold text-lg mb-3">Personal Information</h3>
+              <h3 className="font-semibold text-lg mb-3">
+                Personal Information
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm text-muted-foreground">Full Name</p>
-                  <p className="font-medium">{data.firstName || 'N/A'} {data.lastName || 'N/A'}</p>
+                  <p className="font-medium">
+                    {data.firstName || 'N/A'} {data.lastName || 'N/A'}
+                  </p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Email</p>
@@ -134,8 +143,12 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
                   <p className="font-medium">{data.phone || 'N/A'}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Age & Location</p>
-                  <p className="font-medium">{data.age || 'N/A'} years old, {data.location || 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Age & Location
+                  </p>
+                  <p className="font-medium">
+                    {data.age || 'N/A'} years old, {data.location || 'N/A'}
+                  </p>
                 </div>
               </div>
             </div>
@@ -144,15 +157,25 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
 
             {/* Education Background */}
             <div>
-              <h3 className="font-semibold text-lg mb-3">Education Background</h3>
+              <h3 className="font-semibold text-lg mb-3">
+                Education Background
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Education Level</p>
-                  <p className="font-medium">{data.educationLevel ? formatEducationLevel(data.educationLevel) : 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Education Level
+                  </p>
+                  <p className="font-medium">
+                    {data.educationLevel
+                      ? formatEducationLevel(data.educationLevel)
+                      : 'N/A'}
+                  </p>
                 </div>
                 {data.fieldOfStudy && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Field of Study</p>
+                    <p className="text-sm text-muted-foreground">
+                      Field of Study
+                    </p>
                     <p className="font-medium">{data.fieldOfStudy}</p>
                   </div>
                 )}
@@ -169,25 +192,43 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
 
             {/* Technical Background */}
             <div>
-              <h3 className="font-semibold text-lg mb-3">Technical Background</h3>
+              <h3 className="font-semibold text-lg mb-3">
+                Technical Background
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Programming Experience</p>
-                  <p className="font-medium">{data.programmingExperience ? formatProgrammingExperience(data.programmingExperience) : 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Programming Experience
+                  </p>
+                  <p className="font-medium">
+                    {data.programmingExperience
+                      ? formatProgrammingExperience(data.programmingExperience)
+                      : 'N/A'}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Available Hours per Week</p>
-                  <p className="font-medium">{data.availableHours ? formatAvailableHours(data.availableHours) : 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Available Hours per Week
+                  </p>
+                  <p className="font-medium">
+                    {data.availableHours
+                      ? formatAvailableHours(data.availableHours)
+                      : 'N/A'}
+                  </p>
                 </div>
                 {data.programmingLanguages && (
                   <div className="md:col-span-2">
-                    <p className="text-sm text-muted-foreground">Programming Languages</p>
+                    <p className="text-sm text-muted-foreground">
+                      Programming Languages
+                    </p>
                     <p className="font-medium">{data.programmingLanguages}</p>
                   </div>
                 )}
                 {data.techInterests && (
                   <div className="md:col-span-2">
-                    <p className="text-sm text-muted-foreground">Tech/AI Interests</p>
+                    <p className="text-sm text-muted-foreground">
+                      Tech/AI Interests
+                    </p>
                     <p className="font-medium">{data.techInterests}</p>
                   </div>
                 )}
@@ -201,7 +242,9 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
               <h3 className="font-semibold text-lg mb-3">Goals & Motivation</h3>
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Why join the program?</p>
+                  <p className="text-sm text-muted-foreground">
+                    Why join the program?
+                  </p>
                   <p className="font-medium">{data.motivation || 'N/A'}</p>
                 </div>
                 <div>
@@ -215,21 +258,33 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
 
             {/* Additional Information */}
             <div>
-              <h3 className="font-semibold text-lg mb-3">Additional Information</h3>
+              <h3 className="font-semibold text-lg mb-3">
+                Additional Information
+              </h3>
               <div className="space-y-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">How did you hear about us?</p>
-                  <p className="font-medium">{data.hearAboutUs ? formatHearAboutUs(data.hearAboutUs) : 'N/A'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    How did you hear about us?
+                  </p>
+                  <p className="font-medium">
+                    {data.hearAboutUs
+                      ? formatHearAboutUs(data.hearAboutUs)
+                      : 'N/A'}
+                  </p>
                 </div>
                 {data.portfolioLinks && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Portfolio/Links</p>
+                    <p className="text-sm text-muted-foreground">
+                      Portfolio/Links
+                    </p>
                     <p className="font-medium">{data.portfolioLinks}</p>
                   </div>
                 )}
                 {data.additionalInfo && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Additional Notes</p>
+                    <p className="text-sm text-muted-foreground">
+                      Additional Notes
+                    </p>
                     <p className="font-medium">{data.additionalInfo}</p>
                   </div>
                 )}
@@ -240,17 +295,17 @@ export function ApplicationSuccess({ data, onReturnHome }: ApplicationSuccessPro
 
         {/* Action Buttons */}
         <div className="flex justify-center mt-8 gap-4">
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.href = '/'}
+          <Button
+            variant="outline"
+            onClick={() => (window.location.href = '/')}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             Return to Homepage
           </Button>
-          <Button 
+          <Button
             variant="hero"
-            onClick={() => window.location.href = '/student-dashboard'}
+            onClick={() => (window.location.href = '/student-dashboard')}
           >
             Go to Dashboard
           </Button>

@@ -1,13 +1,13 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AdminSidebar } from "@/components/layout/admin-sidebar";
-import { AdminDashboard } from "@/components/dashboard/admin-dashboard";
-import { Header } from "@/components/layout/header";
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AdminSidebar } from '@/components/layout/admin-sidebar';
+import { AdminDashboard } from '@/components/dashboard/admin-dashboard';
+import { Header } from '@/components/layout/header';
 
 const mockAdmin = {
-  name: "Admin User",
-  email: "admin@techai.foundation",
-  avatar: "/placeholder.svg",
-  role: "Admin"
+  name: 'Admin User',
+  email: 'admin@techai.',
+  avatar: '/placeholder.svg',
+  role: 'Admin',
 };
 
 export default function AdminDashboardPage() {

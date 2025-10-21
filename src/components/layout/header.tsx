@@ -33,7 +33,7 @@ export function Header({ user, onLogout }: HeaderProps) {
             </div>
             <div>
               <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text t">
-                TechAI Foundation
+                TechAI
               </h1>
               <p className="text-xs text-muted-foreground">
                 Learning Management System
@@ -47,12 +47,9 @@ export function Header({ user, onLogout }: HeaderProps) {
             <>
               <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search..."
-                  className="pl-10 w-[250px]"
-                />
+                <Input placeholder="Search..." className="pl-10 w-[250px]" />
               </div>
-              
+
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
@@ -61,7 +58,7 @@ export function Header({ user, onLogout }: HeaderProps) {
               </Button>
             </>
           )}
-          
+
           <ThemeToggle />
 
           {user ? (

@@ -56,7 +56,7 @@ const Index = () => {
           {/* Left: Text */}
           <div className="flex-1 text-center md:text-left">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-primary">
-              TechAI Foundation Program
+              TechAI Program
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-muted-foreground max-w-3xl mx-auto md:mx-0 leading-relaxed">
               Empowering youth with comprehensive training, mentoring, and
@@ -102,7 +102,7 @@ const Index = () => {
             {/* The image */}
             <motion.img
               src="/landing.png"
-              alt="TechAI Foundation Hero"
+              alt="TechAI  Hero"
               className="w-full max-w-xl object-cover relative z-10"
               loading="lazy"
               initial={{ opacity: 0, scale: 0.9, y: 60 }}
@@ -207,11 +207,11 @@ const Index = () => {
             </h2>
             <div className="text-lg text-muted-foreground space-y-6 max-w-xl">
               <p>
-                The TechAI Foundation Program is designed to bridge the
-                opportunity gap in technology and data careers. We believe every
-                young person deserves access to quality training, expert
-                mentorship, and real-world experience that opens doors to
-                successful tech careers.
+                The TechAI Program is designed to bridge the opportunity gap in
+                technology and data careers. We believe every young person
+                deserves access to quality training, expert mentorship, and
+                real-world experience that opens doors to successful tech
+                careers.
               </p>
               <p>
                 Our comprehensive approach combines hands-on learning with
@@ -251,9 +251,9 @@ const Index = () => {
                   Comprehensive TechAI Training
                 </h3>
                 <p className="text-muted-foreground">
-                  Complete foundation program covering data science, AI, and
-                  emerging technologies with comprehensive training, mentoring,
-                  and innovation development opportunities.
+                  Complete program covering data science, AI, and emerging
+                  technologies with comprehensive training, mentoring, and
+                  innovation development opportunities.
                 </p>
               </CardContent>
             </Card>
@@ -343,8 +343,7 @@ const Index = () => {
           </h2>
           <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto">
             Join the next generation of tech leaders and innovators.
-            Applications are now open for our comprehensive TechAI Foundation
-            Program.
+            Applications are now open for our comprehensive TechAI Program.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button variant="accent" size="xl" asChild>
@@ -387,9 +386,7 @@ const Index = () => {
                 <div className="rounded-lg bg-primary p-2">
                   <Brain className="h-6 w-6 text-white" />
                 </div>
-                <span className="text-xl font-bold text-primary">
-                  TechAI Foundation
-                </span>
+                <span className="text-xl font-bold text-primary">TechAI</span>
               </div>
               <p className="text-muted-foreground">
                 Empowering youth with comprehensive tech and data career
@@ -400,7 +397,7 @@ const Index = () => {
             <div>
               <h3 className="font-bold mb-4 text-accent">Programs</h3>
               <div className="space-y-2 text-muted-foreground">
-                <p>TechAI Foundation Course</p>
+                <p>TechAI Course</p>
                 <p>Mentorship Program</p>
                 <p>Innovation Showcase</p>
               </div>
@@ -409,7 +406,7 @@ const Index = () => {
             <div>
               <h3 className="font-bold mb-4 text-accent">Contact</h3>
               <div className="space-y-2 text-muted-foreground">
-                <p>Email: infotechaifoundation@gmail.com</p>
+                <p>Email: infotechai@gmail.com</p>
                 <p>Phone: +254 746 854 108</p>
                 <p>Address: Nairobi, Kenya</p>
               </div>
@@ -418,7 +415,7 @@ const Index = () => {
 
           <div className="text-center mt-8 pt-8 border-t border-border">
             <p className="text-muted-foreground">
-              © 2025 TechAI Foundation Program. All rights reserved.
+              © 2025 TechAI Program. All rights reserved.
             </p>
           </div>
         </div>

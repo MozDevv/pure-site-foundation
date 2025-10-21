@@ -1,13 +1,13 @@
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { TutorSidebar } from "@/components/layout/tutor-sidebar";
-import { TutorDashboard } from "@/components/dashboard/tutor-dashboard";
-import { Header } from "@/components/layout/header";
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { TutorSidebar } from '@/components/layout/tutor-sidebar';
+import { TutorDashboard } from '@/components/dashboard/tutor-dashboard';
+import { Header } from '@/components/layout/header';
 
 const mockTutor = {
-  name: "Dr. Sarah Chen",
-  email: "sarah.chen@techai.foundation",
-  avatar: "/placeholder.svg",
-  role: "Tutor"
+  name: 'Dr. Sarah Chen',
+  email: 'sarah.chen@techai.',
+  avatar: '/placeholder.svg',
+  role: 'Tutor',
 };
 
 export default function TutorDashboardPage() {

@@ -245,7 +245,7 @@ export function ApplicationForm() {
       <div className="container max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-primary bg-clip-text text-transparent mb-4">
-            Apply to TechAI Foundation
+            Apply to TechAI
           </h1>
           <p className="text-xl text-muted-foreground">
             Start your journey in AI and technology with us
@@ -536,7 +536,7 @@ export function ApplicationForm() {
                           </FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Tell us about your motivation for joining TechAI Foundation..."
+                              placeholder="Tell us about your motivation for joining TechAI ..."
                               className="min-h-[120px]"
                               {...field}
                             />

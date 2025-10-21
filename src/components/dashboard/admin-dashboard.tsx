@@ -1,10 +1,26 @@
-import { useState } from "react";
-import { Users, BookOpen, MessageSquare, TrendingUp, Search, Filter, Eye, Check, X } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from 'react';
+import {
+  Users,
+  BookOpen,
+  MessageSquare,
+  TrendingUp,
+  Search,
+  Filter,
+  Eye,
+  Check,
+  X,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -12,7 +28,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -20,79 +36,93 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 
 const mockUsers = [
   {
     id: 1,
-    name: "John Doe",
-    email: "john.doe@email.com",
-    phone: "+1 (555) 123-4567",
+    name: 'John Doe',
+    email: 'john.doe@email.com',
+    phone: '+1 (555) 123-4567',
     educationLevel: "Bachelor's Degree",
-    programmingExperience: "Intermediate",
-    status: "Applied",
-    appliedDate: "2024-12-01",
-    motivation: "I want to transition into AI development and contribute to solving real-world problems...",
-    careerGoals: "To become an AI engineer and work on cutting-edge machine learning projects...",
+    programmingExperience: 'Intermediate',
+    status: 'Applied',
+    appliedDate: '2024-12-01',
+    motivation:
+      'I want to transition into AI development and contribute to solving real-world problems...',
+    careerGoals:
+      'To become an AI engineer and work on cutting-edge machine learning projects...',
   },
   {
     id: 2,
-    name: "Sarah Johnson",
-    email: "sarah.j@email.com",
-    phone: "+1 (555) 987-6543",
+    name: 'Sarah Johnson',
+    email: 'sarah.j@email.com',
+    phone: '+1 (555) 987-6543',
     educationLevel: "Master's Degree",
-    programmingExperience: "Advanced",
-    status: "Approved",
-    appliedDate: "2024-11-28",
-    motivation: "As a data scientist, I want to deepen my knowledge in AI and neural networks...",
-    careerGoals: "To lead AI research projects and mentor other professionals in the field...",
+    programmingExperience: 'Advanced',
+    status: 'Approved',
+    appliedDate: '2024-11-28',
+    motivation:
+      'As a data scientist, I want to deepen my knowledge in AI and neural networks...',
+    careerGoals:
+      'To lead AI research projects and mentor other professionals in the field...',
   },
   {
     id: 3,
-    name: "Mike Chen",
-    email: "mike.chen@email.com",
-    phone: "+1 (555) 456-7890",
-    educationLevel: "High School",
-    programmingExperience: "Beginner",
-    status: "Rejected",
-    appliedDate: "2024-11-25",
+    name: 'Mike Chen',
+    email: 'mike.chen@email.com',
+    phone: '+1 (555) 456-7890',
+    educationLevel: 'High School',
+    programmingExperience: 'Beginner',
+    status: 'Rejected',
+    appliedDate: '2024-11-25',
     motivation: "I'm interested in learning about AI and technology...",
-    careerGoals: "To get a job in the tech industry...",
+    careerGoals: 'To get a job in the tech industry...',
   },
   {
     id: 4,
-    name: "Emma Wilson",
-    email: "emma.wilson@email.com",
-    phone: "+1 (555) 234-5678",
+    name: 'Emma Wilson',
+    email: 'emma.wilson@email.com',
+    phone: '+1 (555) 234-5678',
     educationLevel: "Bachelor's Degree",
-    programmingExperience: "Intermediate",
-    status: "Applied",
-    appliedDate: "2024-12-03",
-    motivation: "I want to combine my background in psychology with AI to create better user experiences...",
-    careerGoals: "To work on AI-powered applications that improve human-computer interaction...",
+    programmingExperience: 'Intermediate',
+    status: 'Applied',
+    appliedDate: '2024-12-03',
+    motivation:
+      'I want to combine my background in psychology with AI to create better user experiences...',
+    careerGoals:
+      'To work on AI-powered applications that improve human-computer interaction...',
   },
 ];
 
 export function AdminDashboard() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedUser, setSelectedUser] = useState<typeof mockUsers[0] | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedUser, setSelectedUser] = useState<
+    (typeof mockUsers)[0] | null
+  >(null);
 
-  const filteredUsers = mockUsers.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || user.status.toLowerCase() === statusFilter;
+  const filteredUsers = mockUsers.filter((user) => {
+    const matchesSearch =
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'all' || user.status.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const getStatusBadge = (status: string) => {
     const variants = {
-      Applied: "secondary",
-      Approved: "default",
-      Rejected: "destructive"
+      Applied: 'secondary',
+      Approved: 'default',
+      Rejected: 'destructive',
     } as const;
-    
-    return <Badge variant={variants[status as keyof typeof variants]}>{status}</Badge>;
+
+    return (
+      <Badge variant={variants[status as keyof typeof variants]}>
+        {status}
+      </Badge>
+    );
   };
 
   const approveUser = (userId: number) => {
@@ -113,7 +143,7 @@ export function AdminDashboard() {
           <div>
             <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
             <p className="text-white/90 text-lg">
-              Manage applications and oversee the TechAI Foundation program
+              Manage applications and oversee the TechAI program
             </p>
           </div>
         </div>
@@ -125,7 +155,9 @@ export function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Applications</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Applications
+                </p>
                 <p className="text-2xl font-bold text-primary">124</p>
               </div>
               <Users className="h-8 w-8 text-primary" />
@@ -137,7 +169,9 @@ export function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Approved Students</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Approved Students
+                </p>
                 <p className="text-2xl font-bold text-success">89</p>
               </div>
               <Check className="h-8 w-8 text-success" />
@@ -149,7 +183,9 @@ export function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Pending Review</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Pending Review
+                </p>
                 <p className="text-2xl font-bold text-warning">23</p>
               </div>
               <TrendingUp className="h-8 w-8 text-warning" />
@@ -161,7 +197,9 @@ export function AdminDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Courses</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Courses
+                </p>
                 <p className="text-2xl font-bold text-accent">12</p>
               </div>
               <BookOpen className="h-8 w-8 text-accent" />
@@ -188,7 +226,7 @@ export function AdminDashboard() {
                 Student Applications
               </CardTitle>
               <CardDescription>
-                Review and manage student applications to the TechAI Foundation program
+                Review and manage student applications to the TechAI program
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -205,11 +243,19 @@ export function AdminDashboard() {
                 </div>
                 <Button
                   variant="outline"
-                  onClick={() => setStatusFilter(statusFilter === "applied" ? "all" : "applied")}
-                  className={statusFilter === "applied" ? "bg-accent text-accent-foreground" : ""}
+                  onClick={() =>
+                    setStatusFilter(
+                      statusFilter === 'applied' ? 'all' : 'applied'
+                    )
+                  }
+                  className={
+                    statusFilter === 'applied'
+                      ? 'bg-accent text-accent-foreground'
+                      : ''
+                  }
                 >
                   <Filter className="mr-2 h-4 w-4" />
-                  {statusFilter === "applied" ? "Pending Only" : "All Status"}
+                  {statusFilter === 'applied' ? 'Pending Only' : 'All Status'}
                 </Button>
               </div>
 
@@ -230,7 +276,9 @@ export function AdminDashboard() {
                   <TableBody>
                     {filteredUsers.map((user) => (
                       <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {user.name}
+                        </TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>{user.educationLevel}</TableCell>
                         <TableCell>{user.programmingExperience}</TableCell>
@@ -240,8 +288,8 @@ export function AdminDashboard() {
                           <div className="flex items-center gap-2">
                             <Dialog>
                               <DialogTrigger asChild>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => setSelectedUser(user)}
                                 >
@@ -250,7 +298,9 @@ export function AdminDashboard() {
                               </DialogTrigger>
                               <DialogContent className="max-w-2xl">
                                 <DialogHeader>
-                                  <DialogTitle>Application Details - {selectedUser?.name}</DialogTitle>
+                                  <DialogTitle>
+                                    Application Details - {selectedUser?.name}
+                                  </DialogTitle>
                                   <DialogDescription>
                                     Review the complete application information
                                   </DialogDescription>
@@ -259,45 +309,75 @@ export function AdminDashboard() {
                                   <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                       <div>
-                                        <h4 className="font-semibold mb-2">Contact Information</h4>
-                                        <p><strong>Name:</strong> {selectedUser.name}</p>
-                                        <p><strong>Email:</strong> {selectedUser.email}</p>
-                                        <p><strong>Phone:</strong> {selectedUser.phone}</p>
+                                        <h4 className="font-semibold mb-2">
+                                          Contact Information
+                                        </h4>
+                                        <p>
+                                          <strong>Name:</strong>{' '}
+                                          {selectedUser.name}
+                                        </p>
+                                        <p>
+                                          <strong>Email:</strong>{' '}
+                                          {selectedUser.email}
+                                        </p>
+                                        <p>
+                                          <strong>Phone:</strong>{' '}
+                                          {selectedUser.phone}
+                                        </p>
                                       </div>
                                       <div>
-                                        <h4 className="font-semibold mb-2">Background</h4>
-                                        <p><strong>Education:</strong> {selectedUser.educationLevel}</p>
-                                        <p><strong>Programming:</strong> {selectedUser.programmingExperience}</p>
-                                        <p><strong>Status:</strong> {getStatusBadge(selectedUser.status)}</p>
+                                        <h4 className="font-semibold mb-2">
+                                          Background
+                                        </h4>
+                                        <p>
+                                          <strong>Education:</strong>{' '}
+                                          {selectedUser.educationLevel}
+                                        </p>
+                                        <p>
+                                          <strong>Programming:</strong>{' '}
+                                          {selectedUser.programmingExperience}
+                                        </p>
+                                        <p>
+                                          <strong>Status:</strong>{' '}
+                                          {getStatusBadge(selectedUser.status)}
+                                        </p>
                                       </div>
                                     </div>
-                                    
+
                                     <div>
-                                      <h4 className="font-semibold mb-2">Motivation</h4>
+                                      <h4 className="font-semibold mb-2">
+                                        Motivation
+                                      </h4>
                                       <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
                                         {selectedUser.motivation}
                                       </p>
                                     </div>
-                                    
+
                                     <div>
-                                      <h4 className="font-semibold mb-2">Career Goals</h4>
+                                      <h4 className="font-semibold mb-2">
+                                        Career Goals
+                                      </h4>
                                       <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
                                         {selectedUser.careerGoals}
                                       </p>
                                     </div>
 
-                                    {selectedUser.status === "Applied" && (
+                                    {selectedUser.status === 'Applied' && (
                                       <div className="flex gap-3 pt-4">
-                                        <Button 
-                                          variant="success" 
-                                          onClick={() => approveUser(selectedUser.id)}
+                                        <Button
+                                          variant="success"
+                                          onClick={() =>
+                                            approveUser(selectedUser.id)
+                                          }
                                         >
                                           <Check className="mr-2 h-4 w-4" />
                                           Approve
                                         </Button>
-                                        <Button 
-                                          variant="destructive" 
-                                          onClick={() => rejectUser(selectedUser.id)}
+                                        <Button
+                                          variant="destructive"
+                                          onClick={() =>
+                                            rejectUser(selectedUser.id)
+                                          }
                                         >
                                           <X className="mr-2 h-4 w-4" />
                                           Reject
@@ -308,19 +388,19 @@ export function AdminDashboard() {
                                 )}
                               </DialogContent>
                             </Dialog>
-                            
-                            {user.status === "Applied" && (
+
+                            {user.status === 'Applied' && (
                               <>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => approveUser(user.id)}
                                   className="text-success hover:text-success"
                                 >
                                   <Check className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => rejectUser(user.id)}
                                   className="text-destructive hover:text-destructive"
@@ -349,19 +429,19 @@ export function AdminDashboard() {
                 Course Management
               </CardTitle>
               <CardDescription>
-                Create and manage courses for the TechAI Foundation program
+                Create and manage courses for the TechAI program
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
                 <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Course Management Coming Soon</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Course Management Coming Soon
+                </h3>
                 <p className="text-muted-foreground mb-4">
                   Create, edit, and manage course content and modules
                 </p>
-                <Button variant="hero">
-                  Create New Course
-                </Button>
+                <Button variant="hero">Create New Course</Button>
               </div>
             </CardContent>
           </Card>
@@ -382,13 +462,13 @@ export function AdminDashboard() {
             <CardContent>
               <div className="text-center py-12">
                 <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Announcements Panel</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Announcements Panel
+                </h3>
                 <p className="text-muted-foreground mb-4">
                   Send important updates and messages to all students
                 </p>
-                <Button variant="hero">
-                  Create Announcement
-                </Button>
+                <Button variant="hero">Create Announcement</Button>
               </div>
             </CardContent>
           </Card>
@@ -409,13 +489,14 @@ export function AdminDashboard() {
             <CardContent>
               <div className="text-center py-12">
                 <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Analytics Dashboard</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  Analytics Dashboard
+                </h3>
                 <p className="text-muted-foreground mb-4">
-                  Comprehensive reports on student engagement and course performance
+                  Comprehensive reports on student engagement and course
+                  performance
                 </p>
-                <Button variant="hero">
-                  View Reports
-                </Button>
+                <Button variant="hero">View Reports</Button>
               </div>
             </CardContent>
           </Card>
