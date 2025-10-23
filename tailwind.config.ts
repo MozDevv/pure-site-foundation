@@ -79,9 +79,6 @@ export default {
         'secondary': 'var(--bg-secondary)',
         'accent': 'var(--bg-accent)',
         'subtle': 'var(--bg-subtle)',
-        'gradient-primary': 'var(--gradient-primary)',
-        'gradient-hero': 'var(--gradient-hero)',
-        'gradient-card': 'var(--gradient-card)',
       },
       boxShadow: {
         'primary': 'var(--shadow-primary)',

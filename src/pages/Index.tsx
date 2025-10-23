@@ -349,28 +349,13 @@ const Index = () => {
             <Button variant="accent" size="xl" asChild>
               <a href="/apply">Apply to Program</a>
             </Button>
-            <Button
-              variant="outline"
-              size="xl"
-              className="border-white/30 text-white hover:bg-white/10"
-              asChild
-            >
+            <Button variant="default" size="xl" className="" asChild>
               <a href="/student">Student Portal</a>
             </Button>
-            <Button
-              variant="outline"
-              size="xl"
-              className="border-white/30 text-white hover:bg-white/10"
-              asChild
-            >
+            <Button variant="default" size="xl" className="" asChild>
               <a href="/tutor">Tutor Portal</a>
             </Button>
-            <Button
-              variant="outline"
-              size="xl"
-              className="border-white/30 text-white hover:bg-white/10"
-              asChild
-            >
+            <Button variant="default" size="xl" className="" asChild>
               <a href="/admin">Admin Portal</a>
             </Button>
           </div>

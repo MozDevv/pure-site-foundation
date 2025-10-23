@@ -2,72 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-/* TechAI  LMS Design System - Modern tech/AI inspired theme */
+/* TechAI Foundation LMS Design System - Clean & Professional */
 
 @layer base {
   :root {
-    /* Core Brand Colors - Tech/AI Theme */
-    --background: 220 20% 98%;
-    --foreground: 220 15% 15%;
+    /* Core Brand Colors - Light Mode Only */
+    --background: 0 0% 98%;
+    --foreground: 215 20% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 15%;
+    --card-foreground: 215 20% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 15%;
+    --popover-foreground: 215 20% 15%;
 
-    /* Primary Brand - Deep Tech Blue (changed to #006990) */
-    --primary: 197 100% 28%; /* #006990 */
+    /* Primary: #1E3A8A (Deep Blue) */
+    --primary: 221 83% 33%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 197 100% 23%; /* Slightly darker for hover */
-    --primary-light: 197 100% 90%;
+    --primary-hover: 221 83% 28%;
+    --primary-light: 221 83% 95%;
 
-    /* Accent - Use #006990 (same as primary) */
-    --accent: 197 100% 28%; /* #006990 */
-    --accent-foreground: 0 0% 100%;
-    --accent-hover: 197 100% 23%;
-    --accent-light: 197 100% 90%;
-
-    /* Secondary - AI Purple */
-    --secondary: 260 60% 55%;
+    /* Secondary: #6A1B9A (Purple) */
+    --secondary: 280 68% 36%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-hover: 260 60% 50%;
-    --secondary-light: 260 60% 95%;
+    --secondary-hover: 280 68% 31%;
+    --secondary-light: 280 68% 95%;
 
-    /* Success - AI Green */
-    --success: 140 70% 45%;
+    /* Accent: #FFD54F (Yellow) */
+    --accent: 46 100% 65%;
+    --accent-foreground: 215 20% 15%;
+    --accent-hover: 46 100% 55%;
+    --accent-light: 46 100% 95%;
+
+    /* Success - Green */
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
-    --success-light: 140 70% 95%;
+    --success-light: 142 71% 95%;
 
-    /* Warning - Neural Orange */
-    --warning: 35 85% 55%;
+    /* Warning - Orange */
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --warning-light: 35 85% 95%;
+    --warning-light: 38 92% 95%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     /* Neutral System */
-    --muted: 220 15% 96%;
-    --muted-foreground: 220 15% 45%;
+    --muted: 215 20% 96%;
+    --muted-foreground: 215 15% 45%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 92%;
-    --ring: 197 100% 28%;
+    --border: 215 15% 90%;
+    --input: 215 15% 92%;
+    --ring: 221 83% 33%;
 
     --radius: 0.75rem;
 
-    /* Solid background colors - no gradients */
+    /* Solid background colors only - NO gradients */
     --bg-primary: hsl(var(--primary));
     --bg-secondary: hsl(var(--secondary));
     --bg-accent: hsl(var(--accent));
     --bg-subtle: hsl(var(--muted));
 
     /* Shadows */
-    --shadow-primary: 0 10px 30px -10px hsl(var(--primary) / 0.3);
-    --shadow-secondary: 0 10px 30px -10px hsl(var(--secondary) / 0.3);
-    --shadow-accent: 0 10px 30px -10px hsl(var(--accent) / 0.3);
-    --shadow-elegant: 0 20px 40px -20px hsl(var(--primary) / 0.4);
+    --shadow-primary: 0 10px 30px -10px hsl(var(--primary) / 0.2);
+    --shadow-secondary: 0 10px 30px -10px hsl(var(--secondary) / 0.2);
+    --shadow-accent: 0 4px 12px -4px hsl(var(--accent) / 0.3);
+    --shadow-elegant: 0 20px 40px -20px hsl(var(--primary) / 0.3);
 
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -91,81 +91,13 @@
     );
 
     --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    /* Dark Theme - Modern Tech/AI */
-    --background: 220 25% 8%;
-    --foreground: 220 15% 95%;
-
-    --card: 220 25% 10%;
-    --card-foreground: 220 15% 95%;
-
-    --popover: 220 25% 10%;
-    --popover-foreground: 220 15% 95%;
-
-    /* Primary stays vibrant in dark (brighter for contrast) */
-    --primary: 197 100% 38%; /* Brighter #008bb3 */
-    --primary-foreground: 0 0% 100%;
-    --primary-hover: 197 100% 33%;
-    --primary-light: 197 100% 20%;
-
-    /* Accent - Use #006990 (same as primary, but a bit lighter for dark mode) */
-    --accent: 197 100% 38%; /* #008bb3 */
-    --accent-foreground: 0 0% 100%;
-    --accent-hover: 197 100% 33%;
-    --accent-light: 197 100% 20%;
-
-    /* Secondary - Brighter in dark */
-    --secondary: 260 60% 65%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-hover: 260 60% 60%;
-    --secondary-light: 260 60% 20%;
-
-    /* Success */
-    --success: 140 70% 55%;
-    --success-foreground: 0 0% 100%;
-    --success-light: 140 70% 15%;
-
-    /* Warning */
-    --warning: 35 85% 65%;
-    --warning-foreground: 0 0% 100%;
-    --warning-light: 35 85% 15%;
-
-    --destructive: 0 84% 70%;
-    --destructive-foreground: 0 0% 100%;
-
-    /* Dark neutrals */
-    --muted: 220 25% 15%;
-    --muted-foreground: 220 15% 65%;
-
-    --border: 220 25% 18%;
-    --input: 220 25% 15%;
-    --ring: 197 100% 38%;
-
-    /* Sidebar dark theme */
-    --sidebar-background: 220 25% 6%;
-    --sidebar-foreground: 220 15% 85%;
-    --sidebar-primary: 197 100% 38%;
+    --sidebar-foreground: 215 20% 15%;
+    --sidebar-primary: 221 83% 33%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 25% 12%;
-    --sidebar-accent-foreground: 220 15% 85%;
-    --sidebar-border: 220 25% 15%;
-    --sidebar-ring: 197 100% 38%;
+    --sidebar-accent: 215 20% 95%;
+    --sidebar-accent-foreground: 215 20% 15%;
+    --sidebar-border: 215 15% 90%;
+    --sidebar-ring: 221 83% 33%;
   }
 }
 
