@@ -177,16 +177,16 @@ const Sidebar = React.forwardRef<
 
     if (collapsible === 'none') {
       return (
-        <div
-          className={cn(
-            'flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground',
-            className
-          )}
-          ref={ref}
-          {...props}
-        >
-          {children}
-        </div>
+      <div
+        className={cn(
+          'flex h-full w-[--sidebar-width] flex-col bg-[#1E3A8A] text-white',
+          className
+        )}
+        ref={ref}
+        {...props}
+      >
+        {children}
+      </div>
       );
     }
 
@@ -196,7 +196,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
+            className="w-[--sidebar-width] bg-[#1E3A8A] p-0 text-white [&>button]:hidden"
             style={
               {
                 '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
@@ -246,7 +246,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className="flex h-full w-full flex-col bg-[#1E3A8A] group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           >
             {children}
           </div>
@@ -437,7 +437,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        'flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-semibold text-white/90 outline-none ring-sidebar-ring transition-[margin,opa] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0',
         className
       )}
@@ -510,21 +510,20 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-lg px-3 transition-all duration-200 ease-in-out text-left font-medium outline-none ring-sidebar-ring shadow-sm focus-visible:ring-2 active:scale-[.99] disabled:pointer-events-none disabled:opacity-50',
+  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-lg px-4 py-3 transition-all duration-300 ease-in-out text-left font-medium outline-none ring-sidebar-ring focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
-        // stronger visible default bg on white, nicer hover, keeps text-primary
+        // Modern ERP sidebar styling with white text on dark blue
         default:
-          'bg-primary/20 text-primary hover:bg-primary/30 hover:text-primary',
+          'text-white hover:bg-[#1A3173] data-[active=true]:bg-[#1A3173] data-[active=true]:rounded-lg data-[active=true]:shadow-lg',
         outline:
           'bg-white border border-sidebar-border text-sidebar-foreground hover:bg-primary/10 hover:text-primary hover:shadow-sm',
       },
       size: {
-        // slightly taller for better presence
-        default: 'h-14 text-sm',
+        default: 'h-12 text-sm',
         sm: 'h-10 text-xs',
-        lg: 'h-16 text-base',
+        lg: 'h-14 text-base',
       },
     },
     defaultVariants: {
@@ -565,10 +564,6 @@ const SidebarMenuButton = React.forwardRef<
         data-active={isActive}
         className={cn(
           sidebarMenuButtonVariants({ variant, size }),
-          // ensure active state uses full primary background & white text when explicit active
-          isActive
-            ? 'data-[active=true]:bg-primary data-[active=true]:text-primary-foreground'
-            : '',
           className
         )}
         {...props}
