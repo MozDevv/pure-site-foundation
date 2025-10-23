@@ -1,40 +1,42 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { useToast } from "@/hooks/use-toast";
-import { apiService, endpoints } from "@/lib/api";
-import Autoplay from "embla-carousel-autoplay";
-import { Loader2 } from "lucide-react";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+} from '@/components/ui/carousel';
+import { useToast } from '@/hooks/use-toast';
+import { apiService, endpoints } from '@/lib/api';
+import Autoplay from 'embla-carousel-autoplay';
+import { Loader2 } from 'lucide-react';
 
 const carouselImages = [
   {
-    src: "/landing.png",
-    alt: "Students learning technology"
+    src: '/leader-discussing-with-shareholders-about-increasing-profit-strategy.jpg',
+    alt: 'Students learning technology',
   },
   {
-    src: "/landing34.png",
-    alt: "Interactive coding session"
+    src: '/city-committed-education-collage-concept.jpg',
+    alt: 'Interactive coding session',
   },
   {
-    src: "/landingldk.png",
-    alt: "Collaborative learning environment"
+    src: '/learning-education-ideas-insight-intelligence-study-concept.jpg',
+    alt: 'Collaborative learning environment',
   },
-  {
-    src: "/lsdjs.png",
-    alt: "Technology education"
-  }
 ];
 
 const SignInPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -42,15 +44,15 @@ const SignInPage = () => {
     const newErrors: { email?: string; password?: string } = {};
 
     if (!email) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = 'Please enter a valid email address';
     }
 
     if (!password) {
-      newErrors.password = "Password is required";
+      newErrors.password = 'Password is required';
     } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = 'Password must be at least 6 characters';
     }
 
     setErrors(newErrors);
@@ -59,7 +61,7 @@ const SignInPage = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -73,25 +75,27 @@ const SignInPage = () => {
       });
 
       if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
+        localStorage.setItem('token', response.data.token);
         if (rememberMe) {
-          localStorage.setItem("rememberMe", "true");
+          localStorage.setItem('rememberMe', 'true');
         }
 
         toast({
-          title: "Welcome back!",
-          description: "You have successfully signed in.",
+          title: 'Welcome back!',
+          description: 'You have successfully signed in.',
         });
 
         // Navigate based on user role
-        const role = response.data.user?.role || "student";
+        const role = response.data?.role?.toLowerCase() || 'student';
         navigate(`/${role}`);
       }
     } catch (error: any) {
       toast({
-        variant: "destructive",
-        title: "Sign in failed",
-        description: error.response?.data?.message || "Invalid email or password. Please try again.",
+        variant: 'destructive',
+        title: 'Sign in failed',
+        description:
+          error.response?.data?.message ||
+          'Invalid email or password. Please try again.',
       });
     } finally {
       setIsLoading(false);
@@ -101,47 +105,28 @@ const SignInPage = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left Half - Image Carousel */}
-      <div className="hidden lg:flex lg:w-1/2 bg-primary relative overflow-hidden">
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          plugins={[
-            Autoplay({
-              delay: 4000,
-            }),
-          ]}
-          className="w-full h-full"
-        >
-          <CarouselContent className="h-screen">
-            {carouselImages.map((image, index) => (
-              <CarouselItem key={index} className="h-full">
-                <div className="relative h-full w-full">
-                  <img
-                    src={image.src}
-                    alt={image.alt}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-primary/20" />
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-        </Carousel>
-        
+      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+        {/* Image - cover the whole column */}
+        <img
+          src="/leader-discussing-with-shareholders-about-increasing-profit-strategy.jpg"
+          alt="Students learning"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          loading="lazy"
+        />
+        {/* Gradient overlay: very subtle at top -> stronger at bottom */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-primary/10 via-primary/30 to-primary/100 mix-blend-multiply" />{' '}
         {/* Overlay Text */}
         <div className="absolute bottom-12 left-12 text-white z-10 max-w-md">
           <h2 className="text-4xl font-bold mb-4">Welcome to TechAI LMS</h2>
           <p className="text-lg opacity-90">
-            Empowering the next generation of tech leaders through quality education and mentorship.
+            Empowering the next generation of tech leaders through quality
+            education and mentorship.
           </p>
         </div>
       </div>
-
       {/* Right Half - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md space-y-8">
+        <div className="w-full max-w-md space-y-8 bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-gray-800">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-foreground">Sign In</h1>
             <p className="text-muted-foreground mt-2">
@@ -161,7 +146,7 @@ const SignInPage = () => {
                   setEmail(e.target.value);
                   setErrors({ ...errors, email: undefined });
                 }}
-                className={errors.email ? "border-destructive" : ""}
+                className={errors.email ? 'border-destructive' : ''}
               />
               {errors.email && (
                 <p className="text-sm text-destructive">{errors.email}</p>
@@ -179,7 +164,7 @@ const SignInPage = () => {
                   setPassword(e.target.value);
                   setErrors({ ...errors, password: undefined });
                 }}
-                className={errors.password ? "border-destructive" : ""}
+                className={errors.password ? 'border-destructive' : ''}
               />
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password}</p>
@@ -191,7 +176,9 @@ const SignInPage = () => {
                 <Checkbox
                   id="remember"
                   checked={rememberMe}
-                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setRememberMe(checked as boolean)
+                  }
                 />
                 <Label
                   htmlFor="remember"
@@ -200,10 +187,7 @@ const SignInPage = () => {
                   Remember me
                 </Label>
               </div>
-              <a
-                href="#"
-                className="text-sm text-primary hover:underline"
-              >
+              <a href="#" className="text-sm text-primary hover:underline">
                 Forgot password?
               </a>
             </div>
@@ -219,13 +203,15 @@ const SignInPage = () => {
                   Signing in...
                 </>
               ) : (
-                "Sign In"
+                'Sign In'
               )}
             </Button>
           </form>
 
           <div className="text-center text-sm">
-            <span className="text-muted-foreground">Don't have an account? </span>
+            <span className="text-muted-foreground">
+              Don't have an account?{' '}
+            </span>
             <a
               href="/apply"
               className="text-primary font-medium hover:underline"

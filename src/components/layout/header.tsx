@@ -29,9 +29,9 @@ export function Header({ user, onLogout }: HeaderProps) {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-gradient-primary p-2">
+            {/* <div className="rounded-lg bg-gradient-primary p-2">
               <Brain className="h-6 w-6 tex" />
-            </div>
+            </div> */}
             <div>
               <h1 className="text-xl font-bold bg-gradient-primary bg-clip-text t">
                 TechAI

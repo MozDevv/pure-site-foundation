@@ -30,12 +30,13 @@ const setAuthorizationHeader = () => {
 })
  */
 export const endpoints = {
-  login: '/auth/login',
+  login: '/v1/auth/login',
   register: '/v1/auth/register',
   getProfile: '/v1/auth/profile',
   updateProfile: '/v1/auth/profile',
 
   createProfile: '/user-profile',
+  getAllUsers: '/users/all',
 };
 
 export const apiService = {

@@ -184,7 +184,7 @@ export function AdminDashboard() {
   return (
     <div className="space-y-8">
       {/* Admin Header - Solid Color */}
-      <div className="bg-primary rounded-xl p-8 text-primary-foreground shadow-primary">
+      {/* <div className="bg-primary rounded-xl p-8 text-primary-foreground shadow-primary">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
@@ -201,7 +201,7 @@ export function AdminDashboard() {
             Export Reports
           </Button>
         </div>
-      </div>
+      </div> */}
 
       {/* KPI Stats Overview - Solid Colors */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

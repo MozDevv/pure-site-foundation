@@ -1,10 +1,9 @@
-import * as React from "react";
-import * as TabsPrimitive from "@radix-ui/react-tabs";
+import * as React from 'react';
+import * as TabsPrimitive from '@radix-ui/react-tabs';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 const Tabs = TabsPrimitive.Root;
-
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
@@ -12,8 +11,9 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-      className,
+      // much lighter surface so the selected tab stands out without being solid
+      'inline-flex h-12 items-center rounded-lg bg-white/5 p-1 text-muted-foreground shadow-sm',
+      className
     )}
     {...props}
   />
@@ -27,8 +27,13 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-      className,
+      // unselected = subtle gray on transparent; active = soft primary tint + subtle ring
+      'inline-flex items-center justify-center whitespace-nowrap rounded px-4 py-[10px] text-sm font-medium transition-all',
+      'text-[16px] bg-gray-200 hover:bg-primary/20',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+      // make active less "solid" — soft tint + subtle ring and slight lift
+      'data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm ',
+      className
     )}
     {...props}
   />
@@ -42,8 +47,8 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className,
+      'mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+      className
     )}
     {...props}
   />
