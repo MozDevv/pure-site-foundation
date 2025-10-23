@@ -1,4 +1,5 @@
 import { Brain, User, LogOut, Bell, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
@@ -103,9 +104,11 @@ export function Header({ user, onLogout }: HeaderProps) {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button variant="hero" size="sm">
-              Sign In
-            </Button>
+            <Link to="/signin">
+              <Button variant="hero" size="sm">
+                Sign In
+              </Button>
+            </Link>
           )}
         </div>
       </div>
