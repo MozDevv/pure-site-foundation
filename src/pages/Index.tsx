@@ -345,19 +345,19 @@ const Index = () => {
             Join the next generation of tech leaders and innovators.
             Applications are now open for our comprehensive TechAI Program.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="accent" size="xl" asChild>
+          <div className="flex  flex-col sm:flex-row gap-4 justify-center">
+            <Button variant="accent" size="lg" asChild>
               <a href="/apply">Apply to Program</a>
             </Button>
-            <Button variant="default" size="xl" className="" asChild>
-              <a href="/student">Student Portal</a>
+            <Button variant="success" size="lg" className="" asChild>
+              <a href="/signin">Sign In</a>
             </Button>
-            <Button variant="default" size="xl" className="" asChild>
+            {/* <Button variant="default" size="xl" className="" asChild>
               <a href="/tutor">Tutor Portal</a>
             </Button>
             <Button variant="default" size="xl" className="" asChild>
               <a href="/admin">Admin Portal</a>
-            </Button>
+            </Button> */}
           </div>
         </div>
       </section>

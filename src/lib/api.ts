@@ -37,6 +37,10 @@ export const endpoints = {
 
   createProfile: '/user-profile',
   getAllUsers: '/users/all',
+  getAllRoles: '/roles/all',
+  activateAccount: (userId: string) => `/v1/auth/activate?userId=${userId}`,
+  approveStudentApplication: (userId: string) =>
+    `/v1/auth/approve-student?userId=${userId}`,
 };
 
 export const apiService = {
@@ -59,7 +63,7 @@ export const apiService = {
     }
   },
 
-  post: async (endpoint, data) => {
+  post: async (endpoint, data?) => {
     try {
       setAuthorizationHeader();
       const response = await api.post(endpoint, data);

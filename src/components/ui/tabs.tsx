@@ -29,10 +29,10 @@ const TabsTrigger = React.forwardRef<
     className={cn(
       // unselected = subtle gray on transparent; active = soft primary tint + subtle ring
       'inline-flex items-center justify-center whitespace-nowrap rounded px-4 py-[10px] text-sm font-medium transition-all',
-      'text-[16px] bg-gray-200 hover:bg-primary/20',
+      'text-[16px] bg-gray-200 hover:bg-primary/10 hover:text-primary',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
       // make active less "solid" — soft tint + subtle ring and slight lift
-      'data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm ',
+      'data-[state=active]:border-b-4 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-sm ',
       className
     )}
     {...props}

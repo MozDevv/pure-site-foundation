@@ -10,9 +10,10 @@ import {
   CarouselItem,
 } from '@/components/ui/carousel';
 import { useToast } from '@/hooks/use-toast';
-import { apiService, endpoints } from '@/lib/api';
+import { API_BASE_URL, apiService, endpoints } from '@/lib/api';
 import Autoplay from 'embla-carousel-autoplay';
 import { Loader2 } from 'lucide-react';
+import axios from 'axios';
 
 const carouselImages = [
   {
@@ -69,7 +70,7 @@ const SignInPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await apiService.login(endpoints.login, {
+      const response = await axios.post(`${API_BASE_URL}${endpoints.login}`, {
         email,
         password,
       });
@@ -79,6 +80,14 @@ const SignInPage = () => {
         if (rememberMe) {
           localStorage.setItem('rememberMe', 'true');
         }
+        const user = {
+          role: response.data.role || 'Student',
+          name: response.data.name || '',
+          email: response.data.email || '',
+          firstName: response.data.firstName || '',
+          lastName: response.data.lastName || '',
+        };
+        localStorage.setItem('user', JSON.stringify(user));
 
         toast({
           title: 'Welcome back!',

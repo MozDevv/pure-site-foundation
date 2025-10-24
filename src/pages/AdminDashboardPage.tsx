@@ -18,7 +18,7 @@ export default function AdminDashboardPage({ userManagement = false }) {
         <AdminSidebar />
         <div className="flex-1 flex flex-col">
           <Header user={mockAdmin} />
-          {/* <div className="flex items-center gap-2 p-4 border-b border-border">
+          {/* <div className="f lex items-center gap-2 p-4 border-b border-border">
             <h2 className="text-lg font-semibold">Admin Dashboard</h2>
           </div> */}
           <main className="flex-1 p-6">

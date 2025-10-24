@@ -12,6 +12,7 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import TimetablePage from './pages/TimetablePage';
 import NotFound from './pages/NotFound';
 import UserManagement from './components/UserManagement';
+import Activate from './components/Activate';
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/signin" element={<SignInPage />} />
           <Route path="/apply" element={<ApplicationPage />} />
+          <Route path="/activate/:userId" element={<Activate />} />
 
           {/* Student Routes */}
           <Route path="/student" element={<StudentDashboardPage />} />

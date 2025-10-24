@@ -12,9 +12,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import React from 'react';
 
 interface HeaderProps {
   user?: {
+    firstName: any;
+    lastName: any;
     name: string;
     email: string;
     avatar?: string;
@@ -23,7 +26,34 @@ interface HeaderProps {
   onLogout?: () => void;
 }
 
-export function Header({ user, onLogout }: HeaderProps) {
+export function Header({ onLogout }: HeaderProps) {
+  const [user, setUser] = React.useState<HeaderProps['user'] | null>(null);
+
+  React.useEffect(() => {
+    const raw = localStorage.getItem('user');
+    if (raw) {
+      try {
+        setUser(JSON.parse(raw));
+      } catch {
+        setUser(null);
+      }
+    }
+  }, []);
+
+  // optional: listen for changes from other tabs
+  React.useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'user') setUser(e.newValue ? JSON.parse(e.newValue) : null);
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    if (onLogout) onLogout();
+    window.location.href = '/signin';
+  };
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between">
@@ -71,8 +101,12 @@ export function Header({ user, onLogout }: HeaderProps) {
                 >
                   <Avatar className="h-10 w-10">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="bg-gradient-primary text-white">
-                      {user.name.charAt(0).toUpperCase()}
+                    <AvatarFallback className="">
+                      {user.firstName && user.lastName
+                        ? `${user.firstName.charAt(0)}${user.lastName.charAt(
+                            0
+                          )}`
+                        : user.name}
                     </AvatarFallback>
                   </Avatar>
                 </Button>
@@ -97,7 +131,7 @@ export function Header({ user, onLogout }: HeaderProps) {
                   Profile
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={onLogout}>
+                <DropdownMenuItem onClick={handleLogout}>
                   <LogOut className="mr-2 h-4 w-4" />
                   Log out
                 </DropdownMenuItem>
