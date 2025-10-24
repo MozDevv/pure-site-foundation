@@ -59,6 +59,7 @@ import {
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
+import { CourseCreationStepper } from './course-creation-stepper';
 
 // Types
 interface Course {
@@ -487,12 +488,24 @@ export default function CoursesManagement() {
         </CardContent>
       </Card>
 
-      {/* Create/Edit Dialog */}
+      {/* Create Course Stepper */}
+      <CourseCreationStepper
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        formData={formData}
+        setFormData={setFormData}
+        students={students}
+        tutors={tutors}
+        categories={categories}
+        onSubmit={handleCreateCourse}
+        onReset={resetForm}
+      />
+
+      {/* Edit Dialog */}
       <Dialog
-        open={isCreateDialogOpen || isEditDialogOpen}
+        open={isEditDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
-            setIsCreateDialogOpen(false);
             setIsEditDialogOpen(false);
             resetForm();
           }
@@ -500,14 +513,8 @@ export default function CoursesManagement() {
       >
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {isCreateDialogOpen ? 'Create New Course' : 'Edit Course'}
-            </DialogTitle>
-            <DialogDescription>
-              {isCreateDialogOpen
-                ? 'Fill in the details to create a new course'
-                : 'Update the course information'}
-            </DialogDescription>
+            <DialogTitle>Edit Course</DialogTitle>
+            <DialogDescription>Update the course information</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6 py-4">
@@ -741,18 +748,14 @@ export default function CoursesManagement() {
             <Button
               variant="outline"
               onClick={() => {
-                setIsCreateDialogOpen(false);
                 setIsEditDialogOpen(false);
                 resetForm();
               }}
             >
               Cancel
             </Button>
-            <Button
-              onClick={isCreateDialogOpen ? handleCreateCourse : handleUpdateCourse}
-              variant="hero"
-            >
-              {isCreateDialogOpen ? 'Create Course' : 'Save Changes'}
+            <Button onClick={handleUpdateCourse} variant="hero">
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
