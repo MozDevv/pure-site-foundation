@@ -4,6 +4,8 @@ import { TutorDashboard } from '@/components/dashboard/tutor-dashboard';
 import { Header } from '@/components/layout/header';
 
 const mockTutor = {
+  firstName: 'Sarah',
+  lastName: 'Chen',
   name: 'Dr. Sarah Chen',
   email: 'sarah.chen@techai.',
   avatar: '/placeholder.svg',

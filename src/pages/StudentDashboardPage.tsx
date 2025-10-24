@@ -4,6 +4,8 @@ import { StudentDashboard } from "@/components/dashboard/student-dashboard";
 import { Header } from "@/components/layout/header";
 
 const mockUser = {
+  firstName: "John",
+  lastName: "Doe",
   name: "John Doe",
   email: "john.doe@email.com",
   avatar: "/placeholder.svg",

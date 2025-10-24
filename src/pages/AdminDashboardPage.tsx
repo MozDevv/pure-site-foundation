@@ -5,6 +5,8 @@ import { Header } from '@/components/layout/header';
 import UserManagement from '@/components/UserManagement';
 
 const mockAdmin = {
+  firstName: 'Admin',
+  lastName: 'User',
   name: 'Admin User',
   email: 'admin@techai.',
   avatar: '/placeholder.svg',

@@ -11,8 +11,8 @@ import TutorDashboardPage from './pages/TutorDashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import TimetablePage from './pages/TimetablePage';
 import NotFound from './pages/NotFound';
-import UserManagement from './components/UserManagement';
 import Activate from './components/Activate';
+import CoursesManagement from './components/CoursesManagement';
 
 const queryClient = new QueryClient();
 
@@ -42,6 +42,7 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/timetable" element={<TimetablePage />} />
           <Route path="/admin/*" element={<AdminDashboardPage />} />
+          <Route path="/admin/courses" element={<CoursesManagement />} />
           <Route
             path="/admin/users"
             element={<AdminDashboardPage userManagement={true} />}

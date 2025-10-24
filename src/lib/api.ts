@@ -41,6 +41,13 @@ export const endpoints = {
   activateAccount: (userId: string) => `/v1/auth/activate?userId=${userId}`,
   approveStudentApplication: (userId: string) =>
     `/v1/auth/approve-student?userId=${userId}`,
+  
+  // Courses
+  getAllCourses: '/api/courses',
+  createCourse: '/api/courses',
+  updateCourse: (courseId: string) => `/api/courses/${courseId}`,
+  deleteCourse: (courseId: string) => `/api/courses/${courseId}`,
+  getCourseById: (courseId: string) => `/api/courses/${courseId}`,
 };
 
 export const apiService = {

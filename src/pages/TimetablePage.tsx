@@ -8,18 +8,24 @@ import { WeeklyTimetable } from '@/components/timetable/weekly-timetable';
 
 const mockUsers = {
   student: {
+    firstName: 'John',
+    lastName: 'Doe',
     name: 'John Doe',
     email: 'john.doe@email.com',
     avatar: '/placeholder.svg',
     role: 'Student',
   },
   tutor: {
+    firstName: 'Sarah',
+    lastName: 'Chen',
     name: 'Dr. Sarah Chen',
     email: 'sarah.chen@techai.',
     avatar: '/placeholder.svg',
     role: 'Tutor',
   },
   admin: {
+    firstName: 'Admin',
+    lastName: 'User',
     name: 'Admin User',
     email: 'admin@techai.',
     avatar: '/placeholder.svg',
