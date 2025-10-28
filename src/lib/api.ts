@@ -41,6 +41,8 @@ export const endpoints = {
   activateAccount: (userId: string) => `/v1/auth/activate?userId=${userId}`,
   approveStudentApplication: (userId: string) =>
     `/v1/auth/approve-student?userId=${userId}`,
+  changePassword: (userId: string) => `/v1/auth/change-password/${userId}`,
+  requestPasswordResetOtp: (userId: string) => `/v1/auth/request-otp/${userId}`,
   
   // Courses
   getAllCourses: '/api/courses',
