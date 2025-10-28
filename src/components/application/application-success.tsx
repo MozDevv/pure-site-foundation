@@ -303,12 +303,12 @@ export function ApplicationSuccess({
             <ArrowLeft className="w-4 h-4" />
             Return to Homepage
           </Button>
-          <Button
+          {/* <Button
             variant="hero"
             onClick={() => (window.location.href = '/student-dashboard')}
           >
             Go to Dashboard
-          </Button>
+          </Button> */}
         </div>
       </div>
     </div>

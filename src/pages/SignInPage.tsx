@@ -111,6 +111,20 @@ const SignInPage = () => {
     }
   };
 
+  const handleSendResetLink = async (userId) => {
+    try {
+      const res = await apiService.login(endpoints.forgotPassword(userId));
+      if (res.status === 200) {
+        toast({
+          title: 'Reset Link Sent',
+          description: 'Please check your email for the password reset link.',
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="min-h-screen flex">
       {/* Left Half - Image Carousel */}
@@ -135,7 +149,7 @@ const SignInPage = () => {
       </div>
       {/* Right Half - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md space-y-8 bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-gray-100 dark:border-gray-800">
+        <div className="w-full max-w-md space-y-8 bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-gray-100">
           <div className="text-center">
             <h1 className="text-3xl font-bold text-foreground">Sign In</h1>
             <p className="text-muted-foreground mt-2">

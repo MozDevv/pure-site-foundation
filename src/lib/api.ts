@@ -2,6 +2,7 @@
 import axios from 'axios';
 
 export const API_BASE_URL = 'http://localhost:8080/api'; //
+// export const API_BASE_URL = 'https://techaipath.zanarianalytics.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -41,13 +42,15 @@ export const endpoints = {
   activateAccount: (userId: string) => `/v1/auth/activate?userId=${userId}`,
   approveStudentApplication: (userId: string) =>
     `/v1/auth/approve-student?userId=${userId}`,
-  
+
   // Courses
-  getAllCourses: '/api/courses',
-  createCourse: '/api/courses',
-  updateCourse: (courseId: string) => `/api/courses/${courseId}`,
-  deleteCourse: (courseId: string) => `/api/courses/${courseId}`,
-  getCourseById: (courseId: string) => `/api/courses/${courseId}`,
+  getAllCourses: '/courses',
+  createCourse: '/courses',
+  updateCourse: `/courses`,
+  deleteCourse: (courseId: string) => `/courses/${courseId}`,
+  getCourseById: (courseId: string) => `/courses/${courseId}`,
+  forgotPassword: (userId: string) =>
+    `/v1/auth/forgot-password?userId=${userId}`,
 };
 
 export const apiService = {
@@ -79,9 +82,9 @@ export const apiService = {
       throw error;
     }
   },
-  login: async (endpoint, data) => {
+  login: async (endpoint, data?) => {
     try {
-      setAuthorizationHeader();
+      // setAuthorizationHeader();
       const response = await api.post(endpoint, data);
       return response;
     } catch (error) {

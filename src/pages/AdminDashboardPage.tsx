@@ -3,6 +3,7 @@ import { AdminSidebar } from '@/components/layout/admin-sidebar';
 import { AdminDashboard } from '@/components/dashboard/admin-dashboard';
 import { Header } from '@/components/layout/header';
 import UserManagement from '@/components/UserManagement';
+import CoursesManagement from '@/components/CoursesManagement';
 
 const mockAdmin = {
   firstName: 'Admin',
@@ -13,7 +14,7 @@ const mockAdmin = {
   role: 'Admin',
 };
 
-export default function AdminDashboardPage({ userManagement = false }) {
+export default function AdminDashboardPage({ menu = 'userManagement' }) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -24,7 +25,13 @@ export default function AdminDashboardPage({ userManagement = false }) {
             <h2 className="text-lg font-semibold">Admin Dashboard</h2>
           </div> */}
           <main className="flex-1 p-6">
-            {userManagement ? <UserManagement /> : <AdminDashboard />}
+            {menu === 'userManagement' ? (
+              <UserManagement />
+            ) : menu === 'coursesManagement' ? (
+              <CoursesManagement />
+            ) : (
+              <AdminDashboard />
+            )}
           </main>
         </div>
       </div>

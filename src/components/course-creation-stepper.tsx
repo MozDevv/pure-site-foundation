@@ -19,7 +19,11 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -170,7 +174,9 @@ export function CourseCreationStepper({
               <Input
                 id="code"
                 value={formData.code}
-                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, code: e.target.value })
+                }
                 placeholder="e.g., CS101"
               />
             </div>
@@ -182,7 +188,9 @@ export function CourseCreationStepper({
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder="e.g., Introduction to Web Development"
               />
             </div>
@@ -193,7 +201,9 @@ export function CourseCreationStepper({
               </Label>
               <Select
                 value={formData.category}
-                onValueChange={(value) => setFormData({ ...formData, category: value })}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, category: value })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
@@ -213,7 +223,9 @@ export function CourseCreationStepper({
               <Input
                 id="shortDescription"
                 value={formData.shortDescription}
-                onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, shortDescription: e.target.value })
+                }
                 placeholder="Brief overview of the course"
               />
             </div>
@@ -225,7 +237,10 @@ export function CourseCreationStepper({
                 type="number"
                 value={formData.priceCents / 100}
                 onChange={(e) =>
-                  setFormData({ ...formData, priceCents: Number(e.target.value) * 100 })
+                  setFormData({
+                    ...formData,
+                    priceCents: Number(e.target.value) * 100,
+                  })
                 }
                 placeholder="0.00"
                 step="0.01"
@@ -242,13 +257,16 @@ export function CourseCreationStepper({
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Detailed course description, objectives, and requirements"
                 rows={12}
                 className="resize-none"
               />
               <p className="text-xs text-muted-foreground">
-                Provide a comprehensive overview of the course content, learning objectives, and prerequisites.
+                Provide a comprehensive overview of the course content, learning
+                objectives, and prerequisites.
               </p>
             </div>
           </div>
@@ -280,7 +298,9 @@ export function CourseCreationStepper({
                   <Calendar
                     mode="single"
                     selected={formData.startDate}
-                    onSelect={(date) => setFormData({ ...formData, startDate: date })}
+                    onSelect={(date) =>
+                      setFormData({ ...formData, startDate: date })
+                    }
                     initialFocus
                     className="pointer-events-auto"
                   />
@@ -311,7 +331,9 @@ export function CourseCreationStepper({
                   <Calendar
                     mode="single"
                     selected={formData.endDate}
-                    onSelect={(date) => setFormData({ ...formData, endDate: date })}
+                    onSelect={(date) =>
+                      setFormData({ ...formData, endDate: date })
+                    }
                     initialFocus
                     className="pointer-events-auto"
                   />
@@ -325,26 +347,36 @@ export function CourseCreationStepper({
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <Label className="text-base font-semibold">Enrolled Students</Label>
+              <Label className="text-base font-semibold">
+                Enrolled Students
+              </Label>
               <Card>
                 <CardContent className="pt-4">
                   <ScrollArea className="h-[180px]">
                     <div className="space-y-2">
                       {students.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No students available</p>
+                        <p className="text-sm text-muted-foreground">
+                          No students available
+                        </p>
                       ) : (
                         students.map((student) => (
-                          <div key={student.id} className="flex items-center space-x-2">
+                          <div
+                            key={student.id}
+                            className="flex items-center space-x-2"
+                          >
                             <Checkbox
                               id={`student-${student.id}`}
-                              checked={formData.enrolledStudentIds.includes(student.id)}
+                              checked={formData.enrolledStudentIds.includes(
+                                student.id
+                              )}
                               onCheckedChange={() => toggleStudent(student.id)}
                             />
                             <label
                               htmlFor={`student-${student.id}`}
                               className="text-sm font-medium leading-none cursor-pointer flex-1"
                             >
-                              {student.firstName} {student.lastName} ({student.email})
+                              {student.firstName} {student.lastName} (
+                              {student.email})
                             </label>
                           </div>
                         ))
@@ -365,10 +397,15 @@ export function CourseCreationStepper({
                   <ScrollArea className="h-[180px]">
                     <div className="space-y-2">
                       {tutors.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No tutors available</p>
+                        <p className="text-sm text-muted-foreground">
+                          No tutors available
+                        </p>
                       ) : (
                         tutors.map((tutor) => (
-                          <div key={tutor.id} className="flex items-center space-x-2">
+                          <div
+                            key={tutor.id}
+                            className="flex items-center space-x-2"
+                          >
                             <Checkbox
                               id={`tutor-${tutor.id}`}
                               checked={formData.tutorIds.includes(tutor.id)}
@@ -400,7 +437,9 @@ export function CourseCreationStepper({
             <Card>
               <CardContent className="pt-6 space-y-4">
                 <div>
-                  <Label className="text-muted-foreground text-xs">Course Code</Label>
+                  <Label className="text-muted-foreground text-xs">
+                    Course Code
+                  </Label>
                   <p className="font-semibold text-lg">{formData.code}</p>
                 </div>
                 <Separator />
@@ -411,21 +450,29 @@ export function CourseCreationStepper({
                 <Separator />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-muted-foreground text-xs">Category</Label>
+                    <Label className="text-muted-foreground text-xs">
+                      Category
+                    </Label>
                     <Badge variant="secondary" className="mt-1">
                       {formData.category}
                     </Badge>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground text-xs">Price</Label>
-                    <p className="font-medium">${(formData.priceCents / 100).toFixed(2)}</p>
+                    <Label className="text-muted-foreground text-xs">
+                      Price
+                    </Label>
+                    <p className="font-medium">
+                      ${(formData.priceCents / 100).toFixed(2)}
+                    </p>
                   </div>
                 </div>
                 <Separator />
                 {formData.shortDescription && (
                   <>
                     <div>
-                      <Label className="text-muted-foreground text-xs">Short Description</Label>
+                      <Label className="text-muted-foreground text-xs">
+                        Short Description
+                      </Label>
                       <p className="text-sm">{formData.shortDescription}</p>
                     </div>
                     <Separator />
@@ -434,7 +481,9 @@ export function CourseCreationStepper({
                 {formData.description && (
                   <>
                     <div>
-                      <Label className="text-muted-foreground text-xs">Full Description</Label>
+                      <Label className="text-muted-foreground text-xs">
+                        Full Description
+                      </Label>
                       <p className="text-sm">{formData.description}</p>
                     </div>
                     <Separator />
@@ -442,26 +491,40 @@ export function CourseCreationStepper({
                 )}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-muted-foreground text-xs">Start Date</Label>
+                    <Label className="text-muted-foreground text-xs">
+                      Start Date
+                    </Label>
                     <p className="font-medium">
-                      {formData.startDate ? format(formData.startDate, 'PPP') : 'Not set'}
+                      {formData.startDate
+                        ? format(formData.startDate, 'PPP')
+                        : 'Not set'}
                     </p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground text-xs">End Date</Label>
+                    <Label className="text-muted-foreground text-xs">
+                      End Date
+                    </Label>
                     <p className="font-medium">
-                      {formData.endDate ? format(formData.endDate, 'PPP') : 'Not set'}
+                      {formData.endDate
+                        ? format(formData.endDate, 'PPP')
+                        : 'Not set'}
                     </p>
                   </div>
                 </div>
                 <Separator />
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-muted-foreground text-xs">Students Enrolled</Label>
-                    <p className="font-medium">{formData.enrolledStudentIds.length}</p>
+                    <Label className="text-muted-foreground text-xs">
+                      Students Enrolled
+                    </Label>
+                    <p className="font-medium">
+                      {formData.enrolledStudentIds.length}
+                    </p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground text-xs">Tutors Assigned</Label>
+                    <Label className="text-muted-foreground text-xs">
+                      Tutors Assigned
+                    </Label>
                     <p className="font-medium">{formData.tutorIds.length}</p>
                   </div>
                 </div>
@@ -477,7 +540,7 @@ export function CourseCreationStepper({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-5xl min-h-[90vh] overflow-hidden flex flex-col mx-3">
         <DialogHeader>
           <DialogTitle>Create New Course</DialogTitle>
           <DialogDescription>
@@ -486,8 +549,8 @@ export function CourseCreationStepper({
         </DialogHeader>
 
         {/* Stepper */}
-        <div className="py-4">
-          <div className="flex items-center justify-between">
+        <div className="py-4 px-4">
+          <div className="flex items-center justify-between bg-primary/10 p-4 rounded-md">
             {steps.map((step, index) => {
               const Icon = step.icon;
               const isCompleted = currentStep > step.id;
@@ -499,12 +562,19 @@ export function CourseCreationStepper({
                     <div
                       className={cn(
                         'w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors',
-                        isCompleted && 'bg-primary border-primary text-primary-foreground',
+                        isCompleted &&
+                          'bg-primary border-primary text-primary-foreground',
                         isCurrent && 'border-primary text-primary',
-                        !isCompleted && !isCurrent && 'border-muted text-muted-foreground'
+                        !isCompleted &&
+                          !isCurrent &&
+                          'border-muted text-muted-foreground'
                       )}
                     >
-                      {isCompleted ? <Check className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
+                      {isCompleted ? (
+                        <Check className="h-5 w-5" />
+                      ) : (
+                        <Icon className="h-5 w-5" />
+                      )}
                     </div>
                     <span
                       className={cn(
@@ -531,16 +601,13 @@ export function CourseCreationStepper({
         </div>
 
         {/* Step Content */}
-        <div className="flex-1 overflow-y-auto py-4">
+        <div className="flex-1 overflow-y-auto py-4 px-4">
           {renderStepContent()}
         </div>
 
         {/* Navigation Buttons */}
         <div className="flex justify-between pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={handleClose}
-          >
+          <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
           <div className="flex gap-2">

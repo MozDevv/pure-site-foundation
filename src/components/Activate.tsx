@@ -1,4 +1,5 @@
-import { apiService, endpoints } from '@/lib/api';
+import { API_BASE_URL, apiService, endpoints } from '@/lib/api';
+import axios from 'axios';
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
@@ -11,8 +12,8 @@ const Activate = () => {
   useEffect(() => {
     async function activateAccount() {
       if (userId) {
-        await apiService
-          .post(endpoints.activateAccount(userId))
+        await axios
+          .post(`${API_BASE_URL}${endpoints.activateAccount(userId)}`, {})
           .then(() => {
             toast.success('Account activated! Please login.');
             navigate('/signin');

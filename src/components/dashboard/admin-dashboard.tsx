@@ -138,13 +138,13 @@ export function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState<
     (typeof mockUsers)[0] | null
   >(null);
-
   const filteredUsers = mockUsers.filter((user) => {
     const matchesSearch =
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
+      (user.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === 'all' || user.status.toLowerCase() === statusFilter;
+      statusFilter === 'all' ||
+      (user.status?.toLowerCase() || '') === statusFilter;
     return matchesSearch && matchesStatus;
   });
 

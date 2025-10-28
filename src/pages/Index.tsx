@@ -51,10 +51,10 @@ const Index = () => {
       <Header />
 
       {/* Hero Section */}
-      <section className="py- bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
+      <section className="  py- bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
         <div className="container  flex flex-col-reverse md:flex-row items-center gap-12 min-h-[70vh]">
           {/* Left: Text */}
-          <div className="flex-1 text-center md:text-left">
+          <div className="mt-28 sm:mt-0 flex-1 text-center md:text-left ">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 text-primary">
               TechAI Program
             </h1>
@@ -62,7 +62,7 @@ const Index = () => {
               Empowering youth with comprehensive training, mentoring, and
               real-world exposure in data and tech careers
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start items-center md:items-start">
+            <div className="flex flex-col mt-20 sm:mt-0 sm:flex-row gap-4 justify-center md:justify-start items-center md:items-start">
               <Button variant="hero" size="xl" asChild>
                 <a href="/apply">Join Our Program</a>
               </Button>
@@ -77,7 +77,7 @@ const Index = () => {
           </div>
           {/* Right: Image */}
           {/* Right: Image with blob background */}
-          <div className="relative flex-2 flex justify-center items-center">
+          <div className="relative flex-2 hidden  md:flex justify-center items-center">
             {/* Blob Background */}
             <motion.div
               initial={{ opacity: 0, x: 100 }}
@@ -175,8 +175,9 @@ const Index = () => {
                 className="flex flex-row items-center gap-4  p-6"
               >
                 {/* Icon circle */}
+                <div className=""></div>
                 <div
-                  className={`w-16 h-16 flex items-center justify-center rounded-full ${stat.color}`}
+                  className={`w-16 hidden  h-16 md:flex items-center justify-center rounded-full ${stat.color}`}
                 >
                   <stat.icon className="w-8 h-8 text-white" />
                 </div>
@@ -223,7 +224,7 @@ const Index = () => {
           {/* Right: Illustration/Image */}
           <div className="flex-1 flex justify-center">
             <img
-              src="https://img.freepik.com/free-vector/ai-technology-brain-background-digital-transformation-concept_53876-124661.jpg?w=700"
+              src="study-group-african-people.jpg"
               alt="TechAI Mission"
               className="rounded-xl shadow-lg w-full max-w-md object-cover"
               loading="lazy"
@@ -391,7 +392,7 @@ const Index = () => {
             <div>
               <h3 className="font-bold mb-4 text-accent">Contact</h3>
               <div className="space-y-2 text-muted-foreground">
-                <p>Email: infotechai@gmail.com</p>
+                <p>Email: info@zanarianalytics.com</p>
                 <p>Phone: +254 746 854 108</p>
                 <p>Address: Nairobi, Kenya</p>
               </div>

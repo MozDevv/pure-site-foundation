@@ -156,9 +156,11 @@ function UserManagement() {
   const filteredUsers =
     usersData?.data?.filter((user) => {
       const matchesSearch =
-        user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        `${user.firstName} ${user.lastName}`
+        (user?.username?.toLowerCase() || '').includes(
+          searchTerm.toLowerCase()
+        ) ||
+        (user?.email.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+        `${user?.firstName} ${user?.lastName}`
           .toLowerCase()
           .includes(searchTerm.toLowerCase());
 

@@ -35,11 +35,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -138,18 +148,21 @@ export default function CoursesManagement() {
   // Fetch courses
   const { data: coursesData, isLoading: coursesLoading } = useQuery({
     queryKey: ['courses'],
-    queryFn: () => apiService.get(endpoints.getAllCourses).then((res) => res.data),
+    queryFn: () =>
+      apiService.get(endpoints.getAllCourses).then((res) => res.data),
   });
 
   // Fetch all users for student and tutor selection
   const { data: usersData } = useQuery({
     queryKey: ['users'],
-    queryFn: () => apiService.get(endpoints.getAllUsers).then((res) => res.data),
+    queryFn: () =>
+      apiService.get(endpoints.getAllUsers).then((res) => res.data),
   });
 
   // Create course mutation
   const createCourseMutation = useMutation({
-    mutationFn: (courseData: any) => apiService.post(endpoints.createCourse, courseData),
+    mutationFn: (courseData: any) =>
+      apiService.post(endpoints.createCourse, courseData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast({ title: 'Course created successfully', variant: 'default' });
@@ -164,7 +177,7 @@ export default function CoursesManagement() {
   // Update course mutation
   const updateCourseMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
-      apiService.put(endpoints.updateCourse(id), data),
+      apiService.post(endpoints.updateCourse, { id, ...data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast({ title: 'Course updated successfully', variant: 'default' });
@@ -178,7 +191,8 @@ export default function CoursesManagement() {
 
   // Delete course mutation
   const deleteCourseMutation = useMutation({
-    mutationFn: (courseId: string) => apiService.delete(endpoints.deleteCourse(courseId)),
+    mutationFn: (courseId: string) =>
+      apiService.delete(endpoints.deleteCourse(courseId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast({ title: 'Course deleted successfully', variant: 'default' });
@@ -188,10 +202,10 @@ export default function CoursesManagement() {
     },
   });
 
-  const courses: Course[] = coursesData?.data || [];
+  const courses: Course[] = coursesData || [];
   const users: User[] = usersData?.data || [];
-  const students = users.filter((u) => u.role === 'STUDENT');
-  const tutors = users.filter((u) => u.role === 'TUTOR');
+  const students = users.filter((u) => u.role === 'Student');
+  const tutors = users.filter((u) => u.role === 'Tutor');
 
   // Filter courses
   const filteredCourses = courses.filter((course) => {
@@ -199,7 +213,8 @@ export default function CoursesManagement() {
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.category.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;
+    const matchesCategory =
+      categoryFilter === 'all' || course.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
@@ -220,7 +235,10 @@ export default function CoursesManagement() {
 
   const handleCreateCourse = () => {
     if (!formData.title || !formData.code || !formData.category) {
-      toast({ title: 'Please fill in all required fields', variant: 'destructive' });
+      toast({
+        title: 'Please fill in all required fields',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -233,7 +251,7 @@ export default function CoursesManagement() {
     createCourseMutation.mutate(courseData);
   };
 
-  const handleUpdateCourse = () => {
+  const handleUpdateCourse = async () => {
     if (!selectedCourse) return;
 
     const courseData = {
@@ -242,12 +260,26 @@ export default function CoursesManagement() {
       endDate: formData.endDate?.toISOString(),
     };
 
-    updateCourseMutation.mutate({ id: selectedCourse.id, data: courseData });
+    try {
+      const res = await apiService.post(endpoints.updateCourse, {
+        id: selectedCourse.id,
+        ...courseData,
+      });
+      if (res.status === 200) {
+        toast({ title: 'Course updated successfully', variant: 'default' });
+      }
+    } catch (error) {
+      console.log('Error updating course:', error);
+      toast({ title: 'Failed to update course', variant: 'destructive' });
+    }
+
+    // updateCourseMutation.mutate({ id: selectedCourse.id, data: courseData });
   };
 
   const handleEditClick = (course: Course) => {
     setSelectedCourse(course);
     setFormData({
+      id: course.id,
       code: course.code,
       title: course.title,
       shortDescription: course.shortDescription,
@@ -298,10 +330,18 @@ export default function CoursesManagement() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Courses Management</h1>
-          <p className="text-muted-foreground mt-1">Manage and organize all courses</p>
+          <h1 className="text-3xl font-bold text-foreground">
+            Courses Management
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Manage and organize all courses
+          </p>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)} size="lg" variant="hero">
+        <Button
+          onClick={() => setIsCreateDialogOpen(true)}
+          size="lg"
+          variant="hero"
+        >
           <Plus className="mr-2 h-5 w-5" />
           Add Course
         </Button>
@@ -327,7 +367,10 @@ export default function CoursesManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {courses.filter((c) => new Date(c.startDate) <= new Date()).length}
+              {
+                courses.filter((c) => new Date(c.startDate) <= new Date())
+                  .length
+              }
             </div>
           </CardContent>
         </Card>
@@ -354,46 +397,14 @@ export default function CoursesManagement() {
       </div>
 
       {/* Search and Filter */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Search & Filter</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search by title, code, or category..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex gap-2 items-center">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Filter by category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Courses Table */}
       <Card>
         <CardHeader>
           <CardTitle>All Courses ({filteredCourses.length})</CardTitle>
-          <CardDescription>View and manage all courses in the system</CardDescription>
+          <CardDescription>
+            View and manage all courses in the system
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {coursesLoading ? (
@@ -421,8 +432,12 @@ export default function CoursesManagement() {
                 <TableBody>
                   {filteredCourses.map((course) => (
                     <TableRow key={course.id}>
-                      <TableCell className="font-mono font-medium">{course.code}</TableCell>
-                      <TableCell className="font-medium">{course.title}</TableCell>
+                      <TableCell className="font-mono font-medium">
+                        {course.code}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {course.title}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="secondary">{course.category}</Badge>
                       </TableCell>
@@ -529,7 +544,9 @@ export default function CoursesManagement() {
                   <Input
                     id="code"
                     value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, code: e.target.value })
+                    }
                     placeholder="e.g., CS101"
                   />
                 </div>
@@ -539,7 +556,9 @@ export default function CoursesManagement() {
                   </Label>
                   <Select
                     value={formData.category}
-                    onValueChange={(value) => setFormData({ ...formData, category: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, category: value })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select category" />
@@ -562,7 +581,9 @@ export default function CoursesManagement() {
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   placeholder="e.g., Introduction to Web Development"
                 />
               </div>
@@ -573,7 +594,10 @@ export default function CoursesManagement() {
                   id="shortDescription"
                   value={formData.shortDescription}
                   onChange={(e) =>
-                    setFormData({ ...formData, shortDescription: e.target.value })
+                    setFormData({
+                      ...formData,
+                      shortDescription: e.target.value,
+                    })
                   }
                   placeholder="Brief overview of the course"
                 />
@@ -584,7 +608,9 @@ export default function CoursesManagement() {
                 <Textarea
                   id="description"
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   placeholder="Detailed course description, objectives, and requirements"
                   rows={4}
                 />
@@ -597,7 +623,10 @@ export default function CoursesManagement() {
                   type="number"
                   value={formData.priceCents / 100}
                   onChange={(e) =>
-                    setFormData({ ...formData, priceCents: Number(e.target.value) * 100 })
+                    setFormData({
+                      ...formData,
+                      priceCents: Number(e.target.value) * 100,
+                    })
                   }
                   placeholder="0.00"
                   step="0.01"
@@ -632,7 +661,9 @@ export default function CoursesManagement() {
                       <Calendar
                         mode="single"
                         selected={formData.startDate}
-                        onSelect={(date) => setFormData({ ...formData, startDate: date })}
+                        onSelect={(date) =>
+                          setFormData({ ...formData, startDate: date })
+                        }
                         initialFocus
                         className="pointer-events-auto"
                       />
@@ -663,7 +694,9 @@ export default function CoursesManagement() {
                       <Calendar
                         mode="single"
                         selected={formData.endDate}
-                        onSelect={(date) => setFormData({ ...formData, endDate: date })}
+                        onSelect={(date) =>
+                          setFormData({ ...formData, endDate: date })
+                        }
                         initialFocus
                         className="pointer-events-auto"
                       />
@@ -681,20 +714,28 @@ export default function CoursesManagement() {
                   <ScrollArea className="h-[200px]">
                     <div className="space-y-2">
                       {students.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No students available</p>
+                        <p className="text-sm text-muted-foreground">
+                          No students available
+                        </p>
                       ) : (
                         students.map((student) => (
-                          <div key={student.id} className="flex items-center space-x-2">
+                          <div
+                            key={student.id}
+                            className="flex items-center space-x-2"
+                          >
                             <Checkbox
                               id={`student-${student.id}`}
-                              checked={formData.enrolledStudentIds.includes(student.id)}
+                              checked={formData.enrolledStudentIds.includes(
+                                student.id
+                              )}
                               onCheckedChange={() => toggleStudent(student.id)}
                             />
                             <label
                               htmlFor={`student-${student.id}`}
                               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                             >
-                              {student.firstName} {student.lastName} ({student.email})
+                              {student.firstName} {student.lastName} (
+                              {student.email})
                             </label>
                           </div>
                         ))
@@ -716,10 +757,15 @@ export default function CoursesManagement() {
                   <ScrollArea className="h-[200px]">
                     <div className="space-y-2">
                       {tutors.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">No tutors available</p>
+                        <p className="text-sm text-muted-foreground">
+                          No tutors available
+                        </p>
                       ) : (
                         tutors.map((tutor) => (
-                          <div key={tutor.id} className="flex items-center space-x-2">
+                          <div
+                            key={tutor.id}
+                            className="flex items-center space-x-2"
+                          >
                             <Checkbox
                               id={`tutor-${tutor.id}`}
                               checked={formData.tutorIds.includes(tutor.id)}
@@ -766,7 +812,9 @@ export default function CoursesManagement() {
         <SheetContent className="w-[600px] sm:w-[700px] overflow-y-auto">
           <SheetHeader>
             <SheetTitle>{selectedCourse?.title}</SheetTitle>
-            <SheetDescription>Course Code: {selectedCourse?.code}</SheetDescription>
+            <SheetDescription>
+              Course Code: {selectedCourse?.code}
+            </SheetDescription>
           </SheetHeader>
 
           {selectedCourse && (
@@ -790,12 +838,18 @@ export default function CoursesManagement() {
                     </div>
                     <Separator />
                     <div>
-                      <Label className="text-muted-foreground">Short Description</Label>
-                      <p className="font-medium">{selectedCourse.shortDescription}</p>
+                      <Label className="text-muted-foreground">
+                        Short Description
+                      </Label>
+                      <p className="font-medium">
+                        {selectedCourse.shortDescription}
+                      </p>
                     </div>
                     <Separator />
                     <div>
-                      <Label className="text-muted-foreground">Full Description</Label>
+                      <Label className="text-muted-foreground">
+                        Full Description
+                      </Label>
                       <p className="text-sm">{selectedCourse.description}</p>
                     </div>
                     <Separator />
@@ -807,27 +861,42 @@ export default function CoursesManagement() {
                         </p>
                       </div>
                       <div>
-                        <Label className="text-muted-foreground">Created At</Label>
+                        <Label className="text-muted-foreground">
+                          Created At
+                        </Label>
                         <p className="font-medium">
-                          {format(new Date(selectedCourse.createdAt), 'MMM dd, yyyy')}
+                          {format(
+                            new Date(selectedCourse.createdAt),
+                            'MMM dd, yyyy'
+                          )}
                         </p>
                       </div>
                     </div>
                     <Separator />
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label className="text-muted-foreground">Start Date</Label>
+                        <Label className="text-muted-foreground">
+                          Start Date
+                        </Label>
                         <p className="font-medium">
                           {selectedCourse.startDate
-                            ? format(new Date(selectedCourse.startDate), 'MMM dd, yyyy')
+                            ? format(
+                                new Date(selectedCourse.startDate),
+                                'MMM dd, yyyy'
+                              )
                             : 'Not set'}
                         </p>
                       </div>
                       <div>
-                        <Label className="text-muted-foreground">End Date</Label>
+                        <Label className="text-muted-foreground">
+                          End Date
+                        </Label>
                         <p className="font-medium">
                           {selectedCourse.endDate
-                            ? format(new Date(selectedCourse.endDate), 'MMM dd, yyyy')
+                            ? format(
+                                new Date(selectedCourse.endDate),
+                                'MMM dd, yyyy'
+                              )
                             : 'Not set'}
                         </p>
                       </div>
@@ -839,7 +908,10 @@ export default function CoursesManagement() {
               <TabsContent value="students" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Enrolled Students ({selectedCourse.enrolledStudentIds?.length || 0})</CardTitle>
+                    <CardTitle>
+                      Enrolled Students (
+                      {selectedCourse.enrolledStudentIds?.length || 0})
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {selectedCourse.enrolledStudentIds?.length === 0 ? (
@@ -859,7 +931,9 @@ export default function CoursesManagement() {
                                 <p className="font-medium">
                                   {student.firstName} {student.lastName}
                                 </p>
-                                <p className="text-sm text-muted-foreground">{student.email}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {student.email}
+                                </p>
                               </div>
                               <Badge variant="secondary">{student.role}</Badge>
                             </div>
@@ -874,11 +948,15 @@ export default function CoursesManagement() {
               <TabsContent value="tutors" className="space-y-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Assigned Tutors ({selectedCourse.tutorIds?.length || 0})</CardTitle>
+                    <CardTitle>
+                      Assigned Tutors ({selectedCourse.tutorIds?.length || 0})
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     {selectedCourse.tutorIds?.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No tutors assigned yet</p>
+                      <p className="text-sm text-muted-foreground">
+                        No tutors assigned yet
+                      </p>
                     ) : (
                       <div className="space-y-3">
                         {selectedCourse.tutorIds?.map((tutorId) => {
@@ -892,7 +970,9 @@ export default function CoursesManagement() {
                                 <p className="font-medium">
                                   {tutor.firstName} {tutor.lastName}
                                 </p>
-                                <p className="text-sm text-muted-foreground">{tutor.email}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {tutor.email}
+                                </p>
                               </div>
                               <Badge variant="secondary">{tutor.role}</Badge>
                             </div>
@@ -922,7 +1002,9 @@ export default function CoursesManagement() {
                 {/* Placeholder for future features */}
                 <Card className="border-dashed">
                   <CardHeader>
-                    <CardTitle className="text-muted-foreground">Future Features</CardTitle>
+                    <CardTitle className="text-muted-foreground">
+                      Future Features
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center gap-2">

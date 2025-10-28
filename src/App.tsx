@@ -42,10 +42,13 @@ const App = () => (
           <Route path="/admin" element={<AdminDashboardPage />} />
           <Route path="/admin/timetable" element={<TimetablePage />} />
           <Route path="/admin/*" element={<AdminDashboardPage />} />
-          <Route path="/admin/courses" element={<CoursesManagement />} />
+          <Route
+            path="/admin/courses"
+            element={<AdminDashboardPage menu="coursesManagement" />}
+          />
           <Route
             path="/admin/users"
-            element={<AdminDashboardPage userManagement={true} />}
+            element={<AdminDashboardPage menu="userManagement" />}
           />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

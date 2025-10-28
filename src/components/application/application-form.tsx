@@ -31,10 +31,11 @@ import {
 } from '@/components/ui/form';
 import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
-import { apiService, endpoints } from '@/lib/api';
+import { API_BASE_URL, apiService, endpoints } from '@/lib/api';
 import { CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ApplicationSuccess } from './application-success';
+import axios from 'axios';
 
 const applicationSchema = z.object({
   // Personal Information
@@ -131,7 +132,10 @@ export function ApplicationForm() {
       // Simulate API call delay
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      const res = await apiService.post(endpoints.createProfile, profileData);
+      const res = await axios.post(
+        `${API_BASE_URL}${endpoints.createProfile}`,
+        profileData
+      );
       if (res.status === 201 || res.status === 200) {
         setSubmittedData(data);
         setIsSubmitted(true);
@@ -210,6 +214,7 @@ export function ApplicationForm() {
         firstName: data.firstName,
         lastName: data.lastName,
         // username: data.username,
+        role: 'Student',
         phoneNumber: data.phoneNumber,
         age: data.age,
         location: data.location,
@@ -217,7 +222,10 @@ export function ApplicationForm() {
         // profilePicture: data.profilePicture,
       };
 
-      const res = await apiService.post(endpoints.register, applicationData);
+      const res = await axios.post(
+        `${API_BASE_URL}${endpoints.register}`,
+        applicationData
+      );
       if (res.status === 200) {
         localStorage.setItem('userId', res.data.id);
         toast({
