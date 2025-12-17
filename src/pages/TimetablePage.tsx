@@ -5,6 +5,7 @@ import { TutorSidebar } from '@/components/layout/tutor-sidebar';
 import { AdminSidebar } from '@/components/layout/admin-sidebar';
 import { Header } from '@/components/layout/header';
 import { WeeklyTimetable } from '@/components/timetable/weekly-timetable';
+import Meetings from './Meetings';
 
 const mockUsers = {
   student: {
@@ -61,7 +62,7 @@ export default function TimetablePage() {
             <h2 className="text-lg font-semibold">Timetable</h2>
           </div>
           <main className="flex-1 p-6">
-            <WeeklyTimetable />
+            <Meetings />
           </main>
         </div>
       </div>

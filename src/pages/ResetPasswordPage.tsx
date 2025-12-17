@@ -4,7 +4,13 @@ import { apiService, endpoints } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 import { Eye, EyeOff, CheckCircle2, XCircle, Lock, Mail } from 'lucide-react';
@@ -27,10 +33,19 @@ const ResetPasswordPage = () => {
   // Password strength validation
   const passwordRules = [
     { label: 'At least 8 characters', test: (pwd: string) => pwd.length >= 8 },
-    { label: 'Contains uppercase letter', test: (pwd: string) => /[A-Z]/.test(pwd) },
-    { label: 'Contains lowercase letter', test: (pwd: string) => /[a-z]/.test(pwd) },
+    {
+      label: 'Contains uppercase letter',
+      test: (pwd: string) => /[A-Z]/.test(pwd),
+    },
+    {
+      label: 'Contains lowercase letter',
+      test: (pwd: string) => /[a-z]/.test(pwd),
+    },
     { label: 'Contains number', test: (pwd: string) => /\d/.test(pwd) },
-    { label: 'Contains special character', test: (pwd: string) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd) },
+    {
+      label: 'Contains special character',
+      test: (pwd: string) => /[!@#$%^&*(),.?":{}|<>]/.test(pwd),
+    },
   ];
 
   // OTP countdown timer
@@ -50,14 +65,12 @@ const ResetPasswordPage = () => {
       newErrors.otp = 'OTP must be 6 digits';
     }
 
-    if (!oldPassword) {
-      newErrors.oldPassword = 'Current password is required';
-    }
-
     if (!newPassword) {
       newErrors.newPassword = 'New password is required';
     } else {
-      const failedRules = passwordRules.filter(rule => !rule.test(newPassword));
+      const failedRules = passwordRules.filter(
+        (rule) => !rule.test(newPassword)
+      );
       if (failedRules.length > 0) {
         newErrors.newPassword = 'Password does not meet strength requirements';
       }
@@ -68,7 +81,8 @@ const ResetPasswordPage = () => {
     }
 
     if (oldPassword === newPassword) {
-      newErrors.newPassword = 'New password must be different from current password';
+      newErrors.newPassword =
+        'New password must be different from current password';
     }
 
     setErrors(newErrors);
@@ -109,13 +123,13 @@ const ResetPasswordPage = () => {
       setIsLoading(true);
       await apiService.post(endpoints.changePassword(userId), {
         otp,
-        oldPassword,
         newPassword,
       });
       toast.success('Password changed successfully!');
       setTimeout(() => navigate('/signin'), 2000);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to change password';
+      const errorMessage =
+        error.response?.data?.message || 'Failed to change password';
       toast.error(errorMessage);
       if (errorMessage.toLowerCase().includes('otp')) {
         setErrors({ ...errors, otp: errorMessage });
@@ -156,7 +170,9 @@ const ResetPasswordPage = () => {
                     placeholder="Enter 6-digit OTP"
                     value={otp}
                     onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      const value = e.target.value
+                        .replace(/\D/g, '')
+                        .slice(0, 6);
                       setOtp(value);
                       if (errors.otp) setErrors({ ...errors, otp: '' });
                     }}
@@ -164,7 +180,9 @@ const ResetPasswordPage = () => {
                     className={errors.otp ? 'border-destructive' : ''}
                   />
                   {errors.otp && (
-                    <p className="text-sm text-destructive mt-1">{errors.otp}</p>
+                    <p className="text-sm text-destructive mt-1">
+                      {errors.otp}
+                    </p>
                   )}
                 </div>
                 <Button
@@ -188,33 +206,6 @@ const ResetPasswordPage = () => {
 
             {/* Current Password */}
             <div className="space-y-2">
-              <Label htmlFor="oldPassword">Current Password</Label>
-              <div className="relative">
-                <Input
-                  id="oldPassword"
-                  type={showOldPassword ? 'text' : 'password'}
-                  value={oldPassword}
-                  onChange={(e) => {
-                    setOldPassword(e.target.value);
-                    if (errors.oldPassword) setErrors({ ...errors, oldPassword: '' });
-                  }}
-                  className={errors.oldPassword ? 'border-destructive pr-10' : 'pr-10'}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowOldPassword(!showOldPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                >
-                  {showOldPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              {errors.oldPassword && (
-                <p className="text-sm text-destructive">{errors.oldPassword}</p>
-              )}
-            </div>
-
-            {/* New Password */}
-            <div className="space-y-2">
               <Label htmlFor="newPassword">New Password</Label>
               <div className="relative">
                 <Input
@@ -223,16 +214,23 @@ const ResetPasswordPage = () => {
                   value={newPassword}
                   onChange={(e) => {
                     setNewPassword(e.target.value);
-                    if (errors.newPassword) setErrors({ ...errors, newPassword: '' });
+                    if (errors.newPassword)
+                      setErrors({ ...errors, newPassword: '' });
                   }}
-                  className={errors.newPassword ? 'border-destructive pr-10' : 'pr-10'}
+                  className={
+                    errors.newPassword ? 'border-destructive pr-10' : 'pr-10'
+                  }
                 />
                 <button
                   type="button"
                   onClick={() => setShowNewPassword(!showNewPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showNewPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               {errors.newPassword && (
@@ -245,13 +243,20 @@ const ResetPasswordPage = () => {
                   {passwordRules.map((rule, index) => {
                     const passed = rule.test(newPassword);
                     return (
-                      <div key={index} className="flex items-center gap-2 text-sm">
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 text-sm"
+                      >
                         {passed ? (
                           <CheckCircle2 className="w-4 h-4 text-green-600" />
                         ) : (
                           <XCircle className="w-4 h-4 text-muted-foreground" />
                         )}
-                        <span className={passed ? 'text-green-600' : 'text-muted-foreground'}>
+                        <span
+                          className={
+                            passed ? 'text-green-600' : 'text-muted-foreground'
+                          }
+                        >
                           {rule.label}
                         </span>
                       </div>
@@ -271,28 +276,39 @@ const ResetPasswordPage = () => {
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
-                    if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' });
+                    if (errors.confirmPassword)
+                      setErrors({ ...errors, confirmPassword: '' });
                   }}
-                  className={errors.confirmPassword ? 'border-destructive pr-10' : 'pr-10'}
+                  className={
+                    errors.confirmPassword
+                      ? 'border-destructive pr-10'
+                      : 'pr-10'
+                  }
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
-                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showConfirmPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
               {errors.confirmPassword && (
-                <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                <p className="text-sm text-destructive">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
 
             {/* Info Alert */}
             <Alert>
               <AlertDescription className="text-sm">
-                For your security, you'll be signed out after changing your password.
-                Please sign in again with your new credentials.
+                For your security, you'll be signed out after changing your
+                password. Please sign in again with your new credentials.
               </AlertDescription>
             </Alert>
 

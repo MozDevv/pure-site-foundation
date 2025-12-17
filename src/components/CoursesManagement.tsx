@@ -70,6 +70,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { CourseCreationStepper } from './course-creation-stepper';
+import ProjectMembers from './ProjectMembers';
 
 // Types
 interface Course {
@@ -296,7 +297,7 @@ export default function CoursesManagement() {
 
   const handleViewClick = (course: Course) => {
     setSelectedCourse(course);
-    setIsViewDrawerOpen(true);
+    // setIsViewDrawerOpen(true);
   };
 
   const handleDeleteClick = (courseId: string) => {
@@ -325,497 +326,545 @@ export default function CoursesManagement() {
 
   const getUserById = (userId: string) => users.find((u) => u.id === userId);
 
+  const handleRefreshSelectedCourse = async () => {
+    if (!selectedCourse) return;
+    try {
+      const res = await apiService.get(endpoints.getAllCourses);
+      if (res.status === 200) {
+        const updatedCourse = res.data.find(
+          (c: Course) => c.id === selectedCourse.id
+        );
+        setSelectedCourse(updatedCourse);
+      }
+    } catch (error) {
+      console.log('Error refreshing course:', error);
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Courses Management
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Manage and organize all courses
-          </p>
-        </div>
-        <Button
-          onClick={() => setIsCreateDialogOpen(true)}
-          size="lg"
-          variant="hero"
-        >
-          <Plus className="mr-2 h-5 w-5" />
-          Add Course
-        </Button>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Courses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{courses.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Courses
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {
-                courses.filter((c) => new Date(c.startDate) <= new Date())
-                  .length
-              }
+    <div className="">
+      {!selectedCourse ? (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">
+                Courses Management
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                Manage and organize all courses
+              </p>
             </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Students
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{students.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Tutors
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{tutors.length}</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search and Filter */}
-
-      {/* Courses Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Courses ({filteredCourses.length})</CardTitle>
-          <CardDescription>
-            View and manage all courses in the system
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {coursesLoading ? (
-            <div className="text-center py-8">Loading courses...</div>
-          ) : filteredCourses.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              No courses found. Create one to get started!
-            </div>
-          ) : (
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>End Date</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Tutors</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredCourses.map((course) => (
-                    <TableRow key={course.id}>
-                      <TableCell className="font-mono font-medium">
-                        {course.code}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {course.title}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="secondary">{course.category}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <DollarSign className="h-3 w-3" />
-                          {(course.priceCents / 100).toFixed(2)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {course.startDate
-                          ? format(new Date(course.startDate), 'MMM dd, yyyy')
-                          : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        {course.endDate
-                          ? format(new Date(course.endDate), 'MMM dd, yyyy')
-                          : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Users className="h-3 w-3" />
-                          {course.enrolledStudentIds?.length || 0}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-1">
-                          <GraduationCap className="h-3 w-3" />
-                          {course.tutorIds?.length || 0}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleViewClick(course)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditClick(course)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteClick(course.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Create Course Stepper */}
-      <CourseCreationStepper
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        formData={formData}
-        setFormData={setFormData}
-        students={students}
-        tutors={tutors}
-        categories={categories}
-        onSubmit={handleCreateCourse}
-        onReset={resetForm}
-      />
-
-      {/* Edit Dialog */}
-      <Dialog
-        open={isEditDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsEditDialogOpen(false);
-            resetForm();
-          }
-        }}
-      >
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Edit Course</DialogTitle>
-            <DialogDescription>Update the course information</DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-6 py-4">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Basic Information</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="code">
-                    Course Code <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="code"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value })
-                    }
-                    placeholder="e.g., CS101"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">
-                    Category <span className="text-destructive">*</span>
-                  </Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, category: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="title">
-                  Course Title <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  placeholder="e.g., Introduction to Web Development"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="shortDescription">Short Description</Label>
-                <Input
-                  id="shortDescription"
-                  value={formData.shortDescription}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      shortDescription: e.target.value,
-                    })
-                  }
-                  placeholder="Brief overview of the course"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Full Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Detailed course description, objectives, and requirements"
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="price">Price (in dollars)</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  value={formData.priceCents / 100}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      priceCents: Number(e.target.value) * 100,
-                    })
-                  }
-                  placeholder="0.00"
-                  step="0.01"
-                />
-              </div>
-            </div>
-
-            {/* Dates */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Schedule</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Start Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          'w-full justify-start text-left font-normal',
-                          !formData.startDate && 'text-muted-foreground'
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.startDate ? (
-                          format(formData.startDate, 'PPP')
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.startDate}
-                        onSelect={(date) =>
-                          setFormData({ ...formData, startDate: date })
-                        }
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>End Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          'w-full justify-start text-left font-normal',
-                          !formData.endDate && 'text-muted-foreground'
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.endDate ? (
-                          format(formData.endDate, 'PPP')
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.endDate}
-                        onSelect={(date) =>
-                          setFormData({ ...formData, endDate: date })
-                        }
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            </div>
-
-            {/* Enrolled Students */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Enrolled Students</h3>
-              <Card>
-                <CardContent className="pt-4">
-                  <ScrollArea className="h-[200px]">
-                    <div className="space-y-2">
-                      {students.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          No students available
-                        </p>
-                      ) : (
-                        students.map((student) => (
-                          <div
-                            key={student.id}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={`student-${student.id}`}
-                              checked={formData.enrolledStudentIds.includes(
-                                student.id
-                              )}
-                              onCheckedChange={() => toggleStudent(student.id)}
-                            />
-                            <label
-                              htmlFor={`student-${student.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                            >
-                              {student.firstName} {student.lastName} (
-                              {student.email})
-                            </label>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </ScrollArea>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {formData.enrolledStudentIds.length} student(s) selected
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Tutors */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Assign Tutors</h3>
-              <Card>
-                <CardContent className="pt-4">
-                  <ScrollArea className="h-[200px]">
-                    <div className="space-y-2">
-                      {tutors.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          No tutors available
-                        </p>
-                      ) : (
-                        tutors.map((tutor) => (
-                          <div
-                            key={tutor.id}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={`tutor-${tutor.id}`}
-                              checked={formData.tutorIds.includes(tutor.id)}
-                              onCheckedChange={() => toggleTutor(tutor.id)}
-                            />
-                            <label
-                              htmlFor={`tutor-${tutor.id}`}
-                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                            >
-                              {tutor.firstName} {tutor.lastName} ({tutor.email})
-                            </label>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </ScrollArea>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {formData.tutorIds.length} tutor(s) selected
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
+            <Button
+              onClick={() => setIsCreateDialogOpen(true)}
+              size="lg"
+              variant="hero"
+            >
+              <Plus className="mr-2 h-5 w-5" />
+              Add Course
+            </Button>
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Courses
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{courses.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Active Courses
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {
+                    courses.filter((c) => new Date(c.startDate) <= new Date())
+                      .length
+                  }
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Students
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{students.length}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Tutors
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{tutors.length}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Search and Filter */}
+
+          {/* Courses Table */}
+          <Card>
+            <CardHeader>
+              <CardTitle>All Courses ({filteredCourses.length})</CardTitle>
+              <CardDescription>
+                View and manage all courses in the system
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {coursesLoading ? (
+                <div className="text-center py-8">Loading courses...</div>
+              ) : filteredCourses.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  No courses found. Create one to get started!
+                </div>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Code</TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Price</TableHead>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>End Date</TableHead>
+                        <TableHead>Students</TableHead>
+                        <TableHead>Tutors</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCourses.map((course) => (
+                        <TableRow key={course.id}>
+                          <TableCell className="font-mono font-medium">
+                            {course.code}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {course.title}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">{course.category}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <DollarSign className="h-3 w-3" />
+                              {(course.priceCents / 100).toFixed(2)}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {course.startDate
+                              ? format(
+                                  new Date(course.startDate),
+                                  'MMM dd, yyyy'
+                                )
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            {course.endDate
+                              ? format(new Date(course.endDate), 'MMM dd, yyyy')
+                              : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {course.enrolledStudentIds?.length || 0}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <GraduationCap className="h-3 w-3" />
+                              {course.tutorIds?.length || 0}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleViewClick(course)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditClick(course)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteClick(course.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Create Course Stepper */}
+          <CourseCreationStepper
+            open={isCreateDialogOpen}
+            onOpenChange={setIsCreateDialogOpen}
+            formData={formData}
+            setFormData={setFormData}
+            students={students}
+            tutors={tutors}
+            categories={categories}
+            onSubmit={handleCreateCourse}
+            onReset={resetForm}
+          />
+
+          {/* Edit Dialog */}
+          <Dialog
+            open={isEditDialogOpen}
+            onOpenChange={(open) => {
+              if (!open) {
                 setIsEditDialogOpen(false);
                 resetForm();
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleUpdateCourse} variant="hero">
-              Save Changes
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              }
+            }}
+          >
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Edit Course</DialogTitle>
+                <DialogDescription>
+                  Update the course information
+                </DialogDescription>
+              </DialogHeader>
 
-      {/* View Course Drawer */}
-      <Sheet open={isViewDrawerOpen} onOpenChange={setIsViewDrawerOpen}>
-        <SheetContent className="w-[600px] sm:w-[700px] overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>{selectedCourse?.title}</SheetTitle>
-            <SheetDescription>
-              Course Code: {selectedCourse?.code}
-            </SheetDescription>
-          </SheetHeader>
+              <div className="space-y-6 py-4">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Basic Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="code">
+                        Course Code <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        id="code"
+                        value={formData.code}
+                        onChange={(e) =>
+                          setFormData({ ...formData, code: e.target.value })
+                        }
+                        placeholder="e.g., CS101"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="category">
+                        Category <span className="text-destructive">*</span>
+                      </Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, category: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>
+                              {cat}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="title">
+                      Course Title <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="title"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      placeholder="e.g., Introduction to Web Development"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="shortDescription">Short Description</Label>
+                    <Input
+                      id="shortDescription"
+                      value={formData.shortDescription}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          shortDescription: e.target.value,
+                        })
+                      }
+                      placeholder="Brief overview of the course"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Full Description</Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Detailed course description, objectives, and requirements"
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="price">Price (in dollars)</Label>
+                    <Input
+                      id="price"
+                      type="number"
+                      value={formData.priceCents / 100}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          priceCents: Number(e.target.value) * 100,
+                        })
+                      }
+                      placeholder="0.00"
+                      step="0.01"
+                    />
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Schedule</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Start Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              'w-full justify-start text-left font-normal',
+                              !formData.startDate && 'text-muted-foreground'
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.startDate ? (
+                              format(formData.startDate, 'PPP')
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={formData.startDate}
+                            onSelect={(date) =>
+                              setFormData({ ...formData, startDate: date })
+                            }
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>End Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              'w-full justify-start text-left font-normal',
+                              !formData.endDate && 'text-muted-foreground'
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {formData.endDate ? (
+                              format(formData.endDate, 'PPP')
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={formData.endDate}
+                            onSelect={(date) =>
+                              setFormData({ ...formData, endDate: date })
+                            }
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Enrolled Students */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Enrolled Students</h3>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <ScrollArea className="h-[200px]">
+                        <div className="space-y-2">
+                          {students.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              No students available
+                            </p>
+                          ) : (
+                            students.map((student) => (
+                              <div
+                                key={student.id}
+                                className="flex items-center space-x-2"
+                              >
+                                <Checkbox
+                                  id={`student-${student.id}`}
+                                  checked={formData.enrolledStudentIds.includes(
+                                    student.id
+                                  )}
+                                  onCheckedChange={() =>
+                                    toggleStudent(student.id)
+                                  }
+                                />
+                                <label
+                                  htmlFor={`student-${student.id}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                  {student.firstName} {student.lastName} (
+                                  {student.email})
+                                </label>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {formData.enrolledStudentIds.length} student(s) selected
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Tutors */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">Assign Tutors</h3>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <ScrollArea className="h-[200px]">
+                        <div className="space-y-2">
+                          {tutors.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                              No tutors available
+                            </p>
+                          ) : (
+                            tutors.map((tutor) => (
+                              <div
+                                key={tutor.id}
+                                className="flex items-center space-x-2"
+                              >
+                                <Checkbox
+                                  id={`tutor-${tutor.id}`}
+                                  checked={formData.tutorIds.includes(tutor.id)}
+                                  onCheckedChange={() => toggleTutor(tutor.id)}
+                                />
+                                <label
+                                  htmlFor={`tutor-${tutor.id}`}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                  {tutor.firstName} {tutor.lastName} (
+                                  {tutor.email})
+                                </label>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </ScrollArea>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {formData.tutorIds.length} tutor(s) selected
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditDialogOpen(false);
+                    resetForm();
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleUpdateCourse} variant="hero">
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* View Course Drawer */}
+        </div>
+      ) : (
+        <div className="w-full h-full overflow-y-auto">
+          <div className="flex items-center gap-3 mb-6">
+            <button
+              type="button"
+              className="p-2 rounded hover:bg-muted transition"
+              onClick={() => setSelectedCourse(null)}
+              aria-label="Back"
+            >
+              {/* You can use any icon library, here is a simple left arrow SVG */}
+              <svg width="20" height="20" fill="none" viewBox="0 0 20 20">
+                <path
+                  d="M13 16l-5-5 5-5"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+            <div>
+              <div className="text-2xl font-bold">{selectedCourse?.title}</div>
+              <div className="text-muted-foreground text-sm">
+                Course Code: {selectedCourse?.code}
+              </div>
+            </div>
+          </div>
 
           {selectedCourse && (
             <Tabs defaultValue="overview" className="mt-6">
@@ -914,33 +963,13 @@ export default function CoursesManagement() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {selectedCourse.enrolledStudentIds?.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        No students enrolled yet
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {selectedCourse.enrolledStudentIds?.map((studentId) => {
-                          const student = getUserById(studentId);
-                          return student ? (
-                            <div
-                              key={studentId}
-                              className="flex items-center justify-between p-3 border rounded-lg"
-                            >
-                              <div>
-                                <p className="font-medium">
-                                  {student.firstName} {student.lastName}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {student.email}
-                                </p>
-                              </div>
-                              <Badge variant="secondary">{student.role}</Badge>
-                            </div>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
+                    <ProjectMembers
+                      projectId={selectedCourse.id}
+                      users={users}
+                      members={selectedCourse.enrolledStudents}
+                      isStudents={true}
+                      refreshCourse={handleRefreshSelectedCourse}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -953,33 +982,15 @@ export default function CoursesManagement() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {selectedCourse.tutorIds?.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">
-                        No tutors assigned yet
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {selectedCourse.tutorIds?.map((tutorId) => {
-                          const tutor = getUserById(tutorId);
-                          return tutor ? (
-                            <div
-                              key={tutorId}
-                              className="flex items-center justify-between p-3 border rounded-lg"
-                            >
-                              <div>
-                                <p className="font-medium">
-                                  {tutor.firstName} {tutor.lastName}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {tutor.email}
-                                </p>
-                              </div>
-                              <Badge variant="secondary">{tutor.role}</Badge>
-                            </div>
-                          ) : null;
-                        })}
-                      </div>
-                    )}
+                    <CardContent>
+                      <ProjectMembers
+                        projectId={selectedCourse.id}
+                        users={users}
+                        members={selectedCourse.tutors}
+                        isStudents={false}
+                        refreshCourse={handleRefreshSelectedCourse}
+                      />
+                    </CardContent>
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -1024,8 +1035,8 @@ export default function CoursesManagement() {
               </TabsContent>
             </Tabs>
           )}
-        </SheetContent>
-      </Sheet>
+        </div>
+      )}
     </div>
   );
 }

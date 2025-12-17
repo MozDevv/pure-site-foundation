@@ -14,50 +14,59 @@ import NotFound from './pages/NotFound';
 import Activate from './components/Activate';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CoursesManagement from './components/CoursesManagement';
+import { ThemeProvider } from '@mui/system';
+import { CssBaseline } from '@mui/material';
+import theme from './lib/muiTheme';
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/signin" element={<SignInPage />} />
-          <Route path="/apply" element={<ApplicationPage />} />
-          <Route path="/activate/:userId" element={<Activate />} />
-          <Route path="/reset-password/:userId" element={<ResetPasswordPage />} />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/signin" element={<SignInPage />} />
+            <Route path="/apply" element={<ApplicationPage />} />
+            <Route path="/activate/:userId" element={<Activate />} />
+            <Route
+              path="/reset-password/:userId"
+              element={<ResetPasswordPage />}
+            />
 
-          {/* Student Routes */}
-          <Route path="/student" element={<StudentDashboardPage />} />
-          <Route path="/student/timetable" element={<TimetablePage />} />
-          <Route path="/student/*" element={<StudentDashboardPage />} />
+            {/* Student Routes */}
+            <Route path="/student" element={<StudentDashboardPage />} />
+            <Route path="/student/timetable" element={<TimetablePage />} />
+            <Route path="/student/*" element={<StudentDashboardPage />} />
 
-          {/* Tutor Routes */}
-          <Route path="/tutor" element={<TutorDashboardPage />} />
-          <Route path="/tutor/timetable" element={<TimetablePage />} />
-          <Route path="/tutor/*" element={<TutorDashboardPage />} />
+            {/* Tutor Routes */}
+            <Route path="/tutor" element={<TutorDashboardPage />} />
+            <Route path="/tutor/timetable" element={<TimetablePage />} />
+            <Route path="/tutor/*" element={<TutorDashboardPage />} />
 
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminDashboardPage />} />
-          <Route path="/admin/timetable" element={<TimetablePage />} />
-          <Route path="/admin/*" element={<AdminDashboardPage />} />
-          <Route
-            path="/admin/courses"
-            element={<AdminDashboardPage menu="coursesManagement" />}
-          />
-          <Route
-            path="/admin/users"
-            element={<AdminDashboardPage menu="userManagement" />}
-          />
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/timetable" element={<TimetablePage />} />
+            <Route path="/admin/*" element={<AdminDashboardPage />} />
+            <Route
+              path="/admin/courses"
+              element={<AdminDashboardPage menu="coursesManagement" />}
+            />
+            <Route
+              path="/admin/users"
+              element={<AdminDashboardPage menu="userManagement" />}
+            />
 
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

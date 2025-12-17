@@ -62,8 +62,8 @@ const applicationSchema = z.object({
   techInterests: z.string().optional(),
 
   // Motivation & Goals
-  motivation: z.string().min(50, 'Please provide at least 50 characters'),
-  careerGoals: z.string().min(50, 'Please provide at least 50 characters'),
+  motivation: z.string().optional(),
+  careerGoals: z.string().optional(),
   availableHours: z.string().min(1, 'Please select your available hours'),
 
   // Additional Information

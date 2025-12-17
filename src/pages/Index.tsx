@@ -392,8 +392,8 @@ const Index = () => {
             <div>
               <h3 className="font-bold mb-4 text-accent">Contact</h3>
               <div className="space-y-2 text-muted-foreground">
-                <p>Email: info@zanarianalytics.com</p>
-                <p>Phone: +254 746 854 108</p>
+                <p>Email: info@techaipath.com</p>
+                <p>Phone: +254 799 367 087</p>
                 <p>Address: Nairobi, Kenya</p>
               </div>
             </div>

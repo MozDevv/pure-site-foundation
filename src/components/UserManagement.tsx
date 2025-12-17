@@ -465,17 +465,29 @@ function UserManagement() {
                             Unlock
                           </Button>
                         )}
-                        {user.role === 'Student' &&
-                          user.status === 'REGISTERED_NOT_CONFIRMED' && (
-                            <Button
-                              size="sm"
-                              onClick={() => handleAction(user, 'approve')}
-                              className="gap-1 bg-green-500 hover:bg-green-600 text-white"
-                            >
-                              <CheckCircle className="h-3 w-3" />
-                              Approve
-                            </Button>
-                          )}
+                      {user.role === 'Student' && (
+  <>
+    {user.status === 'REGISTERED_NOT_CONFIRMED' ? (
+      <Button
+        size="sm"
+        onClick={() => handleAction(user, 'approve')}
+        className="gap-1 bg-green-500 hover:bg-green-600 text-white"
+      >
+        <CheckCircle className="h-3 w-3" />
+        Approve
+      </Button>
+    ) : user.status === 'EMAIL_NOT_CONFIRMED' ? (
+      <Button
+        size="sm"
+        onClick={() => handleAction(user, 'approve')}
+        className="gap-1 bg-green-500 hover:bg-green-600 text-white"
+      >
+        <CheckCircle className="h-3 w-3" />
+        Resend Activation Email
+      </Button>
+    ) : null}
+  </>
+)}
                       </div>
                     </TableCell>
                   </TableRow>
