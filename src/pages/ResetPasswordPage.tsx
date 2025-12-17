@@ -97,7 +97,7 @@ const ResetPasswordPage = () => {
 
     try {
       setIsLoading(true);
-      await apiService.post(endpoints.requestPasswordResetOtp(userId));
+      await apiService.post(endpoints.forgotPassword(userId));
       toast.success('OTP sent to your email');
       setOtpCountdown(120); // 2 minutes countdown
     } catch (error: any) {
