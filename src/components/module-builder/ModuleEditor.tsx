@@ -1,11 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, Clock, Link, Eye, Code, ExternalLink } from 'lucide-react';
-import { CourseModule, ModuleFile, getDepthLabel, formatDuration, generateId } from '@/lib/module-utils';
+import {
+  Save,
+  Plus,
+  Trash2,
+  Link,
+  Eye,
+  Code,
+  ExternalLink,
+} from 'lucide-react';
+import { CourseModule, ModuleFile, getDepthLabel } from '@/lib/module-utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileUpload } from './FileUpload';
@@ -20,6 +28,8 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
+import { CKEditor } from '@ckeditor/ckeditor5-react';
+import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 
 interface ModuleEditorProps {
   module: CourseModule;
@@ -33,6 +43,7 @@ interface ModuleEditorProps {
   onUploadFiles: (moduleId: string, files: File[]) => Promise<void>;
   onDeleteFile: (fileId: string) => void;
   isSaving: boolean;
+  viewMode?: 'edit' | 'view';
 }
 
 export function ModuleEditor({
@@ -47,6 +58,7 @@ export function ModuleEditor({
   onUploadFiles,
   onDeleteFile,
   isSaving,
+  viewMode = 'view',
 }: ModuleEditorProps) {
   const [formData, setFormData] = useState({
     title: module.title,
@@ -102,17 +114,32 @@ export function ModuleEditor({
   const renderMarkdown = (content: string) => {
     let html = content
       // Headers
-      .replace(/^### (.*$)/gim, '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>')
-      .replace(/^## (.*$)/gim, '<h2 class="text-xl font-semibold mt-6 mb-3">$1</h2>')
-      .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold mt-6 mb-4">$1</h1>')
+      .replace(
+        /^### (.*$)/gim,
+        '<h3 class="text-lg font-semibold mt-4 mb-2">$1</h3>'
+      )
+      .replace(
+        /^## (.*$)/gim,
+        '<h2 class="text-xl font-semibold mt-6 mb-3">$1</h2>'
+      )
+      .replace(
+        /^# (.*$)/gim,
+        '<h1 class="text-2xl font-bold mt-6 mb-4">$1</h1>'
+      )
       // Bold
       .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
       // Italic
       .replace(/\*(.*)\*/gim, '<em>$1</em>')
       // Code blocks
-      .replace(/```(\w+)?\n([\s\S]*?)```/gim, '<pre class="bg-muted p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm">$2</code></pre>')
+      .replace(
+        /```(\w+)?\n([\s\S]*?)```/gim,
+        '<pre class="bg-muted p-4 rounded-lg overflow-x-auto my-4"><code class="text-sm">$2</code></pre>'
+      )
       // Inline code
-      .replace(/`(.*?)`/gim, '<code class="bg-muted px-1.5 py-0.5 rounded text-sm">$1</code>')
+      .replace(
+        /`(.*?)`/gim,
+        '<code class="bg-muted px-1.5 py-0.5 rounded text-sm">$1</code>'
+      )
       // Lists
       .replace(/^\- (.*$)/gim, '<li class="ml-4">$1</li>')
       // Line breaks
@@ -121,13 +148,112 @@ export function ModuleEditor({
     return html;
   };
 
+  // --- VIEW MODE ---
+  if (viewMode === 'view') {
+    return (
+      <div className="flex flex-col h-full bg-background">
+        {/* Breadcrumbs */}
+        <div className="px-6 py-3 border-b bg-muted/30">
+          <div className="flex items-center gap-1 text-sm">
+            <button
+              onClick={() =>
+                breadcrumbs.length > 0 && onBreadcrumbClick(breadcrumbs[0])
+              }
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Course
+            </button>
+            {breadcrumbs.map((crumb, index) => (
+              <div key={crumb.id} className="flex items-center gap-1">
+                <span className="text-muted-foreground">/</span>
+                <button
+                  onClick={() => onBreadcrumbClick(crumb)}
+                  className={
+                    index === breadcrumbs.length - 1
+                      ? 'font-medium text-foreground'
+                      : 'text-muted-foreground hover:text-foreground transition-colors'
+                  }
+                >
+                  {crumb.title}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <ScrollArea className="flex-1">
+          <div className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+            {/* Title */}
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              {formData.title}
+            </h1>
+            {/* Description */}
+            {formData.description && (
+              <p className="text-lg text-muted-foreground mb-4">
+                {formData.description}
+              </p>
+            )}
+
+            {/* Video/Resource */}
+            {formData.contentUrl && (
+              <div className="rounded-lg border bg-muted/30 overflow-hidden mb-6">
+                <div className="aspect-video">
+                  <iframe
+                    src={formData.contentUrl}
+                    className="w-full h-full"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                    title="Module Video"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Content */}
+            <div
+              className="prose prose-lg max-w-none bg-white/80 rounded-xl p-6 border"
+              dangerouslySetInnerHTML={{
+                __html: formData.contentMarkdown,
+              }}
+            />
+
+            {/* Files */}
+            {files && files.length > 0 && (
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold mb-2">Resources</h2>
+                <ul className="space-y-2">
+                  {files.map((file) => (
+                    <li key={file.id}>
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary underline flex items-center gap-2"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        {file.name}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  // --- EDIT MODE ---
   return (
     <div className="flex flex-col h-full">
       {/* Breadcrumbs */}
       <div className="px-6 py-3 border-b bg-muted/30">
         <div className="flex items-center gap-1 text-sm">
           <button
-            onClick={() => breadcrumbs.length > 0 && onBreadcrumbClick(breadcrumbs[0])}
+            onClick={() =>
+              breadcrumbs.length > 0 && onBreadcrumbClick(breadcrumbs[0])
+            }
             className="text-muted-foreground hover:text-foreground transition-colors"
           >
             Course
@@ -192,7 +318,7 @@ export function ModuleEditor({
 
       {/* Content */}
       <ScrollArea className="flex-1">
-        <div className="p-6 space-y-6 max-w-4xl">
+        <div className="p-6 space-y-6 ">
           {/* Title */}
           <div className="space-y-2">
             <Label htmlFor="title" className="text-sm font-medium">
@@ -222,23 +348,12 @@ export function ModuleEditor({
           </div>
 
           {/* Duration & Content URL */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className=" gap-4">
             <div className="space-y-2">
-              <Label htmlFor="duration" className="text-sm font-medium flex items-center gap-2">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                Duration (minutes)
-              </Label>
-              <Input
-                id="duration"
-                type="number"
-                min={0}
-                value={formData.durationInMinutes}
-                onChange={(e) => handleChange('durationInMinutes', parseInt(e.target.value) || 0)}
-                placeholder="30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="contentUrl" className="text-sm font-medium flex items-center gap-2">
+              <Label
+                htmlFor="contentUrl"
+                className="text-sm font-medium flex items-center gap-2"
+              >
                 <Link className="h-4 w-4 text-muted-foreground" />
                 Content URL (Video/Resource)
               </Label>
@@ -256,9 +371,20 @@ export function ModuleEditor({
           {formData.contentUrl && (
             <div className="rounded-lg border bg-muted/30 overflow-hidden">
               <div className="px-3 py-2 border-b bg-muted/50 flex items-center justify-between">
-                <span className="text-xs font-medium text-muted-foreground">Video Preview</span>
-                <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" asChild>
-                  <a href={formData.contentUrl} target="_blank" rel="noopener noreferrer">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Video Preview
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  asChild
+                >
+                  <a
+                    href={formData.contentUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
                     <ExternalLink className="h-3 w-3 mr-1" />
                     Open
                   </a>
@@ -281,7 +407,10 @@ export function ModuleEditor({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Content</Label>
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'edit' | 'preview')}>
+              <Tabs
+                value={activeTab}
+                onValueChange={(v) => setActiveTab(v as 'edit' | 'preview')}
+              >
                 <TabsList className="h-8">
                   <TabsTrigger value="edit" className="text-xs px-3 h-6">
                     <Code className="h-3 w-3 mr-1" />
@@ -296,27 +425,77 @@ export function ModuleEditor({
             </div>
 
             {activeTab === 'edit' ? (
-              <Textarea
-                value={formData.contentMarkdown}
-                onChange={(e) => handleChange('contentMarkdown', e.target.value)}
-                placeholder="Write your content in Markdown...
+              <div className="min-h-[500px] bg-white rounded-lg border">
+                <style>
+                  {`
+    .ck-editor__editable_inline {
+      min-height: 500px;
+      max-height: 500px;
+      border-radius: 0.75rem !important; /* rounded-xl */
+      box-shadow: 0 2px 8px 0 rgba(16,30,54,0.06);
+      border: none !important;
+      background: #fff;
+      padding: 1rem;
+      transition: box-shadow 0.2s;
+    }
+    .ck.ck-editor__main > .ck-editor__editable:not(.ck-focused) {
+      box-shadow: 0 1px 4px 0 rgba(16,30,54,0.04);
+    }
+    .ck.ck-editor__main > .ck-editor__editable.ck-focused {
+      box-shadow: 0 4px 16px 0 rgba(16,30,54,0.10);
+      border: 1.5px solid #6366f1 !important; /* primary-500 */
+    }
+    .ck.ck-toolbar {
+      border-radius: 0.75rem 0.75rem 0 0 !important;
+      border: none !important;
+      background: #f3f4f6;
+    }
+  `}
+                </style>
+                <CKEditor
+                  editor={ClassicEditor}
+                  data={formData.contentMarkdown}
+                  onChange={(_, editor) => {
+                    const data = editor.getData();
+                    handleChange('contentMarkdown', data);
+                  }}
+                  config={{
+                    toolbar: [
+                      'heading',
+                      '|',
+                      'bold',
+                      'italic',
+                      'underline',
+                      'strikethrough',
+                      'code',
+                      '|',
+                      'link',
+                      'bulletedList',
+                      'numberedList',
+                      '|',
+                      'blockQuote',
+                      'horizontalLine',
+                      '|',
+                      'insertTable',
+                      'mediaEmbed',
+                      '|',
+                      'codeBlock',
+                      '|',
+                      'undo',
+                      'redo',
+                      'removeFormat',
+                    ],
 
-## Example Heading
-
-This is a paragraph with **bold** and *italic* text.
-
-- List item 1
-- List item 2
-
-```javascript
-const code = 'example';
-```"
-                className="min-h-[300px] font-mono text-sm"
-              />
+                    height: 300,
+                  }}
+                />
+              </div>
             ) : (
               <div
                 className="min-h-[300px] p-4 rounded-lg border bg-background prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(formData.contentMarkdown) }}
+                dangerouslySetInnerHTML={{
+                  __html: formData.contentMarkdown,
+                }}
               />
             )}
           </div>
@@ -339,8 +518,8 @@ const code = 'example';
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {getDepthLabel(depth)}?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete "{module.title}" and all its child modules.
-              This action cannot be undone.
+              This will permanently delete "{module.title}" and all its child
+              modules. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

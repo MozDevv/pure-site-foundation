@@ -4,6 +4,9 @@ import { AdminDashboard } from '@/components/dashboard/admin-dashboard';
 import { Header } from '@/components/layout/header';
 import UserManagement from '@/components/UserManagement';
 import CoursesManagement from '@/components/CoursesManagement';
+import { ModuleBuilder } from '@/components/module-builder/ModuleBuilder';
+import { ResourceLibrary } from '@/components/module-builder/ResourceLibrary';
+import Meetings from './Meetings';
 
 const mockAdmin = {
   firstName: 'Admin',
@@ -29,7 +32,13 @@ export default function AdminDashboardPage({ menu = 'userManagement' }) {
               <UserManagement />
             ) : menu === 'coursesManagement' ? (
               <CoursesManagement />
-            ) : (
+            ) : menu === 'moduleBuilder' ? (
+              <ModuleBuilder />
+            ) : menu === 'resourceLibrary' ? (
+              <ResourceLibrary />
+            ) : menu === 'timetable' ? (
+              <Meetings/>
+            ):(
               <AdminDashboard />
             )}
           </main>

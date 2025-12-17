@@ -170,7 +170,7 @@ const Meetings = () => {
       apiService.get(endpoints.getAllCourses).then((res) => res.data),
   });
 
-  const { data: usersData, isLoading: usersLoading } = useQuery({
+  const { data: usersData = [], isLoading: usersLoading } = useQuery({
     queryKey: ['users'],
     queryFn: () =>
       apiService.get(endpoints.getAllUsers).then((res) => res.data.data),
@@ -308,9 +308,9 @@ const Meetings = () => {
   };
 
   const handleEventClick = (event) => {
-    console.log("Event clicked:", event);
+    console.log('Event clicked:', event);
 
-    setSelectedEvent({...event, attendeesObj: event.attendees || []});
+    setSelectedEvent({ ...event, attendeesObj: event.attendees || [] });
     setDrawerOpen(true);
   };
 
@@ -540,9 +540,12 @@ const Meetings = () => {
             <div className="flex items-center gap-3">
               <div className="flex -space-x-2">
                 {meeting.attendees.slice(0, 4).map((attendee, index) => (
-                  <UserAvatar 
+                  <UserAvatar
                     key={index}
-                    user={{firstName: attendee.name?.split(' ')[0] || 'U', lastName: attendee.name?.split(' ')[1] || ''}}
+                    user={{
+                      firstName: attendee.name?.split(' ')[0] || 'U',
+                      lastName: attendee.name?.split(' ')[1] || '',
+                    }}
                     fontSize={12}
                     height={28}
                     width={28}
@@ -955,252 +958,275 @@ const Meetings = () => {
         </div>
 
         {/* Event Details Drawer */}
-  <MuiDrawer
-  anchor="right"
-  open={drawerOpen}
-  onClose={() => setDrawerOpen(false)}
-  PaperProps={{
-    sx: {
-      width: { xs: '100%', md: 600, lg: 700 },
-      maxWidth: '100vw',
-      p: 0,
-    },
-  }}
->
-  <div className="border-b pt-12 px-6 pb-4 flex items-start justify-between">
-    <div>
-      <div className="text-xl font-semibold">{selectedEvent?.title}</div>
-      <p className="text-muted-foreground mt-1">{selectedEvent?.description}</p>
-    
-      {selectedEvent?.courseName && (
-        <div className="text-xs mt-1">
-          <strong>Course:</strong> {selectedEvent.courseName}
-        </div>
-      )}
-      {selectedEvent?.googleEventId && (
-        <div className="text-xs mt-1">
-          <strong>Google Event ID:</strong> {selectedEvent.googleEventId}
-        </div>
-      )}
-      {selectedEvent?.ownerId && (
-        <div className="text-xs mt-1">
-          <strong>Owner ID:</strong> {selectedEvent.ownerId}
-        </div>
-      )}
-    </div>
-    <IconButton onClick={() => setDrawerOpen(false)} size="small">
-      <CloseIcon />
-    </IconButton>
-  </div>
-
-  <div className="p-6 space-y-6">
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Clock className="h-5 w-5 text-primary" />
-          <div>
-            <p className="font-medium">
-              {selectedEvent?.startTime
-                ? moment(selectedEvent.startTime).format('MMMM DD, YYYY')
-                : selectedEvent?.start
-                ? moment(selectedEvent.start).format('MMMM DD, YYYY')
-                : ''}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {(selectedEvent?.startTime
-                ? moment(selectedEvent.startTime)
-                : moment(selectedEvent?.start)
-              ).format('h:mm A')}
-              {' - '}
-              {(selectedEvent?.endTime
-                ? moment(selectedEvent.endTime)
-                : moment(selectedEvent?.end)
-              ).format('h:mm A')}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <MapPin className="h-5 w-5 text-primary" />
-          <div>
-            <p className="font-medium">
-              {selectedEvent?.location || (selectedEvent?.isOnlineEvent ? 'Online' : '—')}
-            </p>
-          </div>
-        </div>
-
- {selectedEvent?.meetLink && (
-  <div className="flex items-center gap-3 p-4 rounded-lg border border-green-200 bg-green-50">
-    <Video className="h-5 w-5 text-green-600" />
-    <span className="text-sm font-medium text-green-800">
-      Google Meet link available
-    </span>
-    <a
-      href={selectedEvent.meetLink}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="ml-auto"
-    >
-      <Button
-        size="sm"
-        variant="outline"
-        className="border-green-300 text-green-700 hover:bg-green-100"
-      >
-        Join Meeting
-        <ExternalLink className="h-4 w-4 ml-1" />
-      </Button>
-    </a>
-  </div>
-)}
-      </div>
-
-      <div className="space-y-4">
-        {/* Attendees by role */}
-        {selectedEvent?.attendeesObj && selectedEvent.attendeesObj.length > 0 && (
-          <>
+        <MuiDrawer
+          anchor="right"
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          PaperProps={{
+            sx: {
+              width: { xs: '100%', md: 600, lg: 700 },
+              maxWidth: '100vw',
+              p: 0,
+            },
+          }}
+        >
+          <div className="border-b pt-12 px-6 pb-4 flex items-start justify-between">
             <div>
-              <h4 className="font-medium mb-2">Attendees</h4>
-              <div className="flex flex-col gap-2">
-                {/* Students */}
-                {selectedEvent.attendeesObj.some(a => a.role === 'Student') && (
+              <div className="text-xl font-semibold">
+                {selectedEvent?.title}
+              </div>
+              <p className="text-muted-foreground mt-1">
+                {selectedEvent?.description}
+              </p>
+
+              {selectedEvent?.courseName && (
+                <div className="text-xs mt-1">
+                  <strong>Course:</strong> {selectedEvent.courseName}
+                </div>
+              )}
+              {selectedEvent?.googleEventId && (
+                <div className="text-xs mt-1">
+                  <strong>Google Event ID:</strong>{' '}
+                  {selectedEvent.googleEventId}
+                </div>
+              )}
+              {selectedEvent?.ownerId && (
+                <div className="text-xs mt-1">
+                  <strong>Owner ID:</strong> {selectedEvent.ownerId}
+                </div>
+              )}
+            </div>
+            <IconButton onClick={() => setDrawerOpen(false)} size="small">
+              <CloseIcon />
+            </IconButton>
+          </div>
+
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 text-primary" />
                   <div>
-                    <div className="text-xs font-semibold mb-1">Students</div>
+                    <p className="font-medium">
+                      {selectedEvent?.startTime
+                        ? moment(selectedEvent.startTime).format(
+                            'MMMM DD, YYYY'
+                          )
+                        : selectedEvent?.start
+                        ? moment(selectedEvent.start).format('MMMM DD, YYYY')
+                        : ''}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {(selectedEvent?.startTime
+                        ? moment(selectedEvent.startTime)
+                        : moment(selectedEvent?.start)
+                      ).format('h:mm A')}
+                      {' - '}
+                      {(selectedEvent?.endTime
+                        ? moment(selectedEvent.endTime)
+                        : moment(selectedEvent?.end)
+                      ).format('h:mm A')}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5 text-primary" />
+                  <div>
+                    <p className="font-medium">
+                      {selectedEvent?.location ||
+                        (selectedEvent?.isOnlineEvent ? 'Online' : '—')}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedEvent?.meetLink && (
+                  <div className="flex items-center gap-3 p-4 rounded-lg border border-green-200 bg-green-50">
+                    <Video className="h-5 w-5 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">
+                      Google Meet link available
+                    </span>
+                    <a
+                      href={selectedEvent.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto"
+                    >
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-green-300 text-green-700 hover:bg-green-100"
+                      >
+                        Join Meeting
+                        <ExternalLink className="h-4 w-4 ml-1" />
+                      </Button>
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                {/* Attendees by role */}
+                {selectedEvent?.attendeesObj &&
+                  selectedEvent.attendeesObj.length > 0 && (
+                    <>
+                      <div>
+                        <h4 className="font-medium mb-2">Attendees</h4>
+                        <div className="flex flex-col gap-2">
+                          {/* Students */}
+                          {selectedEvent.attendeesObj.some(
+                            (a) => a.role === 'Student'
+                          ) && (
+                            <div>
+                              <div className="text-xs font-semibold mb-1">
+                                Students
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {selectedEvent.attendeesObj
+                                  .filter((a) => a.role === 'Student')
+                                  .map((attendee) => (
+                                    <div
+                                      key={attendee.id}
+                                      className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
+                                    >
+                                      <Avatar className="h-6 w-6">
+                                        <AvatarFallback className="text-xs">
+                                          {attendee.name
+                                            ? attendee.name
+                                                .substring(0, 2)
+                                                .toUpperCase()
+                                            : 'U'}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-sm">
+                                        {attendee.name || attendee.email}
+                                      </span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                          {/* Tutors */}
+                          {selectedEvent.attendeesObj.some(
+                            (a) => a.role === 'Tutor'
+                          ) && (
+                            <div>
+                              <div className="text-xs font-semibold mb-1">
+                                Tutors
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {selectedEvent.attendeesObj
+                                  .filter((a) => a.role === 'Tutor')
+                                  .map((attendee) => (
+                                    <div
+                                      key={attendee.id}
+                                      className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
+                                    >
+                                      <Avatar className="h-6 w-6">
+                                        <AvatarFallback className="text-xs">
+                                          {attendee.name
+                                            ? attendee.name
+                                                .substring(0, 2)
+                                                .toUpperCase()
+                                            : 'U'}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-sm">
+                                        {attendee.name || attendee.email}
+                                      </span>
+                                    </div>
+                                  ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                {/* Guests */}
+                {selectedEvent?.guests && selectedEvent.guests.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Guests</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedEvent.attendeesObj
-                        .filter(a => a.role === 'Student')
-                        .map((attendee) => (
-                          <div
-                            key={attendee.id}
-                            className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
-                          >
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-xs">
-                                {attendee.name
-                                  ? attendee.name.substring(0, 2).toUpperCase()
-                                  : 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">
-                              {attendee.name || attendee.email}
+                      {selectedEvent.guests.map((guest, idx) => (
+                        <div
+                          key={guest.email || idx}
+                          className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
+                        >
+                          <Avatar className="h-6 w-6">
+                            <AvatarFallback className="text-xs">
+                              {guest.name
+                                ? guest.name
+                                    .split(' ')
+                                    .map((n) => n[0])
+                                    .join('')
+                                    .toUpperCase()
+                                : 'G'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">
+                            {guest.name || guest.email}
+                          </span>
+                          {guest.role && (
+                            <span className="ml-2 text-xs text-muted-foreground">
+                              {guest.role}
                             </span>
-                          </div>
-                        ))}
+                          )}
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
-                {/* Tutors */}
-                {selectedEvent.attendeesObj.some(a => a.role === 'Tutor') && (
+
+                {/* Tags */}
+                {selectedEvent?.tags && selectedEvent.tags.length > 0 && (
                   <div>
-                    <div className="text-xs font-semibold mb-1">Tutors</div>
+                    <h4 className="font-medium mb-3">Tags</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedEvent.attendeesObj
-                        .filter(a => a.role === 'Tutor')
-                        .map((attendee) => (
-                          <div
-                            key={attendee.id}
-                            className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
-                          >
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-xs">
-                                {attendee.name
-                                  ? attendee.name.substring(0, 2).toUpperCase()
-                                  : 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">
-                              {attendee.name || attendee.email}
-                            </span>
-                          </div>
-                        ))}
+                      {selectedEvent.tags.map((tag) => (
+                        <Badge
+                          key={tag}
+                          variant="outline"
+                          className="capitalize"
+                        >
+                          <Tag className="h-3 w-3 mr-1" />
+                          {tag}
+                        </Badge>
+                      ))}
                     </div>
                   </div>
                 )}
               </div>
             </div>
-          </>
-        )}
 
-        {/* Guests */}
-        {selectedEvent?.guests && selectedEvent.guests.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-2">Guests</h4>
-            <div className="flex flex-wrap gap-2">
-              {selectedEvent.guests.map((guest, idx) => (
-                <div
-                  key={guest.email || idx}
-                  className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
+            <Separator />
+
+            <div className="flex flex-wrap gap-3 pt-12">
+              {selectedEvent?.meetLink && (
+                <Button
+                  onClick={() => handleJoinMeeting(selectedEvent.meetLink)}
                 >
-                  <Avatar className="h-6 w-6">
-                    <AvatarFallback className="text-xs">
-                      {guest.name
-                        ? guest.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')
-                            .toUpperCase()
-                        : 'G'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm">
-                    {guest.name || guest.email}
-                  </span>
-                  {guest.role && (
-                    <span className="ml-2 text-xs text-muted-foreground">
-                      {guest.role}
-                    </span>
-                  )}
-                </div>
-              ))}
+                  <Video className="h-4 w-4 mr-2" />
+                  Join Meeting
+                </Button>
+              )}
+              <Button variant="outline">
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </Button>
+
+              <Button variant="outline">
+                <Copy className="h-4 w-4 mr-2" />
+                Copy Link
+              </Button>
+              <Button variant="outline">
+                <Save className="h-4 w-4 mr-2" />
+                Save
+              </Button>
             </div>
           </div>
-        )}
-
-        {/* Tags */}
-        {selectedEvent?.tags && selectedEvent.tags.length > 0 && (
-          <div>
-            <h4 className="font-medium mb-3">Tags</h4>
-            <div className="flex flex-wrap gap-2">
-              {selectedEvent.tags.map((tag) => (
-                <Badge
-                  key={tag}
-                  variant="outline"
-                  className="capitalize"
-                >
-                  <Tag className="h-3 w-3 mr-1" />
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-
-    <Separator />
-
-    <div className="flex flex-wrap gap-3 pt-12">
-      {selectedEvent?.meetLink && (
-        <Button onClick={() => handleJoinMeeting(selectedEvent.meetLink)}>
-          <Video className="h-4 w-4 mr-2" />
-          Join Meeting
-        </Button>
-      )}
-      <Button variant="outline">
-        <Edit className="h-4 w-4 mr-2" />
-        Edit
-      </Button>
-     
-      <Button variant="outline">
-        <Copy className="h-4 w-4 mr-2" />
-        Copy Link
-      </Button>
-      <Button variant="outline">
-        <Save className="h-4 w-4 mr-2" />
-        Save
-      </Button>
-    </div>
-  </div>
-</MuiDrawer>
+        </MuiDrawer>
 
         {/* Create Event Modal */}
         <Dialog
@@ -1321,8 +1347,15 @@ const Meetings = () => {
                           key={id}
                           className="flex items-center gap-1 cursor-pointer"
                         >
-                          <UserAvatar user={user || {firstName: 'U', lastName: ''}} fontSize={12} height={24} width={24} />
-                          <span className="text-sm">{user?.firstName} {user?.lastName}</span>
+                          <UserAvatar
+                            user={user || { firstName: 'U', lastName: '' }}
+                            fontSize={12}
+                            height={24}
+                            width={24}
+                          />
+                          <span className="text-sm">
+                            {user?.firstName} {user?.lastName}
+                          </span>
                           <Button
                             variant="ghost"
                             size="sm"
@@ -1431,28 +1464,29 @@ const Meetings = () => {
                               ))
                             ) : (
                               <>
-                                {usersData?.map((user) => (
-                                  <tr key={user.id} className="border-b">
-                                    <td className="p-2">
-                                      <Checkbox
-                                        checked={selectedAttendees.includes(
-                                          user.id
-                                        )}
-                                        onCheckedChange={() =>
-                                          toggleAttendee(user.id)
-                                        }
-                                      />
-                                    </td>
-                                    <td className="p-2">
-                                      {user.name ||
-                                        `${user.firstName || ''} ${
-                                          user.lastName || ''
-                                        }`}
-                                    </td>
-                                    <td className="p-2">{user.role}</td>
-                                    <td className="p-2">{user.email}</td>
-                                  </tr>
-                                ))}
+                                {usersData &&
+                                  usersData?.map((user) => (
+                                    <tr key={user.id} className="border-b">
+                                      <td className="p-2">
+                                        <Checkbox
+                                          checked={selectedAttendees.includes(
+                                            user.id
+                                          )}
+                                          onCheckedChange={() =>
+                                            toggleAttendee(user.id)
+                                          }
+                                        />
+                                      </td>
+                                      <td className="p-2">
+                                        {user.name ||
+                                          `${user.firstName || ''} ${
+                                            user.lastName || ''
+                                          }`}
+                                      </td>
+                                      <td className="p-2">{user.role}</td>
+                                      <td className="p-2">{user.email}</td>
+                                    </tr>
+                                  ))}
                               </>
                             )}
                           </tbody>

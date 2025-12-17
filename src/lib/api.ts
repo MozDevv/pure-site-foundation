@@ -1,8 +1,8 @@
 /* eslint-disable no-useless-catch */
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:8080/api'; //
-// export const API_BASE_URL = 'https://techaipath.com/api';
+// export const API_BASE_URL = 'http://localhost:8080/api'; //
+export const API_BASE_URL = 'https://techaipath.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -86,6 +86,19 @@ export const endpoints = {
     `/courses/add-members/${courseId}?isStudents=false`,
   createEvent: '/events/create',
   getUserEvents: '/events',
+  getAll: '/course-modules',
+  getById: (id: string) => `/course-modules/${id}`,
+  create: '/course-modules',
+  update: (id: string) => `/course-modules/${id}`,
+  delete: (id: string) => `/course-modules/${id}`,
+  getCourseModules: (courseId: string) => `/course-modules/course/${courseId}`,
+
+  uploadFileTeam: (name: string, description: string, teamId: string) =>
+    `/documents/upload?name=${name}&description=${description}&teamId=${teamId}`,
+
+  uploadFile: (name: string, description: string) =>
+    `/documents/upload?name=${name}&description=${description}`,
+  getDocumentPreview: (id: string) => `/documents/preview/${id}`,
 };
 
 export const apiService = {

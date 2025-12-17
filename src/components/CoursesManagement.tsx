@@ -71,7 +71,13 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { CourseCreationStepper } from './course-creation-stepper';
 import ProjectMembers from './ProjectMembers';
-
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+} from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 // Types
 interface Course {
   id: string;
@@ -965,7 +971,9 @@ export default function CoursesManagement() {
                     <ProjectMembers
                       projectId={selectedCourse.id}
                       users={users}
-                      members={users.filter((u) => selectedCourse.enrolledStudentIds?.includes(u.id))}
+                      members={users.filter((u) =>
+                        selectedCourse.enrolledStudentIds?.includes(u.id)
+                      )}
                       isStudents={true}
                     />
                   </CardContent>
@@ -983,7 +991,9 @@ export default function CoursesManagement() {
                     <ProjectMembers
                       projectId={selectedCourse.id}
                       users={users}
-                      members={users.filter((u) => selectedCourse.tutorIds?.includes(u.id))}
+                      members={users.filter((u) =>
+                        selectedCourse.tutorIds?.includes(u.id)
+                      )}
                       isStudents={false}
                     />
                   </CardContent>

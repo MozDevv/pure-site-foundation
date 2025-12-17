@@ -59,11 +59,19 @@ const App = () => (
             />
             <Route
               path="/admin/module-builder"
-              element={<ModuleBuilder />}
+              element={<AdminDashboardPage menu="moduleBuilder" />}
+            />
+            <Route
+              path="/admin/module-builder/resource-library"
+              element={<AdminDashboardPage menu="resourceLibrary" />}
             />
             <Route
               path="/admin/users"
               element={<AdminDashboardPage menu="userManagement" />}
+            />
+            <Route
+              path="/admin/timetable"
+              element={<AdminDashboardPage menu="timetable" />}
             />
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

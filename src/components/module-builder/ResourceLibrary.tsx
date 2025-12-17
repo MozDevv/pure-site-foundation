@@ -40,6 +40,7 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import { TeamFileHub } from './TeamFileHub';
 // API endpoints for course modules
 const moduleEndpoints = {
   getAll: '/course-modules',
@@ -54,7 +55,7 @@ interface ModuleBuilderProps {
   courseId?: string;
 }
 
-export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
+export function ResourceLibrary({ courseId }: ModuleBuilderProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -411,182 +412,10 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
       ) : (
         <div className="flex flex-col h-screen bg-background">
           {/* Header */}
-          <header className="h-14 border-b flex items-center justify-between px-4 bg-card shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="h-4 w-px bg-border" />
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />
-                <h1 className="font-semibold text-foreground">
-                  Course Module Builder
-                </h1>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-muted-foreground">Mode:</span>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={viewMode === 'edit'}
-                      onChange={(_, checked) =>
-                        setViewMode(checked ? 'edit' : 'view')
-                      }
-                      color="primary"
-                    />
-                  }
-                  label={viewMode === 'edit' ? 'Edit' : 'View'}
-                  labelPlacement="end"
-                  sx={{
-                    '.MuiFormControlLabel-label': {
-                      fontWeight: 500,
-                      color: viewMode === 'edit' ? '#6366f1' : '#64748b', // Tailwind primary/foreground
-                      fontSize: '0.95rem',
-                    },
-                  }}
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">
-                {countModules(modules)} modules
-              </span>
-              {useMockData && (
-                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">
-                  Demo Mode
-                </span>
-              )}
-            </div>
-          </header>
-
-          {/* Main Content */}
-          <div className="flex flex-1 overflow-hidden">
-            {/* Sidebar - Module Tree */}
-            <aside className="w-80 shrink-0 overflow-hidden">
-              <ModuleTree
-                modules={modules}
-                selectedModuleId={selectedModuleId}
-                onSelectModule={handleSelectModule}
-                onAddChild={handleAddChild}
-                onRename={handleRenameClick}
-                onDelete={handleDeleteModule}
-                onReorder={handleReorder}
-              />
-            </aside>
-
-            {/* Main Content - Editor */}
-            <main className="flex-1 overflow-hidden bg-muted/20">
-              {selectedModule ? (
-                <ModuleEditor
-                  viewMode={viewMode}
-                  module={selectedModule}
-                  depth={selectedDepth}
-                  breadcrumbs={breadcrumbs}
-                  files={moduleFiles[selectedModule.id] || []}
-                  onSave={handleSaveModule}
-                  onAddChild={handleAddChild}
-                  onDelete={handleDeleteModule}
-                  onBreadcrumbClick={handleBreadcrumbClick}
-                  onUploadFiles={handleUploadFiles}
-                  onDeleteFile={handleDeleteFile}
-                  isSaving={isSaving}
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8">
-                  <BookOpen className="h-16 w-16 text-muted-foreground/30 mb-4" />
-                  <h2 className="text-xl font-semibold text-foreground mb-2">
-                    Select a Module
-                  </h2>
-                  <p className="text-muted-foreground max-w-md">
-                    Choose a module from the sidebar to edit its content, or
-                    create a new one to get started.
-                  </p>
-                  <Button
-                    variant="outline"
-                    className="mt-6"
-                    onClick={() => handleAddChild(null)}
-                  >
-                    Create First Module
-                  </Button>
-                </div>
-              )}
-            </main>
-          </div>
-
-          {/* Create Module Dialog */}
-          <Dialog
-            open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  Create New{' '}
-                  {getDepthLabel(newModuleParentId ? breadcrumbs.length : 0)}
-                </DialogTitle>
-                <DialogDescription>
-                  {newModuleParentId
-                    ? `Add a new ${getDepthLabel(
-                        breadcrumbs.length
-                      ).toLowerCase()} to this module`
-                    : 'Create a new top-level module for your course'}
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-title">Title</Label>
-                  <Input
-                    id="new-title"
-                    value={newModuleTitle}
-                    onChange={(e) => setNewModuleTitle(e.target.value)}
-                    placeholder="Enter module title..."
-                    onKeyDown={(e) => e.key === 'Enter' && handleCreateModule()}
-                    autoFocus
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsCreateDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateModule}>Create</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-
-          {/* Rename Dialog */}
-          <Dialog
-            open={isRenameDialogOpen}
-            onOpenChange={setIsRenameDialogOpen}
-          >
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Rename Module</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="rename-title">New Title</Label>
-                  <Input
-                    id="rename-title"
-                    value={renameTitle}
-                    onChange={(e) => setRenameTitle(e.target.value)}
-                    placeholder="Enter new title..."
-                    onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-                    autoFocus
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setIsRenameDialogOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleRename}>Rename</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <TeamFileHub
+            files={selectedCourse?.documents}
+            currentTeam={selectedCourse}
+          />
         </div>
       )}
     </div>

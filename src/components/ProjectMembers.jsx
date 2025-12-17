@@ -120,6 +120,9 @@ function ProjectMembers({ projectId, users, members, isStudents }) {
       console.log('Error refreshing course:', error);
     }
   };
+  useEffect(() => {
+    refreshCourse();
+  }, [projectId]);
   const [selectedMember, setSelectedMember] = useState(null);
   const [snackbar, setSnackbar] = useState({
     open: false,

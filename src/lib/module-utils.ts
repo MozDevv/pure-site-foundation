@@ -10,6 +10,7 @@ export interface CourseModule {
   orderIndex: number;
   parentId: string | null;
   subModules: CourseModule[];
+  courseId?: string | null;
 }
 
 export interface ModuleFile {
@@ -141,7 +142,12 @@ export function reorderSiblings(
     if (module.subModules?.length) {
       return {
         ...module,
-        subModules: reorderSiblings(module.subModules, parentId, fromIndex, toIndex),
+        subModules: reorderSiblings(
+          module.subModules,
+          parentId,
+          fromIndex,
+          toIndex
+        ),
       };
     }
     return module;
@@ -157,7 +163,11 @@ export function getDepthLabel(depth: number): string {
 // Count total modules
 export function countModules(modules: CourseModule[]): number {
   return modules.reduce((count, module) => {
-    return count + 1 + (module.subModules?.length ? countModules(module.subModules) : 0);
+    return (
+      count +
+      1 +
+      (module.subModules?.length ? countModules(module.subModules) : 0)
+    );
   }, 0);
 }
 
@@ -184,7 +194,8 @@ export const mockModules: CourseModule[] = [
     id: 'mod-1',
     title: 'Getting Started with Web Development',
     description: 'Introduction to modern web development concepts',
-    contentMarkdown: '## Welcome to Web Development\n\nIn this module, you will learn the fundamentals of building modern web applications.\n\n### What You Will Learn\n- HTML5 and semantic markup\n- CSS3 and responsive design\n- JavaScript ES6+ features',
+    contentMarkdown:
+      '## Welcome to Web Development\n\nIn this module, you will learn the fundamentals of building modern web applications.\n\n### What You Will Learn\n- HTML5 and semantic markup\n- CSS3 and responsive design\n- JavaScript ES6+ features',
     contentUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     durationInMinutes: 45,
     orderIndex: 0,
@@ -194,7 +205,8 @@ export const mockModules: CourseModule[] = [
         id: 'top-1-1',
         title: 'HTML Fundamentals',
         description: 'Learn the building blocks of web pages',
-        contentMarkdown: '## HTML Basics\n\nHTML (HyperText Markup Language) is the standard markup language for documents designed to be displayed in a web browser.',
+        contentMarkdown:
+          '## HTML Basics\n\nHTML (HyperText Markup Language) is the standard markup language for documents designed to be displayed in a web browser.',
         contentUrl: '',
         durationInMinutes: 20,
         orderIndex: 0,
@@ -204,7 +216,8 @@ export const mockModules: CourseModule[] = [
             id: 'unit-1-1-1',
             title: 'Document Structure',
             description: 'Understanding HTML document structure',
-            contentMarkdown: '## Document Structure\n\nEvery HTML document follows a basic structure:\n\n```html\n<!DOCTYPE html>\n<html>\n  <head>\n    <title>Page Title</title>\n  </head>\n  <body>\n    Content goes here\n  </body>\n</html>\n```',
+            contentMarkdown:
+              '## Document Structure\n\nEvery HTML document follows a basic structure:\n\n```html\n<!DOCTYPE html>\n<html>\n  <head>\n    <title>Page Title</title>\n  </head>\n  <body>\n    Content goes here\n  </body>\n</html>\n```',
             contentUrl: '',
             durationInMinutes: 10,
             orderIndex: 0,
@@ -215,7 +228,8 @@ export const mockModules: CourseModule[] = [
             id: 'unit-1-1-2',
             title: 'Semantic Elements',
             description: 'Using semantic HTML elements',
-            contentMarkdown: '## Semantic HTML\n\nSemantic elements clearly describe their meaning:\n\n- `<header>` - Page header\n- `<nav>` - Navigation\n- `<main>` - Main content\n- `<article>` - Self-contained content\n- `<footer>` - Page footer',
+            contentMarkdown:
+              '## Semantic HTML\n\nSemantic elements clearly describe their meaning:\n\n- `<header>` - Page header\n- `<nav>` - Navigation\n- `<main>` - Main content\n- `<article>` - Self-contained content\n- `<footer>` - Page footer',
             contentUrl: '',
             durationInMinutes: 10,
             orderIndex: 1,
@@ -228,7 +242,8 @@ export const mockModules: CourseModule[] = [
         id: 'top-1-2',
         title: 'CSS Styling',
         description: 'Master CSS for beautiful designs',
-        contentMarkdown: '## CSS Overview\n\nCSS (Cascading Style Sheets) is used to style HTML elements.',
+        contentMarkdown:
+          '## CSS Overview\n\nCSS (Cascading Style Sheets) is used to style HTML elements.',
         contentUrl: '',
         durationInMinutes: 25,
         orderIndex: 1,
@@ -241,7 +256,8 @@ export const mockModules: CourseModule[] = [
     id: 'mod-2',
     title: 'JavaScript Essentials',
     description: 'Core JavaScript programming concepts',
-    contentMarkdown: '## JavaScript Fundamentals\n\nJavaScript is the programming language of the web.',
+    contentMarkdown:
+      '## JavaScript Fundamentals\n\nJavaScript is the programming language of the web.',
     contentUrl: '',
     durationInMinutes: 60,
     orderIndex: 1,
@@ -251,7 +267,8 @@ export const mockModules: CourseModule[] = [
         id: 'top-2-1',
         title: 'Variables and Data Types',
         description: 'Understanding JavaScript data types',
-        contentMarkdown: '## Variables\n\nJavaScript has three ways to declare variables:\n\n```javascript\nconst name = "John"; // constant\nlet age = 25; // block-scoped\nvar legacy = true; // function-scoped (avoid)\n```',
+        contentMarkdown:
+          '## Variables\n\nJavaScript has three ways to declare variables:\n\n```javascript\nconst name = "John"; // constant\nlet age = 25; // block-scoped\nvar legacy = true; // function-scoped (avoid)\n```',
         contentUrl: '',
         durationInMinutes: 30,
         orderIndex: 0,
