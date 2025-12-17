@@ -14,6 +14,7 @@ import NotFound from './pages/NotFound';
 import Activate from './components/Activate';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import CoursesManagement from './components/CoursesManagement';
+import { ModuleBuilder } from './components/module-builder/ModuleBuilder';
 import { ThemeProvider } from '@mui/system';
 import { CssBaseline } from '@mui/material';
 import theme from './lib/muiTheme';
@@ -55,6 +56,10 @@ const App = () => (
             <Route
               path="/admin/courses"
               element={<AdminDashboardPage menu="coursesManagement" />}
+            />
+            <Route
+              path="/admin/module-builder"
+              element={<ModuleBuilder />}
             />
             <Route
               path="/admin/users"

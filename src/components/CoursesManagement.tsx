@@ -280,7 +280,6 @@ export default function CoursesManagement() {
   const handleEditClick = (course: Course) => {
     setSelectedCourse(course);
     setFormData({
-      id: course.id,
       code: course.code,
       title: course.title,
       shortDescription: course.shortDescription,
@@ -966,9 +965,8 @@ export default function CoursesManagement() {
                     <ProjectMembers
                       projectId={selectedCourse.id}
                       users={users}
-                      members={selectedCourse.enrolledStudents}
+                      members={users.filter((u) => selectedCourse.enrolledStudentIds?.includes(u.id))}
                       isStudents={true}
-                      refreshCourse={handleRefreshSelectedCourse}
                     />
                   </CardContent>
                 </Card>
@@ -982,15 +980,12 @@ export default function CoursesManagement() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardContent>
-                      <ProjectMembers
-                        projectId={selectedCourse.id}
-                        users={users}
-                        members={selectedCourse.tutors}
-                        isStudents={false}
-                        refreshCourse={handleRefreshSelectedCourse}
-                      />
-                    </CardContent>
+                    <ProjectMembers
+                      projectId={selectedCourse.id}
+                      users={users}
+                      members={users.filter((u) => selectedCourse.tutorIds?.includes(u.id))}
+                      isStudents={false}
+                    />
                   </CardContent>
                 </Card>
               </TabsContent>

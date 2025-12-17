@@ -243,7 +243,7 @@ const Meetings = () => {
   const [meetLinkFilter, setMeetLinkFilter] = useState('all');
   const [creatorFilter, setCreatorFilter] = useState('all');
 
-  const { currentTeam } = {
+  const currentTeam = {
     id: '434362c4-dfa0-4898-a2bc-a428aeed4773',
     name: 'Product Team',
   }; //useTeams();
@@ -540,9 +540,13 @@ const Meetings = () => {
             <div className="flex items-center gap-3">
               <div className="flex -space-x-2">
                 {meeting.attendees.slice(0, 4).map((attendee, index) => (
-                  <UserAvatar user={
-                    {firstName: attendee.name.split(' ')[0],}
-                  } />
+                  <UserAvatar 
+                    key={index}
+                    user={{firstName: attendee.name?.split(' ')[0] || 'U', lastName: attendee.name?.split(' ')[1] || ''}}
+                    fontSize={12}
+                    height={28}
+                    width={28}
+                  />
                 ))}
               </div>
               <span className="text-sm font-medium text-muted-foreground">
@@ -1317,8 +1321,8 @@ const Meetings = () => {
                           key={id}
                           className="flex items-center gap-1 cursor-pointer"
                         >
-                          <UserAvatar user={user} />
-                          <span className="text-sm">{user?.name}</span>
+                          <UserAvatar user={user || {firstName: 'U', lastName: ''}} fontSize={12} height={24} width={24} />
+                          <span className="text-sm">{user?.firstName} {user?.lastName}</span>
                           <Button
                             variant="ghost"
                             size="sm"
