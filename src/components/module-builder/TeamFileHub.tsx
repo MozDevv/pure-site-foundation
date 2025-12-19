@@ -331,7 +331,6 @@ export function TeamFileHub({
         toast({
           title: 'File uploaded',
           description: `${uploadName} uploaded successfully.`,
-          variant: 'success',
         });
         // Map backend file to TeamFile and add to files
         const newTeamFile = mapBackendFileToTeamFile(res.data);

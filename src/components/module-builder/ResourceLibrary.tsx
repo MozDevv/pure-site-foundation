@@ -318,7 +318,7 @@ export function ResourceLibrary({ courseId }: ModuleBuilderProps) {
       try {
         const formData = new FormData();
         files.forEach((file) => formData.append('files', file));
-        await apiService.post(endpoints.uploadFile(moduleId), formData);
+        await apiService.post(`/course-modules/${moduleId}/files`, formData);
       } catch (err) {
         console.error('Failed to upload files:', err);
       }
