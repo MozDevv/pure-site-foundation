@@ -1,8 +1,8 @@
 /* eslint-disable no-useless-catch */
 import axios from 'axios';
 
-// export const API_BASE_URL = 'http://localhost:8080/api'; //
-export const API_BASE_URL = 'https://techaipath.com/api';
+export const API_BASE_URL = 'http://localhost:8080/api'; //
+// export const API_BASE_URL = 'https://techaipath.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
