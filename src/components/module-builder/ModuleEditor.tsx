@@ -453,9 +453,9 @@ export function ModuleEditor({
   `}
                 </style>
                 <CKEditor
-                  editor={ClassicEditor}
+                  editor={ClassicEditor as any}
                   data={formData.contentMarkdown}
-                  onChange={(_, editor) => {
+                  onChange={(_, editor: any) => {
                     const data = editor.getData();
                     handleChange('contentMarkdown', data);
                   }}
@@ -485,9 +485,7 @@ export function ModuleEditor({
                       'redo',
                       'removeFormat',
                     ],
-
-                    height: 300,
-                  }}
+                  } as any}
                 />
               </div>
             ) : (
