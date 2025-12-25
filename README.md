@@ -1,140 +1,250 @@
-Build a complete, beautiful admin dashboard module called "Innovation Hub" — a hackathon-style innovation platform integrated into an existing Learning Management System (LMS). The design should feel premium, modern, clean, and inspiring for education: use a calm professional color palette (primarily white, soft grays, deep blue accents #1e40af or #3b82f6), generous whitespace, subtle shadows, rounded cards, smooth hover effects, and clean typography. Use shadcn/ui components, Tailwind CSS, React, and Vite.
+## 🔧 COMPLETE REFACTOR PROMPT (WITH CONTEXT + DUMMY APIs)
 
-Important: Do NOT use Supabase or any real database/auth. Use only hardcoded dummy data and mock API endpoints (simulate async fetches with setTimeout returning static dummy data). Structure all dummy data EXACTLY according to the shapes below so it matches my future real database schema.
+I am building an **Innovation / Hackathon module** inside an existing **LMS**, inspired by **Devpost’s project submission stepper**.
 
-The app has two roles (simulate with a hardcoded currentUser object):
+I already had a stepper from another project but **uprooted it**, and I now want to **refactor and rebuild on top of existing foundations**, not start from scratch.
 
-- Regular user: { id: 1, name: "Alex Chen", email: "alex@student.com", role: "student" }
-- Admin/mentor: { id: 99, name: "Dr. Maria Garcia", email: "maria@admin.com", role: "admin" }
-  Toggle between them easily for testing.
+---
 
-Authentication: Simple login page with email/password (dummy — accept any input, set currentUser to admin if email includes "admin", otherwise student).
+## 🧠 Existing Context (IMPORTANT – USE THIS)
 
-Main sidebar navigation with these exact items under "Innovation Hub":
+- Route:
 
-- Innovation Hub → /innovation → icon: Home
-- Teams & Clubs → /innovation/teams → icon: Users
-- Projects & Ideas → /innovation/projects → icon: FileText
-- Submissions & Reviews → /innovation/reviews → icon: CheckSquare
-- Events & Challenges → /innovation/events → icon: Trophy
+  ```ts
+  path = '/innovation/submit-project';
+  ```
 
-All pages must use mock API functions (e.g., getTeams(), getProjects()) that return Promises resolving after 500ms with the structured dummy data below.
+- Existing component (must be reused & extended, not discarded):
 
-=== REQUIRED DUMMY DATA STRUCTURES ===
+  ```ts
+  import { TeamSetupWizard } from '@/components/setup-wizard/TeamSetupWizard';
+  ```
 
-2. Teams (15 teams)
-   Each team:
-   {
-   id: number,
-   name: string,
-   description: string,
-   is_club: boolean (true for ongoing clubs),
-   creator_id: number,
-   max_members: number | null,
-   looking_for_members: boolean,
-   skills_needed: string[],
-   created_at: "2025-..."
-   }
+- The old stepper logic existed but was removed; this task is to:
 
-3. Team Members (junction)
-   Array of { team_id: , user_id: number, role: "leader" | "member", joined_at: string }
+  - Refactor
+  - Recompose
+  - Build forward using modern patterns
 
-4. Projects (25+ projects)
-   Each project:
-   {
-   id: number,
-   title: string,
-   description: string,
-   problem_statement: string,
-   solution_overview: string,
-   tech_stack: string[], // e.g., ["React", "Firebase", "Tailwind"]
-   is_public: boolean,
-   status: "draft" | "submitted" | "approved" | "in_progress" | "completed",
-   team_id: number | null, // null for solo drafts
-   creator_id: number,
-   created_at: string,
-   updated_at: string
-   }
+---
 
-5. Project Files (attachments)
-   Array of {
-   id: number,
-   project_id: number,
-   file_type: "image" | "document" | "link",
-   url: string (use placeholder images or https://via.placeholder.com/400x300),
-   description: string
-   }
+## 🎯 Objective
 
-6. Approvals / Reviews
-   Array of {
-   id: number,
-   project_id: number,
-   reviewer_id: number,
-   status: "pending" | "approved" | "revisions_needed" | "rejected",
-   comments: string,
-   score_innovation: number (0-10),
-   score_feasibility: number (0-10),
-   score_impact: number (0-10),
-   reviewed_at: string | null
-   }
+Refactor the project submission flow into a **Devpost-style multi-step stepper** that:
 
-7. Events
-   Array of 6 events:
-   {
-   id: number,
-   title: string,
-   description: string,
-   theme: string,
-   start_date: string,
-   end_date: string,
-   participant_count: number,
-   status: "upcoming" | "ongoing" | "completed"
-   }
+- Builds **on top of `TeamSetupWizard`**
+- Uses **context/state** for step data
+- Uses **dummy/mock API endpoints**
+- Uses **dummy payloads and responses**
+- Adds **tooltips, helper text, and guidance**
+- Is cleanly structured so real APIs can be swapped in later
 
-Detailed page requirements with dummy data:
+---
 
-1. /innovation (Innovation Hub Dashboard)
+## 🧭 Stepper Structure (REQUIRED)
 
-   - Welcome card with stats: Total Teams (24), Active Projects (42), Pending Reviews (8), Upcoming Events (3)
-   - Recent Activity feed (5-6 dummy entries: "Team Alpha submitted project...", "John joined Team Beta")
-   - Quick actions: "Create Team", "Submit Idea", "Browse Gallery"
-   - Featured public projects carousel (3-4 cards)
+Stepper steps (top navigation, clickable):
 
-2. /innovation/teams (Teams & Clubs)
+```
+1. Manage Team
+2. Project Overview
+3. Project Details
+4. Additional Info
+5. Submit
+```
 
-   - Search bar + filters (All / My Teams / Open to Join)
-   - Grid/List of team cards: team name, description, member count, skills needed, "Join" or "View" button
-   - Floating "+" button: "Create New Team" → modal with form (name, description, max members, public/private)
-   - Dummy data: 12-15 teams, some marked as "Looking for members"
+### Global Rules
 
-3. /innovation/projects (Projects & Ideas)
+- Non-linear navigation
+- Autosave on change
+- Step-level validation
+- Submit locked until required steps complete
+- Project begins in `DRAFT` state
 
-   - Tabs: All Projects / My Projects / Drafts / Public Gallery
-   - Grid of project cards: title, short description, team name, status badge (Draft, Submitted, Approved, In Progress), visibility (Public/Private), tech tags
-   - Search + filter by status/theme
-   - "+" button: "Submit New Idea" → multi-step form modal (title, problem, solution, tech stack, visibility toggle, file uploads placeholder)
-   - Dummy data: 20+ projects with varied statuses
+---
 
-4. /innovation/reviews (Submissions & Reviews)
+## 🧑‍🤝‍🧑 Step 1: Manage Team (REUSE EXISTING)
 
-   - Admin-focused view: Table of pending submissions with columns: Project Title, Team, Submitted Date, Status, Actions (View, Approve/Reject)
-   - Detail modal on click: full project info + comment section + scoring (Innovation, Feasibility, Impact — 1-10 sliders) + final decision buttons
-   - Notification badge on menu if pending > 0
-   - Dummy data: 10 pending, 15 past reviews
+### Refactor Rules
 
-5. /innovation/events (Events & Challenges)
-   - List/Grid of upcoming and past events
-   - Event card: title, dates, theme, participant count, status (Upcoming / Ongoing / Completed)
-   - "+" button (admin only): Create Event modal
-   - Featured banner for active challenge
-   - Dummy data: 6 events (e.g., "AI for Good Challenge", "Sustainability Hackathon")
+- **Reuse `TeamSetupWizard`**
+- Wrap it inside the new stepper
+- Extend it where necessary
 
-Additional:
+### Behavior
 
-- All lists/tables: searchable, sortable, pagination if >10 items
-- Loading skeletons during mock fetch
-- Toast notifications on create/update
-- Lucide icons everywhere
-- Top header with current user avatar + dropdown
+- Project creator = Owner
+- Invite members (dummy logic)
+- Assign roles (Owner, Member, Mentor)
+- Set visibility (Private / Public)
+- checkout team roles
+- Team Name, can choose the teams he exists or invite a teamMembers and name it
+  Option A: Use Existing Team
+  Option B:
+  Team Name \*
+  [ _______________________ ]
 
-Make this feel like a polished, premium edtech product — joyful, intuitive, and professional.
+Invite Team Members
+[ email / username input ] [+ Add]
+
+### Tooltips
+
+- “Team members can be invited later.”
+- “Mentors do not count toward team size.”
+- “Private projects are only visible to reviewers.”
+
+### Completion Rule
+
+- At least 1 team member
+
+---
+
+## 🧾 Step 2: Project Overview
+
+### Fields
+
+- Project name (required)
+- Elevator pitch (required)
+- Thumbnail upload (dummy file handler)
+- Tags / categories
+
+### Tooltips
+
+- “This is the first thing reviewers see.”
+- “Keep the pitch under 200 characters.”
+
+---
+
+## 📘 Step 3: Project Details
+
+### Fields
+
+- Problem statement (required)
+- Proposed solution (required)
+- Target users
+- Innovation / uniqueness
+- Tech stack
+- Project status (Idea / Prototype / MVP)
+
+### Tooltips
+
+- “Clearly explain the real-world problem.”
+- “Describe what makes your idea different.”
+
+---
+
+## ➕ Step 4: Additional Info
+
+### Fields
+
+- Expected impact
+- Risks & challenges
+- Sustainability
+- Requested support (mentorship, funding)
+
+### Tooltips
+
+- “Optional, but helps reviewers understand scale.”
+- “Be honest about risks.”
+
+---
+
+## 🚀 Step 5: Submit
+
+### Behavior
+
+- Show read-only project summary
+- Validate all required steps
+- Confirm submission
+- Change project status from:
+
+```
+DRAFT → SUBMITTED
+```
+
+---
+
+## 🔄 Project States (MANDATORY)
+
+Use these states in logic and UI:
+
+```
+DRAFT
+SUBMITTED
+UNDER_REVIEW
+CHANGES_REQUESTED
+APPROVED
+REJECTED
+```
+
+---
+
+## 🧠 Context & State Management
+
+Use a **ProjectSubmissionContext** (or equivalent):
+
+- Store step data
+- Track step completion
+- Track project status
+- Expose save/update methods
+
+---
+
+## 🌐 Dummy API Requirements (IMPORTANT)
+
+### Use mock endpoints ONLY (I will replace later)
+
+Examples:
+
+```ts
+POST   /api/mock/projects
+PATCH  /api/mock/projects/:id
+GET    /api/mock/projects/:id
+POST   /api/mock/projects/:id/submit
+```
+
+### Dummy API behavior
+
+- Simulate latency
+- Return fake IDs
+- Return status updates
+- Persist data in memory or localStorage
+
+⚠️ Do NOT hardcode real URLs
+⚠️ Keep API layer isolated
+
+---
+
+## 🎨 UX / UI Requirements
+
+- Sticky stepper at top
+- Clear “Save & Continue” CTA
+- Visual step completion (✔️)
+- Tooltips via icons or hover
+- Clean, Devpost-like aesthetic
+- Responsive and accessible
+
+---
+
+## 🧩 Refactor Expectations
+
+- Modular components per step
+- Stepper orchestrator component
+- Existing `TeamSetupWizard` adapted, not replaced
+- Clean separation of:
+
+  - UI
+  - State
+  - API calls
+
+- Comments explaining where to swap real APIs
+
+---
+
+## 📦 Deliverables
+
+1. Refactored stepper at `/innovation/submit-project`
+2. Context-driven project state
+3. Dummy API layer
+4. Tooltips & helper text
+5. Clear upgrade path to real backend

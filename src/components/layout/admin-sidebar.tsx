@@ -64,6 +64,7 @@ const navigationSections = [
         url: '/admin/innovation/projects',
         icon: FileText,
       },
+
       {
         title: 'Submissions & Reviews',
         url: '/admin/innovation/reviews',
@@ -95,7 +96,7 @@ export function AdminSidebar() {
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarContent className="mt-8">
+      <SidebarContent className="">
         {navigationSections.map((section) => (
           <SidebarGroup key={section.label}>
             <SidebarGroupLabel className="font-bold text-xs">

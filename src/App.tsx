@@ -73,7 +73,31 @@ const App = () => (
               path="/admin/timetable"
               element={<AdminDashboardPage menu="timetable" />}
             />
+            <Route
+              path="/admin/innovation"
+              element={<AdminDashboardPage menu="innovationDashboard" />}
+            />
+            <Route
+              path="/innovation/submit-project"
+              element={<AdminDashboardPage menu="submitProject" />}
+            />
 
+            <Route
+              path="/admin/innovation/teams"
+              element={<AdminDashboardPage menu="teamsPage" />}
+            />
+            <Route
+              path="/admin/innovation/projects"
+              element={<AdminDashboardPage menu="projectsPage" />}
+            />
+            <Route
+              path="/admin/innovation/reviews"
+              element={<AdminDashboardPage menu="reviewsPage" />}
+            />
+            <Route
+              path="/admin/innovation/events"
+              element={<AdminDashboardPage menu="eventsPage" />}
+            />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

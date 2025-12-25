@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { Divider } from '@mui/material';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar:state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -177,16 +178,16 @@ const Sidebar = React.forwardRef<
 
     if (collapsible === 'none') {
       return (
-      <div
-        className={cn(
-          'flex h-full w-[--sidebar-width] flex-col bg-[#1E3A8A] text-white',
-          className
-        )}
-        ref={ref}
-        {...props}
-      >
-        {children}
-      </div>
+        <div
+          className={cn(
+            'flex h-full w-[--sidebar-width] flex-col bg-[#1E3A8A] text-white',
+            className
+          )}
+          ref={ref}
+          {...props}
+        >
+          {children}
+        </div>
       );
     }
 
@@ -396,17 +397,40 @@ SidebarSeparator.displayName = 'SidebarSeparator';
 const SidebarContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<'div'>
->(({ className, ...props }, ref) => {
+>(({ className, children, ...props }, ref) => {
   return (
     <div
       ref={ref}
       data-sidebar="content"
       className={cn(
-        'flex min-h-0 flex-1 flex-col gap-2 overflow-auto group-data-[collapsible=icon]:overflow-hidden',
+        'flex min-h-0 flex-1 flex-col  overflow-auto group-data-[collapsible=icon]:overflow-hidden',
         className
       )}
       {...props}
-    />
+    >
+      {/* Logo block at the top */}
+      <div className="flex items-center gap-2 px-4 pt-1 ">
+        <img
+          src="/light-bulb-sign-with-gears-effective-learning-idea-concept.png"
+          alt="TechAi logo"
+          className="w-16 h-16 object-contain opacity-95"
+          loading="lazy"
+        />
+        <span className="text-white text-2xl font-extrabold tracking-wide">
+          Tech<span className="text-blue-400">Ai</span>
+          <span className="text-white">.</span>
+        </span>
+      </div>
+      <Divider
+        sx={{
+          borderColor: 'gray', // Tailwind blue-600
+          borderBottomWidth: 0.2,
+          opacity: 0.9,
+          my: 1.5,
+        }}
+      />
+      {children}
+    </div>
   );
 });
 SidebarContent.displayName = 'SidebarContent';
@@ -562,10 +586,7 @@ const SidebarMenuButton = React.forwardRef<
         data-sidebar="menu-button"
         data-size={size}
         data-active={isActive}
-        className={cn(
-          sidebarMenuButtonVariants({ variant, size }),
-          className
-        )}
+        className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
         {...props}
       />
     );
