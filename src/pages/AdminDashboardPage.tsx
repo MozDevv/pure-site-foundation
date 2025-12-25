@@ -57,7 +57,7 @@ export default function AdminDashboardPage({ menu = 'userManagement' }) {
               ) : menu === 'eventsPage' ? (
                 <EventsPage />
               ) : menu === 'submitProject' ? (
-                <TeamSetupWizard />
+                <TeamSetupWizard isOpen={true} onClose={() => {}} />
               ) : (
                 <AdminDashboard />
               )}

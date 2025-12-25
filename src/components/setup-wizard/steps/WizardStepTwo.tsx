@@ -378,10 +378,10 @@ export const WizardStepTwo = React.forwardRef<
             setFetchedData={setFetchedData}
             saveId={incompleteTeamId}
             saveIdTitle="teamId"
-            getEndpoint={endpoints.getTeamRequirements(incompleteTeamId)}
+            getEndpoint={endpoints.getTeamRequirements(incompleteTeamId || '')}
             postEndpoint={endpoints.createRequirement}
             putEndpoint={endpoints.updateRequirement}
-            deleteEndpoint={endpoints.deleteRequirement}
+            deleteEndpoint={endpoints.deleteRequirement(incompleteTeamId || '')}
           />
         </CardContent>
       </Card>

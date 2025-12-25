@@ -99,6 +99,18 @@ export const endpoints = {
   uploadFile: (name: string, description: string) =>
     `/documents/upload?name=${name}&description=${description}`,
   getDocumentPreview: (id: string) => `/documents/preview/${id}`,
+
+  // Team endpoints
+  createTeam: '/teams',
+  updateTeam: '/teams',
+  getTeamById: (teamId: string) => `/teams/${teamId}`,
+  
+  // Requirements endpoints
+  getTeamRequirements: (teamId: string) => `/requirements/team/${teamId}`,
+  createRequirement: '/requirements',
+  updateRequirement: '/requirements',
+  deleteRequirement: (id: string) => `/requirements/${id}`,
+  generateBoardFromRequirements: '/requirements/generate-board',
 };
 
 export const apiService = {
