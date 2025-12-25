@@ -10,6 +10,11 @@ import { WizardStepTwo } from './steps/WizardStepTwo';
 import { WizardStepThree } from './steps/WizardStepThree';
 import { WizardStepFour } from './steps/WizardStepFour';
 import { WizardStepFive } from './steps/WizardStepFive';
+
+export interface TeamSetupWizardProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
 import { apiService, endpoints } from '@/lib/api';
 import { useNavigate } from 'react-router-dom';
 
@@ -108,10 +113,7 @@ export interface WizardData {
   // Step 5: Final review data is computed from other steps
 }
 
-interface TeamSetupWizardProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+// Props interface moved to top for export
 
 const STEPS = [
   { id: 1, title: 'Basic Info', description: 'Workspace name and description' },
@@ -433,7 +435,6 @@ export function TeamSetupWizard({ isOpen, onClose }: TeamSetupWizardProps) {
         toast({
           title: 'Team Created',
           description: `Team "${wizardData.teamName}" has been created successfully.`,
-          variant: 'success',
         });
         navigate(`/team`);
       }
