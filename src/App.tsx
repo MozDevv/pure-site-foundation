@@ -91,6 +91,10 @@ const App = () => (
               element={<AdminDashboardPage menu="projectsPage" />}
             />
             <Route
+              path="/admin/innovation/projects/:id"
+              element={<AdminDashboardPage menu="projectDetailPage" />}
+            />
+            <Route
               path="/admin/innovation/reviews"
               element={<AdminDashboardPage menu="reviewsPage" />}
             />
