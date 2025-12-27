@@ -46,14 +46,15 @@ export const WizardStepOne = forwardRef<
     if (incompleteTeamId) {
       return true;
     }
-    setIsSaving(true);
 
     try {
       // Your save logic here - this could be an API call
       // For example:
-      const response = await apiService.post(endpoints.createTeam, {
+      const response = await apiService.post(endpoints.createProject, {
         name: data.teamName,
         description: data.description,
+        avatar: data.avatar,
+        visibility: data.visibility,
       });
       if (response.status === 200) {
         console.log('Step 1 data saved:', response.data);
@@ -119,9 +120,9 @@ export const WizardStepOne = forwardRef<
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h3 className="text-2xl font-bold mb-2">Let's create your team</h3>
+        <h3 className="text-2xl font-bold mb-2">Let's create your Project</h3>
         <p className="text-muted-foreground">
-          Start by providing basic information about your team
+          Start by providing basic information about your Project
         </p>
       </div>
 
@@ -129,7 +130,7 @@ export const WizardStepOne = forwardRef<
         {/* Form */}
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="team-name">Team Name *</Label>
+            <Label htmlFor="team-name">Project Name *</Label>
             <Input
               id="team-name"
               value={data.teamName}

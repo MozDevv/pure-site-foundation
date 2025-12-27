@@ -1,390 +1,529 @@
-import React, { useEffect, useImperativeHandle, useState } from 'react';
+import React, { useImperativeHandle, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogClose,
-} from '@/components/ui/dialog';
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Kanban, ListChecks, Layers, Plus, Trash2 } from 'lucide-react';
+  AlertCircle,
+  Lightbulb,
+  Users,
+  Sparkles,
+  Layers,
+  Code,
+  HelpCircle,
+  X,
+} from 'lucide-react';
 import { WizardData } from '../TeamSetupWizard';
-import SimpleInputTable from '../../SimpleInputTable';
-import { API_BASE_URL, apiService, endpoints } from '@/services/api';
-import { useIncompleteTeamIdStore } from '@/services/store';
-import { Checkbox } from '@/components/ui/checkbox';
-import GenerateBoardDialog from '../../GenerateBoardDialog';
-import { useSelectedTeamStore, useTeamResourceStore } from '@/services/store';
-import Tasks from '@/pages/Tasks';
-import axios from 'axios';
-import { ExcelDropzone } from '@/components/ui/ExcelDropzone';
+import { apiService, endpoints } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 interface WizardStepTwoProps {
   data: WizardData;
   onUpdate: (updates: Partial<WizardData>) => void;
 }
 
-// Dummy templates for requirements, epics, stories
-const REQUIREMENT_TYPES = [
-  { id: 'user-story', name: 'User Story' },
-  { id: 'requirement', name: 'Requirement' },
-  { id: 'backlog-item', name: 'Backlog Item' },
-];
-
-const EPIC_COLORS = [
-  { id: '#7c3aed', name: 'Purple' },
-  { id: '#2563eb', name: 'Blue' },
-  { id: '#059669', name: 'Green' },
-  { id: '#f59e42', name: 'Orange' },
-];
-
-const IMPORTANCE_ENUMS = [
-  { id: 'CRITICAL', name: 'Critical', cellColor: '#ef4444' }, // Red
-  { id: 'HIGH', name: 'High', cellColor: '#f59e42' }, // Orange
-  { id: 'MEDIUM', name: 'Medium', cellColor: '#fbbf24' }, // Yellow
-  { id: 'LOW', name: 'Low', cellColor: '#22c55e' }, // Green
-];
-
-const STATUS_ENUMS = [
-  { id: 'REQUESTED', name: 'Requested' },
-  { id: 'UNDER_REVIEW', name: 'Under Review' },
-  { id: 'REJECTED', name: 'Rejected' },
-  { id: 'ACCEPTED', name: 'Accepted' },
-  { id: 'PLANNED', name: 'Planned' },
-  { id: 'IN_PROGRESS', name: 'In Progress' },
-  { id: 'DEVELOPED', name: 'Developed' },
-  { id: 'TESTED', name: 'Tested' },
-  { id: 'COMPLETED', name: 'Completed' },
-  { id: 'OBSOLETE', name: 'Obsolete' },
-  { id: 'READY_FOR_REVIEW', name: 'Ready for Review' },
-  { id: 'READY_FOR_TEST', name: 'Ready for Test' },
-  { id: 'RELEASED', name: 'Released' },
-  { id: 'DESIGN_IN_PROCESS', name: 'Design in Process' },
-  { id: 'DESIGN_APPROVAL', name: 'Design Approval' },
-  { id: 'DOCUMENTED', name: 'Documented' },
-];
-
-export const REQUIREMENT_TYPE_ENUMS = [
-  { id: 'DESIGN_ELEMENT', name: 'Design Element', chipColor: '#6366F1' }, // Indigo
-  { id: 'EPIC', name: 'Epic', chipColor: '#EF4444' }, // Red
-  { id: 'FEATURE', name: 'Feature', chipColor: '#F59E0B' }, // Amber
-  { id: 'NEED', name: 'Need', chipColor: '#10B981' }, // Emerald
-  { id: 'QUALITY', name: 'Quality', chipColor: '#06B6D4' }, // Cyan
-  { id: 'USE_CASE', name: 'Use Case', chipColor: '#8B5CF6' }, // Violet
-  { id: 'USER_STORY', name: 'User Story', chipColor: '#3B82F6' }, // Blue
-  { id: 'TASK', name: 'Task', chipColor: '#22C55E' }, // Green
-];
-
-export interface WizardStepOneHandle {
+export interface WizardStepTwoHandle {
   saveData: () => Promise<boolean>;
 }
+
+const TECH_STACK_OPTIONS = [
+  'React',
+  'Node.js',
+  'Python',
+  'TypeScript',
+  'JavaScript',
+  'Java',
+  'C#',
+  'Go',
+  'Rust',
+  'AI / ML',
+  'Mobile (React Native)',
+  'Mobile (Flutter)',
+  'iOS (Swift)',
+  'Android (Kotlin)',
+  'PostgreSQL',
+  'MongoDB',
+  'Firebase',
+  'AWS',
+  'Azure',
+  'Docker',
+  'Kubernetes',
+];
+
+const PROJECT_STAGES = [
+  { value: 'IDEA', label: 'Idea', description: 'Just a concept or vision' },
+  { value: 'PROTOTYPE', label: 'Prototype', description: 'Early working demo' },
+  { value: 'MVP', label: 'MVP', description: 'Minimum viable product ready' },
+];
+
 export const WizardStepTwo = React.forwardRef<
-  WizardStepOneHandle,
+  WizardStepTwoHandle,
   WizardStepTwoProps
 >(({ data, onUpdate }, ref) => {
-  // Requirement Dialog
-  const [openRequirementDialog, setOpenRequirementDialog] = useState(false);
-  const [requirementForm, setRequirementForm] = useState({
-    title: '',
-    description: '',
-    type: 'user-story',
-    priority: 'Medium',
-  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [techInput, setTechInput] = useState('');
 
   useImperativeHandle(ref, () => ({
     saveData: async () => {
       return await handleSave();
     },
   }));
-  const [isSaving, setIsSaving] = useState(false);
-  const { incompleteTeamId, setIncompleteTeamId } = useIncompleteTeamIdStore();
+
+  const { toast } = useToast();
 
   const handleSave = async (): Promise<boolean> => {
+    // Validate required fields
+    if (!data.problemStatement?.trim()) {
+      return false;
+    }
+    if (!data.solutionDescription?.trim()) {
+      return false;
+    }
+    if (!data.projectStage) {
+      return false;
+    }
+    /**
+ * 
+        localStorage.setItem('incompleteTeam', JSON.stringify(response.data));
+ * 
+ */
+    let incompleteTeam = localStorage.getItem('incompleteTeam');
+    if (incompleteTeam) {
+      incompleteTeam = JSON.parse(incompleteTeam);
+    }
+    const id = data.id || (incompleteTeam ? incompleteTeam.id : null);
+    if (!id) {
+      console.error('No project ID found for saving step 2 data');
+      return false;
+    }
+
     setIsSaving(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    return true;
-  };
-
-  // Story Dialog
-
-  const [openTasks, setOpenTasks] = useState(false);
-  const [fetchedData, setFetchedData] = useState(null);
-  const handleImportExcel = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-      fileInputRef.current.click();
-    }
-  };
-  const [openBoardDialog, setOpenBoardDialog] = useState(false);
-  const [openExcelDialog, setOpenExcelDialog] = useState(false);
-  const handlers = {
-    'Generate Boards': () => {
-      setOpenBoardDialog(true);
-    },
-    'Generate Excel Template': () => {
-      generateMembersTemplate();
-    },
-    'Import from Excel': () => {
-      setOpenExcelDialog(true);
-    },
-    'Export to Excel': () => {},
-
-    'Print Table': () => {},
-    'Reset Table': () => {},
-  };
-  const [loading, setLoading] = useState(false);
-  const handleGeneratingBoard = async (data) => {
-    setLoading(true);
     try {
-      const res = await apiService.post(
-        endpoints.generateBoardFromRequirements,
-        data
-      );
-      if (res.status === 200) {
-        useTeamResourceStore.getState().setSelectedTeam(incompleteTeamId);
-        useTeamResourceStore.getState().setResourceType('boards');
-        useTeamResourceStore.getState().setResources([res.data]);
-
-        //add a timeout
-        setTimeout(() => {
-          setOpenTasks(true);
-        }, 2500);
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const loaderMessages = [
-    'Initializing board generation engine...',
-    'Parsing requirements dataset...',
-    'Configuring workflow columns...',
-    'Allocating tasks to board structure...',
-    'Finalizing board schema and relationships...',
-    'Syncing data and preparing your workspace...',
-    'Board successfully generated. Launching interface...',
-  ];
-  const [loaderStep, setLoaderStep] = useState(0);
-
-  useEffect(() => {
-    if (!loading) return;
-    setLoaderStep(0);
-    const interval = setInterval(() => {
-      setLoaderStep((step) => (step + 1) % loaderMessages.length);
-    }, 900);
-    return () => clearInterval(interval);
-  }, [loading]);
-
-  const generateMembersTemplate = async () => {
-    const token = localStorage.getItem('token'); // Replace 'token' with the actual key used in your app
-
-    try {
-      // Fetch the file as a blob
-      const response = await axios.get(
-        `${API_BASE_URL}/requirements/api/excel/requirement-template`,
-        {
-          responseType: 'blob', // Specify that the response is a binary Blob
-          headers: {
-            Authorization: `Bearer ${token}`, // Add the token to the Authorization header
-          },
-        }
-      );
-
-      const blob = new Blob([response.data], {
-        type: response.headers['content-type'],
+      const res = await apiService.put(endpoints.updateProject(id as string), {
+        ...incompleteTeam,
+        problemStatement: data.problemStatement,
+        solutionDescription: data.solutionDescription,
+        targetUsers: data.targetUsers,
+        innovationNotes: data.innovationNotes,
+        projectStage: data.projectStage,
+        techStack: data.techStack,
       });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'Requirement Template.xlsx');
-      document.body.appendChild(link);
-      link.click();
-      link.remove(); // Clean up
-      window.URL.revokeObjectURL(url); // Release memory
-    } catch (error) {
-      console.error('Error downloading te file:', error);
-    }
-  };
-
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const handleExcelFileChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const token = localStorage.getItem('token'); // or however you get your auth token
-
-        const response = await axios.post(
-          `${API_BASE_URL}/requirements/import-requirements-excel`,
-          formData,
-          {
-            headers: {
-              'Content-Type': 'multipart/form-data',
-            },
-          }
-        );
-
-        // Handle the response (response.data should be your List<RequirementDto>)
-        console.log('Imported requirements:', response.data);
-        // Optionally update your state with the imported requirements
-        // setFetchedData(response.data);
-      } catch (error) {
-        console.error('Error uploading Excel file:', error);
-        // Optionally show a toast or error message
+      if (res.status === 200) {
+        console.log('Step 2 data saved:', res.data);
+        toast({
+          title: 'Success',
+          description: 'Step 2 data saved successfully, proceed to next step',
+        });
+        localStorage.setItem('incompleteTeam', JSON.stringify(res.data));
+        return true;
       }
+    } catch (error) {
+      console.error('Failed to save step 2 data:', error);
+    }
+    setIsSaving(false);
+  };
+
+  const handleAddTech = (tech: string) => {
+    const currentStack = data.techStack || [];
+    if (!currentStack.includes(tech)) {
+      onUpdate({ techStack: [...currentStack, tech] });
+    }
+    setTechInput('');
+  };
+
+  const handleRemoveTech = (tech: string) => {
+    const currentStack = data.techStack || [];
+    onUpdate({ techStack: currentStack.filter((t) => t !== tech) });
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && techInput.trim()) {
+      e.preventDefault();
+      handleAddTech(techInput.trim());
     }
   };
-  return (
-    <div className="space-y-8">
-      {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="flex flex-col items-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-primary border-4 mb-6"></div>
-            <div className="text-lg font-semibold text-primary mb-2">
-              {loaderMessages[loaderStep]}
-            </div>
-            <div className="text-muted-foreground text-sm text-center">
-              Creating your board, columns, and tasks...
-              <br />
-              This usually takes 3–6 seconds. Grab a ☕!
-            </div>
-          </div>
-        </div>
-      )}
-      <Dialog open={openExcelDialog} onOpenChange={setOpenExcelDialog}>
-        <DialogContent className="w-[700px] h-[30vh] ">
-          <DialogHeader>
-            <DialogTitle>Upload Excel File</DialogTitle>
-          </DialogHeader>
-          <ExcelDropzone onFileAccepted={handleExcelFileChange} />
-          <div className="flex  gap-4 justify-end mt-4">
-            <Button variant="outline" onClick={() => setOpenExcelDialog(false)}>
-              Close
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => {
-                fileInputRef.current?.click();
-              }}
-            >
-              Proceed
-            </Button>
-          </div>
-        </DialogContent>
-        <DialogFooter></DialogFooter>
-      </Dialog>
-      <Dialog open={openTasks} onOpenChange={setOpenTasks}>
-        <DialogContent className="w-[98vw] max-w-[1800px] h-[90vh] p-6 flex flex-col">
-          <div className="flex-1 min-h-0">
-            <Tasks isGeneratedFromRequirement={true} isSprint={false} />
-          </div>
-        </DialogContent>
-      </Dialog>
 
-      <GenerateBoardDialog
-        open={openBoardDialog}
-        onOpenChange={setOpenBoardDialog}
-        fetchedData={fetchedData}
-        REQUIREMENT_TYPE_ENUMS={REQUIREMENT_TYPE_ENUMS}
-        STATUS_ENUMS={STATUS_ENUMS}
-        onSave={(boardSettings) => {
-          handleGeneratingBoard(boardSettings);
-        }}
-      />
-      {/* Requirements */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+  const getCharacterCount = (text: string | undefined, max: number) => {
+    const count = text?.length || 0;
+    return (
+      <span
+        className={count > max ? 'text-destructive' : 'text-muted-foreground'}
+      >
+        {count}/{max}
+      </span>
+    );
+  };
+
+  return (
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-foreground">
+            Project Details
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            Explain your idea clearly to reviewers, mentors, and the community
+          </p>
+        </div>
+
+        {/* 1. Problem Statement (Required) */}
+        <Card>
+          <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <ListChecks className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 bg-gradient-to-br from-red-500 to-orange-500 rounded-lg flex items-center justify-center">
+                <AlertCircle className="w-5 h-5 text-white" />
               </div>
-              <div>
-                <CardTitle>Requirements</CardTitle>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">Problem Statement</CardTitle>
+                  <Badge variant="destructive" className="text-xs">
+                    Required
+                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Strong projects clearly define a real, specific problem.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
                 <p className="text-sm text-muted-foreground">
-                  Capture user stories, requirements, or backlog items
+                  What problem are you solving?
                 </p>
               </div>
             </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <SimpleInputTable
-            fields={[
-              {
-                label: 'Description',
-                value: 'description',
-                type: 'textarea',
-              },
-              {
-                label: 'Type',
-                value: 'type',
-                type: 'select',
-                options: REQUIREMENT_TYPE_ENUMS,
-              },
-              {
-                label: 'Importance',
-                value: 'importance',
-                type: 'select',
-                options: IMPORTANCE_ENUMS,
-              },
-              {
-                label: 'Status',
-                value: 'status',
-                type: 'select',
-                options: STATUS_ENUMS,
-              },
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Textarea
+                placeholder="e.g., Many small farmers in rural areas lack access to real-time market prices, causing them to sell their produce at unfair rates..."
+                value={data.problemStatement || ''}
+                onChange={(e) => onUpdate({ problemStatement: e.target.value })}
+                className="min-h-[120px] resize-none"
+                maxLength={1500}
+              />
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">
+                  Describe the problem your project addresses and who is
+                  affected.
+                </span>
+                {getCharacterCount(data.problemStatement, 1500)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-              {
-                label: 'Parent Requirement',
-                value: 'parentId',
-                type: 'select',
-                notRequired: true,
-                options: fetchedData && fetchedData,
-                cellEditorParams: (params) => ({
-                  values: (fetchedData || [])
-                    .filter((opt) => opt.id !== params.data.id) // Exclude self
-                    .map((opt) => opt.id),
-                }),
-                valueFormatter: (params) => {
-                  const opt = (fetchedData || []).find(
-                    (o) => o.id === params.value
-                  );
-                  return opt ? opt.name : '';
-                },
-              },
-            ]}
-            handlers={handlers}
-            setFetchedData={setFetchedData}
-            saveId={incompleteTeamId}
-            saveIdTitle="teamId"
-            getEndpoint={endpoints.getTeamRequirements(incompleteTeamId || '')}
-            postEndpoint={endpoints.createRequirement}
-            putEndpoint={endpoints.updateRequirement}
-            deleteEndpoint={endpoints.deleteRequirement(incompleteTeamId || '')}
-          />
-        </CardContent>
-      </Card>
-    </div>
+        {/* 2. Proposed Solution (Required) */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-lg flex items-center justify-center">
+                <Lightbulb className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">Proposed Solution</CardTitle>
+                  <Badge variant="destructive" className="text-xs">
+                    Required
+                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Focus on the idea, not the implementation details yet.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  How does your project solve the problem?
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Textarea
+                placeholder="e.g., Our mobile app aggregates real-time market prices from multiple sources and delivers SMS alerts to farmers, even without internet access..."
+                value={data.solutionDescription || ''}
+                onChange={(e) =>
+                  onUpdate({ solutionDescription: e.target.value })
+                }
+                className="min-h-[120px] resize-none"
+                maxLength={1500}
+              />
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">
+                  Explain your solution and how it works at a high level.
+                </span>
+                {getCharacterCount(data.solutionDescription, 1500)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 3. Target Users (Optional but Recommended) */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">
+                    Target Users / Beneficiaries
+                  </CardTitle>
+                  <Badge variant="secondary" className="text-xs">
+                    Recommended
+                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Knowing the user helps reviewers understand impact.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Who will use or benefit from this project?
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Textarea
+                placeholder="e.g., Small-scale farmers, Agricultural cooperatives, Rural communities, Government agricultural agencies..."
+                value={data.targetUsers || ''}
+                onChange={(e) => onUpdate({ targetUsers: e.target.value })}
+                className="min-h-[80px] resize-none"
+                maxLength={500}
+              />
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">
+                  Examples: Students, Farmers, SMEs, Developers, Government
+                </span>
+                {getCharacterCount(data.targetUsers, 500)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 4. Innovation / Uniqueness (Optional) */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+                <Sparkles className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">
+                    Innovation / Uniqueness
+                  </CardTitle>
+                  <Badge variant="outline" className="text-xs">
+                    Optional
+                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>
+                        Is this faster, cheaper, smarter, or more accessible?
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  What makes this different from existing solutions?
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <Textarea
+                placeholder="e.g., Unlike existing solutions that require internet, our app works offline using SMS. We also use AI to predict price trends..."
+                value={data.innovationNotes || ''}
+                onChange={(e) => onUpdate({ innovationNotes: e.target.value })}
+                className="min-h-[80px] resize-none"
+                maxLength={500}
+              />
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">
+                  Highlight what sets your project apart.
+                </span>
+                {getCharacterCount(data.innovationNotes, 500)}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* 5. Project Status (Required) */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-yellow-500 rounded-lg flex items-center justify-center">
+                <Layers className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">Project Status</CardTitle>
+                  <Badge variant="destructive" className="text-xs">
+                    Required
+                  </Badge>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="w-4 h-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>This helps reviewers set expectations.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Current stage of the project
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup
+              value={data.projectStage || ''}
+              onValueChange={(value) =>
+                onUpdate({
+                  projectStage: value as 'IDEA' | 'PROTOTYPE' | 'MVP',
+                })
+              }
+              className="grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
+              {PROJECT_STAGES.map((stage) => (
+                <Label
+                  key={stage.value}
+                  htmlFor={stage.value}
+                  className={`flex items-start space-x-3 p-4 border rounded-lg cursor-pointer transition-all hover:border-primary ${
+                    data.projectStage === stage.value
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border'
+                  }`}
+                >
+                  <RadioGroupItem value={stage.value} id={stage.value} />
+                  <div className="space-y-1">
+                    <span className="font-medium">{stage.label}</span>
+                    <p className="text-xs text-muted-foreground">
+                      {stage.description}
+                    </p>
+                  </div>
+                </Label>
+              ))}
+            </RadioGroup>
+          </CardContent>
+        </Card>
+
+        {/* 6. Tech Stack (Optional) */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-slate-600 to-slate-800 rounded-lg flex items-center justify-center">
+                <Code className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-lg">Tech Stack</CardTitle>
+                  <Badge variant="outline" className="text-xs">
+                    Optional
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Technologies you plan to use
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Selected Technologies */}
+              {data.techStack && data.techStack.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {data.techStack.map((tech) => (
+                    <Badge
+                      key={tech}
+                      variant="secondary"
+                      className="pl-3 pr-1 py-1 flex items-center gap-1"
+                    >
+                      {tech}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTech(tech)}
+                        className="ml-1 hover:bg-muted rounded-full p-0.5"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* Input for custom tech */}
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  placeholder="Type a technology and press Enter..."
+                  value={techInput}
+                  onChange={(e) => setTechInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  className="w-full px-3 py-2 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+              </div>
+
+              {/* Quick add suggestions */}
+              <div className="space-y-2">
+                <Label className="text-xs text-muted-foreground">
+                  Quick add:
+                </Label>
+                <div className="flex flex-wrap gap-2">
+                  {TECH_STACK_OPTIONS.filter(
+                    (tech) => !data.techStack?.includes(tech)
+                  )
+                    .slice(0, 10)
+                    .map((tech) => (
+                      <Badge
+                        key={tech}
+                        variant="outline"
+                        className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                        onClick={() => handleAddTech(tech)}
+                      >
+                        + {tech}
+                      </Badge>
+                    ))}
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                You can update this later.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </TooltipProvider>
   );
 });
+
+WizardStepTwo.displayName = 'WizardStepTwo';

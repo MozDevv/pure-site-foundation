@@ -103,14 +103,50 @@ export const endpoints = {
   // Team endpoints
   createTeam: '/teams',
   updateTeam: '/teams',
+  getUserTeams: '/teams',
   getTeamById: (teamId: string) => `/teams/${teamId}`,
-  
+
   // Requirements endpoints
   getTeamRequirements: (teamId: string) => `/requirements/team/${teamId}`,
   createRequirement: '/requirements',
   updateRequirement: '/requirements',
   deleteRequirement: (id: string) => `/requirements/${id}`,
   generateBoardFromRequirements: '/requirements/generate-board',
+  /**api/teams/invite?
+    teamId={{$random.uuid}}&
+    email={{$random.alphanumeric(8)}}&
+    roleId={{$random.uuid}} */
+  inviteMemberToTeam: (teamId: string, email: string, roleId: string) =>
+    `/teams/invite?teamId=${teamId}&email=${email}&roleId=${roleId}`,
+  /**project-controller
+
+
+GET
+/api/projects/{id}
+
+
+PUT
+/api/projects/{id}
+
+
+GET
+/api/projects
+
+
+POST
+/api/projects */
+  getProjectById: (id: string) => `/projects/${id}`,
+  updateProject: (id: string) => `/projects/${id}`,
+  getUserProjects: '/projects',
+  createProject: '/projects',
+
+  submitProjectForApproval: (projectId: string) =>
+    `/v1/workflow/projects/${projectId}/submit`,
+  rejectProject: (projectId: string) =>
+    `/v1/workflow/projects/${projectId}/reject`,
+  approveProject: (projectId: string) =>
+    `/v1/workflow/projects/${projectId}/approve`,
+  getAllApprovals: '/v1/workflow/approvals',
 };
 
 export const apiService = {

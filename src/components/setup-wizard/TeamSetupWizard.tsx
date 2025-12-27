@@ -4,7 +4,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-import { X, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  X,
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+  Save,
+  SendHorizontal,
+} from 'lucide-react';
 import { WizardStepOne } from './steps/WizardStepOne';
 import { WizardStepTwo } from './steps/WizardStepTwo';
 import { WizardStepThree } from './steps/WizardStepThree';
@@ -31,68 +38,31 @@ export interface WizardData {
     id: string;
     name: string;
     permissions: {
-      kanban: {
-        moveCards: boolean;
-        editTasks: boolean;
-        deleteColumns: boolean;
-        createBoard: boolean;
-        addMembersToBoard: boolean;
-        archiveBoard: boolean;
-        assignTasks: boolean;
-        commentOnTasks: boolean;
-        setDueDates: boolean;
-        reorderColumns: boolean;
+      projects: {
+        createProject: boolean;
+        editProject: boolean;
+        deleteProject: boolean;
+        submitProject: boolean;
       };
-      code: {
-        viewGithub: boolean;
-        mergePRs: boolean;
-        accessSSH: boolean;
-        addRepo: boolean;
-        manageRepoAccess: boolean;
-        deleteRepo: boolean;
-        createBranch: boolean;
-        pushCode: boolean;
-        reviewCode: boolean;
-        viewCommitHistory: boolean;
-      };
-      cicd: {
-        triggerDeployments: boolean;
-        editPipelines: boolean;
-        viewPipelineStatus: boolean;
-        rollbackDeployment: boolean;
-        approvePipeline: boolean;
-        cancelPipeline: boolean;
-        viewDeploymentLogs: boolean;
-      };
-      documents: {
-        uploadFiles: boolean;
-        downloadFiles: boolean;
-        deleteFiles: boolean;
-        shareFiles: boolean;
-        editFiles: boolean;
-        commentOnFiles: boolean;
-        viewFileHistory: boolean;
-      };
-      ssh: {
-        startSession: boolean;
-        terminateSession: boolean;
-        viewSessionLogs: boolean;
-        manageSessionAccess: boolean;
-      };
-      general: {
+      team: {
         inviteMembers: boolean;
-        viewAnalytics: boolean;
-        editSettings: boolean;
         removeMembers: boolean;
-        viewActivityLog: boolean;
-        deleteTeam: boolean;
-        changeTeamOwner: boolean;
-        manageIntegrations: boolean;
-        viewTeamProfile: boolean;
+        assignRoles: boolean;
+        manageTeamSettings: boolean;
+      };
+      submissions: {
+        uploadFiles: boolean;
+        editSubmission: boolean;
+        addDemoLink: boolean;
+        viewFeedback: boolean;
+      };
+      communication: {
+        postUpdates: boolean;
+        chat: boolean;
+        mentorContact: boolean;
       };
     };
   }>;
-
   // Step 3: Resources
   githubRepos: Array<{
     name: string;
@@ -148,197 +118,89 @@ export function TeamSetupWizard({ isOpen, onClose }: TeamSetupWizardProps) {
     visibility: 'invite-only',
     customRoles: [
       {
-        id: 'pm',
-        name: 'Project Manager',
+        id: 'lead',
+        name: 'Team Lead',
         permissions: {
-          kanban: {
-            moveCards: true,
-            editTasks: true,
-            deleteColumns: true,
-            createBoard: true,
-            addMembersToBoard: true,
-            archiveBoard: true,
-            assignTasks: true,
-            commentOnTasks: true,
-            setDueDates: true,
-            reorderColumns: true,
+          projects: {
+            createProject: true,
+            editProject: true,
+            deleteProject: true,
+            submitProject: true,
           },
-          code: {
-            viewGithub: true,
-            mergePRs: true,
-            accessSSH: true,
-            addRepo: true,
-            manageRepoAccess: true,
-            deleteRepo: true,
-            createBranch: true,
-            pushCode: true,
-            reviewCode: true,
-            viewCommitHistory: true,
-          },
-          cicd: {
-            triggerDeployments: true,
-            editPipelines: true,
-            viewPipelineStatus: true,
-            rollbackDeployment: true,
-            approvePipeline: true,
-            cancelPipeline: true,
-            viewDeploymentLogs: true,
-          },
-          documents: {
-            uploadFiles: true,
-            downloadFiles: true,
-            deleteFiles: true,
-            shareFiles: true,
-            editFiles: true,
-            commentOnFiles: true,
-            viewFileHistory: true,
-          },
-          ssh: {
-            startSession: true,
-            terminateSession: true,
-            viewSessionLogs: true,
-            manageSessionAccess: true,
-          },
-          general: {
+          team: {
             inviteMembers: true,
-            viewAnalytics: true,
-            editSettings: true,
             removeMembers: true,
-            viewActivityLog: true,
-            deleteTeam: true,
-            changeTeamOwner: true,
-            manageIntegrations: true,
-            viewTeamProfile: true,
+            assignRoles: true,
+            manageTeamSettings: true,
           },
-        },
-      },
-      {
-        id: 'dev',
-        name: 'Developer',
-        permissions: {
-          kanban: {
-            moveCards: true,
-            editTasks: true,
-            deleteColumns: false,
-            createBoard: false,
-            addMembersToBoard: false,
-            archiveBoard: false,
-            assignTasks: false,
-            commentOnTasks: true,
-            setDueDates: true,
-            reorderColumns: true,
-          },
-          code: {
-            viewGithub: true,
-            mergePRs: true,
-            accessSSH: false,
-            addRepo: false,
-            manageRepoAccess: false,
-            deleteRepo: false,
-            createBranch: true,
-            pushCode: true,
-            reviewCode: true,
-            viewCommitHistory: true,
-          },
-          cicd: {
-            triggerDeployments: true,
-            editPipelines: false,
-            viewPipelineStatus: true,
-            rollbackDeployment: false,
-            approvePipeline: false,
-            cancelPipeline: false,
-            viewDeploymentLogs: true,
-          },
-          documents: {
+          submissions: {
             uploadFiles: true,
-            downloadFiles: true,
-            deleteFiles: false,
-            shareFiles: true,
-            editFiles: true,
-            commentOnFiles: true,
-            viewFileHistory: true,
+            editSubmission: true,
+            addDemoLink: true,
+            viewFeedback: true,
           },
-          ssh: {
-            startSession: false,
-            terminateSession: false,
-            viewSessionLogs: true,
-            manageSessionAccess: false,
-          },
-          general: {
-            inviteMembers: false,
-            viewAnalytics: true,
-            editSettings: false,
-            removeMembers: false,
-            viewActivityLog: true,
-            deleteTeam: false,
-            changeTeamOwner: false,
-            manageIntegrations: false,
-            viewTeamProfile: true,
+          communication: {
+            postUpdates: true,
+            chat: true,
+            mentorContact: true,
           },
         },
       },
       {
-        id: 'QA',
-        name: 'QA',
+        id: 'member',
+        name: 'Member',
         permissions: {
-          kanban: {
-            moveCards: false,
-            editTasks: true,
-            deleteColumns: false,
-            createBoard: false,
-            addMembersToBoard: false,
-            archiveBoard: false,
-            assignTasks: false,
-            commentOnTasks: true,
-            setDueDates: false,
-            reorderColumns: false,
+          projects: {
+            createProject: true,
+            editProject: true,
+            deleteProject: false,
+            submitProject: false,
           },
-          code: {
-            viewGithub: true,
-            mergePRs: false,
-            accessSSH: false,
-            addRepo: false,
-            manageRepoAccess: false,
-            deleteRepo: false,
-            createBranch: false,
-            pushCode: false,
-            reviewCode: true,
-            viewCommitHistory: true,
-          },
-          cicd: {
-            triggerDeployments: false,
-            editPipelines: false,
-            viewPipelineStatus: true,
-            rollbackDeployment: false,
-            approvePipeline: false,
-            cancelPipeline: false,
-            viewDeploymentLogs: true,
-          },
-          documents: {
-            uploadFiles: false,
-            downloadFiles: true,
-            deleteFiles: false,
-            shareFiles: false,
-            editFiles: false,
-            commentOnFiles: true,
-            viewFileHistory: true,
-          },
-          ssh: {
-            startSession: false,
-            terminateSession: false,
-            viewSessionLogs: false,
-            manageSessionAccess: false,
-          },
-          general: {
+          team: {
             inviteMembers: false,
-            viewAnalytics: false,
-            editSettings: false,
             removeMembers: false,
-            viewActivityLog: true,
-            deleteTeam: false,
-            changeTeamOwner: false,
-            manageIntegrations: false,
-            viewTeamProfile: true,
+            assignRoles: false,
+            manageTeamSettings: false,
+          },
+          submissions: {
+            uploadFiles: true,
+            editSubmission: true,
+            addDemoLink: true,
+            viewFeedback: true,
+          },
+          communication: {
+            postUpdates: true,
+            chat: true,
+            mentorContact: true,
+          },
+        },
+      },
+      {
+        id: 'viewer',
+        name: 'Viewer',
+        permissions: {
+          projects: {
+            createProject: false,
+            editProject: false,
+            deleteProject: false,
+            submitProject: false,
+          },
+          team: {
+            inviteMembers: false,
+            removeMembers: false,
+            assignRoles: false,
+            manageTeamSettings: false,
+          },
+          submissions: {
+            uploadFiles: false,
+            editSubmission: false,
+            addDemoLink: false,
+            viewFeedback: true,
+          },
+          communication: {
+            postUpdates: false,
+            chat: true,
+            mentorContact: false,
           },
         },
       },
@@ -421,26 +283,13 @@ export function TeamSetupWizard({ isOpen, onClose }: TeamSetupWizardProps) {
 
   const handleComplete = async () => {
     // Create the team with the wizard data
-    // createTeam(wizardData);
-    const team = JSON.parse(localStorage.getItem('incompleteTeam') || '{}');
-    const teamId = team.id;
-    const payload = {
-      id: teamId,
-      hasCompletedSetup: true,
-    };
-    try {
-      const res = await apiService.put(endpoints.updateTeam, payload);
-      if (res.status === 200) {
-        console.log('Team created successfully:', res.data);
-        toast({
-          title: 'Team Created',
-          description: `Team "${wizardData.teamName}" has been created successfully.`,
-        });
-        navigate(`/team`);
-      }
-    } catch (error) {
-      console.log(error);
-    }
+
+    toast({
+      title: 'Draft Saved',
+      description: `Workspace "${wizardData.teamName}" has been saved as a draft. You can continue the setup later.`,
+    });
+    localStorage.removeItem('incompleteTeam');
+    navigate('/admin/innovation/projects');
 
     onClose();
   };
@@ -503,6 +352,53 @@ export function TeamSetupWizard({ isOpen, onClose }: TeamSetupWizardProps) {
     }
   };
 
+  const handleSubmitForApproval = async () => {
+    setIsSaving(true);
+    try {
+      const team = JSON.parse(localStorage.getItem('incompleteTeam') || '{}');
+      const teamId = team.id;
+
+      if (!teamId) {
+        toast({
+          title: 'Error',
+          description: 'No team found. Please start from the beginning.',
+          variant: 'destructive',
+        });
+        setIsSaving(false);
+        return;
+      }
+
+      const payload = {
+        id: teamId,
+        hasCompletedSetup: true,
+        status: 'PENDING_APPROVAL',
+      };
+
+      const res = await apiService.post(
+        endpoints.submitProjectForApproval(teamId)
+      );
+      if (res.status === 200) {
+        console.log('Team submitted for approval:', res.data);
+        toast({
+          title: 'Submitted for Approval',
+          description: `Team "${wizardData.teamName}" has been submitted for approval. You will be notified once it's reviewed.`,
+        });
+        localStorage.removeItem('incompleteTeam');
+        navigate('/admin/innovation/projects');
+        onClose?.();
+      }
+    } catch (error) {
+      console.error('Failed to submit for approval:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to submit for approval. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="  flex items-center justify-center  ">
       <div className="bg-background  w-full max-h-[90vh] overflow-hidden">
@@ -555,7 +451,10 @@ export function TeamSetupWizard({ isOpen, onClose }: TeamSetupWizardProps) {
               </div>
             ))}
           </div>
-          <Progress value={(currentStep / 5) * 100} className="h-2" />
+          <Progress
+            value={(currentStep / 5) * 100}
+            className="h-2 bg-gray-200 [&>div]:bg-blue-600"
+          />
         </div>
 
         {/* Step Content */}
@@ -576,14 +475,43 @@ export function TeamSetupWizard({ isOpen, onClose }: TeamSetupWizardProps) {
           </Button>
 
           {currentStep === 5 ? (
-            <Button
-              onClick={handleComplete}
-              disabled={!isStepValid()}
-              className="flex items-center gap-2 bg-gradient-primary hover:opacity-90"
-            >
-              <Sparkles className="w-4 h-4" />
-              Create Team
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={handleComplete}
+                disabled={isSaving}
+                className="flex items-center gap-2"
+              >
+                {isSaving ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Save as Draft
+                  </>
+                )}
+              </Button>
+              <Button
+                onClick={handleSubmitForApproval}
+                disabled={!isStepValid() || isSaving}
+                className="flex items-center gap-2 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90"
+              >
+                {isSaving ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <SendHorizontal className="w-4 h-4" />
+                    Submit for Approval
+                  </>
+                )}
+              </Button>
+            </div>
           ) : (
             <Button
               onClick={nextStep}

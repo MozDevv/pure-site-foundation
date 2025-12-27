@@ -117,86 +117,41 @@ export function TeamRoles({ data, onUpdate }: WizardStepTwoProps) {
 
   const permissionCategories = [
     {
-      key: 'kanban',
-      title: 'Kanban Boards',
+      key: 'projects',
+      title: 'Projects & Ideas',
       permissions: [
-        { key: 'moveCards', label: 'Move cards between columns' },
-        { key: 'editTasks', label: 'Edit task details' },
-        { key: 'deleteColumns', label: 'Delete board columns' },
-        { key: 'createBoard', label: 'Create new boards' },
-        { key: 'addMembersToBoard', label: 'Add members to boards' },
-        { key: 'archiveBoard', label: 'Archive boards' },
-        { key: 'assignTasks', label: 'Assign tasks to members' },
-        { key: 'commentOnTasks', label: 'Comment on tasks' },
-        { key: 'setDueDates', label: 'Set due dates for tasks' },
-        { key: 'reorderColumns', label: 'Reorder board columns' },
+        { key: 'editProject', label: 'Edit project details' },
+        { key: 'deleteProject', label: 'Delete projects' },
+        { key: 'submitProject', label: 'Submit project for judging' },
       ],
     },
     {
-      key: 'code',
-      title: 'Code Management',
+      key: 'team',
+      title: 'Team Management',
       permissions: [
-        { key: 'viewGithub', label: 'View GitHub repositories' },
-        { key: 'mergePRs', label: 'Merge pull requests' },
-        { key: 'accessSSH', label: 'Access SSH sessions' },
-        { key: 'addRepo', label: 'Add repositories to team' },
-        { key: 'manageRepoAccess', label: 'Manage repository access' },
-        { key: 'deleteRepo', label: 'Delete repositories' },
-        { key: 'createBranch', label: 'Create branches' },
-        { key: 'pushCode', label: 'Push code to repository' },
-        { key: 'reviewCode', label: 'Review code changes' },
-        { key: 'viewCommitHistory', label: 'View commit history' },
+        { key: 'inviteMembers', label: 'Invite team members' },
+        { key: 'removeMembers', label: 'Remove team members' },
+        { key: 'assignRoles', label: 'Assign member roles' },
+        { key: 'manageTeamSettings', label: 'Manage team settings' },
       ],
     },
     {
-      key: 'cicd',
-      title: 'CI/CD Pipeline',
+      key: 'submissions',
+      title: 'Submissions & Demos',
       permissions: [
-        { key: 'triggerDeployments', label: 'Trigger deployments' },
-        { key: 'editPipelines', label: 'Edit pipeline configurations' },
-        { key: 'viewPipelineStatus', label: 'View pipeline status' },
-        { key: 'rollbackDeployment', label: 'Rollback deployments' },
-        { key: 'approvePipeline', label: 'Approve pipeline runs' },
-        { key: 'cancelPipeline', label: 'Cancel running pipelines' },
-        { key: 'viewDeploymentLogs', label: 'View deployment logs' },
+        { key: 'uploadFiles', label: 'Upload project files' },
+        { key: 'editSubmission', label: 'Edit submission details' },
+        { key: 'addDemoLink', label: 'Add demo/video links' },
+        { key: 'viewFeedback', label: 'View judge feedback' },
       ],
     },
     {
-      key: 'documents',
-      title: 'Documents',
+      key: 'communication',
+      title: 'Communication',
       permissions: [
-        { key: 'uploadFiles', label: 'Upload files to team' },
-        { key: 'downloadFiles', label: 'Download team files' },
-        { key: 'deleteFiles', label: 'Delete team files' },
-        { key: 'shareFiles', label: 'Share files with members' },
-        { key: 'editFiles', label: 'Edit team documents' },
-        { key: 'commentOnFiles', label: 'Comment on documents' },
-        { key: 'viewFileHistory', label: 'View file version history' },
-      ],
-    },
-    {
-      key: 'ssh',
-      title: 'SSH Sessions',
-      permissions: [
-        { key: 'startSession', label: 'Start SSH session' },
-        { key: 'terminateSession', label: 'Terminate SSH session' },
-        { key: 'viewSessionLogs', label: 'View SSH session logs' },
-        { key: 'manageSessionAccess', label: 'Manage SSH session access' },
-      ],
-    },
-    {
-      key: 'general',
-      title: 'General Access',
-      permissions: [
-        { key: 'inviteMembers', label: 'Invite new members' },
-        { key: 'viewAnalytics', label: 'View team analytics' },
-        { key: 'editSettings', label: 'Edit team settings' },
-        { key: 'removeMembers', label: 'Remove members from team' },
-        { key: 'viewActivityLog', label: 'View team activity log' },
-        { key: 'deleteTeam', label: 'Delete team' },
-        { key: 'changeTeamOwner', label: 'Change team owner' },
-        { key: 'manageIntegrations', label: 'Manage third-party integrations' },
-        { key: 'viewTeamProfile', label: 'View team profile' },
+        { key: 'postUpdates', label: 'Post team updates' },
+        { key: 'chat', label: 'Use team chat' },
+        { key: 'mentorContact', label: 'Contact mentors' },
       ],
     },
   ];
@@ -259,7 +214,7 @@ export function TeamRoles({ data, onUpdate }: WizardStepTwoProps) {
               }`}
             >
               <CardHeader
-                className="pb-3 sticky top-0 z-10 bg-secondary backdrop-blur border-b"
+                className="pb-3 sticky top-0 z-10 bg-primary  border-b"
                 style={
                   {
                     // fallback for dark mode if needed:
@@ -267,10 +222,12 @@ export function TeamRoles({ data, onUpdate }: WizardStepTwoProps) {
                   }
                 }
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between text-white">
                   <div className="flex items-center gap-2">
                     {getRoleIcon(role.id)}
-                    <CardTitle className="text-lg">{role.name}</CardTitle>
+                    <CardTitle className="text-lg text-white">
+                      {role.name}
+                    </CardTitle>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button
@@ -279,7 +236,7 @@ export function TeamRoles({ data, onUpdate }: WizardStepTwoProps) {
                       onClick={() => toggleRoleComparison(role.id)}
                       className={
                         compareRoles.includes(role.id)
-                          ? 'bg-primary text-primary-foreground'
+                          ? 'bg-primary text-primary'
                           : ''
                       }
                     >
@@ -304,7 +261,7 @@ export function TeamRoles({ data, onUpdate }: WizardStepTwoProps) {
               >
                 {permissionCategories.map((category) => (
                   <div key={category.key} className="space-y-2">
-                    <h5 className="text-sm font-medium text-muted-foreground">
+                    <h5 className="text-sm font-medium text-primary">
                       {category.title}
                     </h5>
                     <div className="space-y-2">
