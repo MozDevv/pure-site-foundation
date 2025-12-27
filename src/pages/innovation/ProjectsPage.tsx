@@ -3,13 +3,15 @@ import {
   Search,
   Plus,
   FolderOpen,
-  Filter,
   Grid3X3,
   List,
-  Eye,
-  EyeOff,
   ChevronRight,
   ChevronLeft,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  FileText,
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,124 +19,87 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { Progress } from '@/components/ui/progress';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInnovation } from '@/components/innovation-hub/InnovationContext';
 import { toast } from '@/hooks/use-toast';
-import {
-  getProjects,
-  getTeams,
-  Project,
-  Team,
-} from '@/lib/innovation-hub-data';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { apiService, endpoints } from '@/lib/api';
 
-const statusColors: Record<Project['status'], string> = {
-  draft: 'bg-gray-100 text-gray-700',
-  submitted: 'bg-amber-100 text-amber-700',
-  approved: 'bg-emerald-100 text-emerald-700',
-  in_progress: 'bg-blue-100 text-blue-700',
-  completed: 'bg-purple-100 text-purple-700',
-};
+// API Project interface matching backend response
+interface ApiProject {
+  id: string;
+  name: string;
+  description: string;
+  avatar: string;
+  problemStatement: string;
+  solutionDescription: string;
+  targetUsers: string;
+  innovationNotes: string;
+  techStack: string[];
+  githubRepos: { name: string; url: string }[];
+  team: {
+    id: string;
+    name: string;
+    description: string;
+    teamMembers: any[];
+  } | null;
+  status: string;
+  submittedAt: string;
+}
 
-const statusLabels: Record<Project['status'], string> = {
-  draft: 'Draft',
-  submitted: 'Submitted',
-  approved: 'Approved',
-  in_progress: 'In Progress',
-  completed: 'Completed',
+const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
+  DRAFT: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: FileText },
+  PENDING_REVIEW: { label: 'Pending Review', color: 'bg-amber-100 text-amber-700', icon: Clock },
+  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-100 text-blue-700', icon: AlertCircle },
+  APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
+  REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: XCircle },
+  CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-100 text-orange-700', icon: AlertCircle },
+  IN_PROGRESS: { label: 'In Progress', color: 'bg-blue-100 text-blue-700', icon: Clock },
+  COMPLETED: { label: 'Completed', color: 'bg-purple-100 text-purple-700', icon: CheckCircle2 },
 };
 
 export function ProjectsPage() {
   const { currentUser } = useInnovation();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
+  const [projects, setProjects] = useState<ApiProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [filter, setFilter] = useState<'all' | 'my' | 'drafts' | 'public'>(
-    'all'
-  );
+  const [filter, setFilter] = useState<'all' | 'drafts'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
   const navigate = useNavigate();
 
-  const [newProject, setNewProject] = useState({
-    title: '',
-    description: '',
-    problemStatement: '',
-    solutionOverview: '',
-    techStack: '',
-    isPublic: true,
-    teamId: '',
-  });
-
-  const fetchProjectsFromApi = async () => {
-    try {
-      const res = await apiService.get(endpoints.getUserProjects);
-    } catch (error) {
-      console.log(error);
-    }
-  };
-
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const [projectsData, teamsData] = await Promise.all([
-        getProjects(),
-        getTeams(),
-      ]);
-      setProjects(projectsData);
-      setTeams(teamsData);
-      setLoading(false);
+      try {
+        const response = await apiService.get(endpoints.getUserProjects);
+        setProjects(response.data || []);
+      } catch (error) {
+        console.error('Failed to fetch projects:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load projects',
+          variant: 'destructive',
+        });
+        setProjects([]);
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, []);
 
-  const getTeamName = (teamId: number | null) => {
-    if (!teamId) return 'Solo Project';
-    const team = teams.find((t) => t.id === teamId);
-    return team?.name || 'Unknown Team';
-  };
-
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
-      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (project.name?.toLowerCase() || '').includes(searchQuery.toLowerCase()) ||
+      (project.description?.toLowerCase() || '').includes(searchQuery.toLowerCase());
 
     switch (filter) {
-      case 'my':
-        return matchesSearch && project.creator_id === currentUser.id;
       case 'drafts':
-        return (
-          matchesSearch &&
-          project.status === 'draft' &&
-          project.creator_id === currentUser.id
-        );
-      case 'public':
-        return matchesSearch && project.is_public;
+        return matchesSearch && project.status === 'DRAFT';
       default:
         return matchesSearch;
     }
@@ -145,39 +110,6 @@ export function ProjectsPage() {
     currentPage * itemsPerPage
   );
   const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
-
-  const handleCreateProject = () => {
-    if (!newProject.title.trim()) {
-      toast({
-        title: 'Error',
-        description: 'Project title is required',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    toast({
-      title: 'Project Created!',
-      description: `${newProject.title} has been created as a draft.`,
-    });
-    setShowCreateModal(false);
-    setCurrentStep(1);
-    setNewProject({
-      title: '',
-      description: '',
-      problemStatement: '',
-      solutionOverview: '',
-      techStack: '',
-      isPublic: true,
-      teamId: '',
-    });
-  };
-
-  const steps = [
-    { number: 1, title: 'Basic Info' },
-    { number: 2, title: 'Problem & Solution' },
-    { number: 3, title: 'Tech & Visibility' },
-  ];
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -226,9 +158,7 @@ export function ProjectsPage() {
             >
               <TabsList>
                 <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="my">My Projects</TabsTrigger>
                 <TabsTrigger value="drafts">Drafts</TabsTrigger>
-                <TabsTrigger value="public">Gallery</TabsTrigger>
               </TabsList>
             </Tabs>
             <div className="flex border rounded-lg">
@@ -254,8 +184,7 @@ export function ProjectsPage() {
 
         {/* Results count */}
         <p className="text-sm text-muted-foreground mb-4">
-          Showing {paginatedProjects.length} of {filteredProjects.length}{' '}
-          projects
+          Showing {paginatedProjects.length} of {filteredProjects.length} projects
         </p>
 
         {/* Projects Grid/List */}
@@ -291,112 +220,129 @@ export function ProjectsPage() {
                 ? "You don't have any draft projects"
                 : 'Try adjusting your search or filters'}
             </p>
-            <Button onClick={() => setShowCreateModal(true)}>
+            <Button onClick={() => navigate('/innovation/submit-project')}>
               <Plus className="h-4 w-4 mr-2" />
               Submit an Idea
             </Button>
           </Card>
         ) : viewMode === 'grid' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {paginatedProjects.map((project) => (
-              <Card
-                key={project.id}
-                className="hover:shadow-md transition-shadow group cursor-pointer"
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-foreground group-hover:text-blue-600 transition-colors truncate">
-                        {project.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {getTeamName(project.team_id)}
-                      </p>
+            {paginatedProjects.map((project) => {
+              const status = statusConfig[project.status] || statusConfig.DRAFT;
+              const techStack = project.techStack || [];
+              return (
+                <Card
+                  key={project.id}
+                  className="hover:shadow-md transition-shadow group cursor-pointer"
+                  onClick={() => navigate(`/admin/innovation/projects/${project.id}`)}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-3 mb-3">
+                      {project.avatar ? (
+                        <Avatar className="h-10 w-10 shrink-0">
+                          <AvatarImage src={project.avatar} alt={project.name} />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {project.name?.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+                          <FolderOpen className="h-5 w-5 text-white" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground group-hover:text-blue-600 transition-colors truncate">
+                          {project.name}
+                        </h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {project.team?.name || 'Solo Project'}
+                        </p>
+                      </div>
                     </div>
-                    {project.is_public ? (
-                      <Eye className="h-4 w-4 text-muted-foreground shrink-0" />
-                    ) : (
-                      <EyeOff className="h-4 w-4 text-muted-foreground shrink-0" />
-                    )}
-                  </div>
 
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {project.description}
-                  </p>
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                      {project.description}
+                    </p>
 
-                  <div className="flex flex-wrap gap-1.5 mb-4">
-                    {project.tech_stack.slice(0, 3).map((tech) => (
-                      <Badge
-                        key={tech}
-                        variant="outline"
-                        className="text-xs font-normal"
-                      >
-                        {tech}
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {techStack.slice(0, 3).map((tech) => (
+                        <Badge
+                          key={tech}
+                          variant="outline"
+                          className="text-xs font-normal"
+                        >
+                          {tech}
+                        </Badge>
+                      ))}
+                      {techStack.length > 3 && (
+                        <Badge variant="outline" className="text-xs font-normal">
+                          +{techStack.length - 3}
+                        </Badge>
+                      )}
+                    </div>
+
+                    <div className="flex items-center justify-between pt-3 border-t">
+                      <Badge className={cn('text-xs', status.color)}>
+                        {status.label}
                       </Badge>
-                    ))}
-                    {project.tech_stack.length > 3 && (
-                      <Badge variant="outline" className="text-xs font-normal">
-                        +{project.tech_stack.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between pt-3 border-t">
-                    <Badge
-                      className={cn('text-xs', statusColors[project.status])}
-                    >
-                      {statusLabels[project.status]}
-                    </Badge>
-                    <Button variant="ghost" size="sm" className="h-8">
-                      View <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                      <Button variant="ghost" size="sm" className="h-8">
+                        View <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <div className="space-y-3">
-            {paginatedProjects.map((project) => (
-              <Card
-                key={project.id}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <CardContent className="p-4 flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
-                    <FolderOpen className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-foreground">
-                        {project.title}
-                      </h3>
-                      <Badge
-                        className={cn('text-xs', statusColors[project.status])}
-                      >
-                        {statusLabels[project.status]}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {project.description}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4 shrink-0">
-                    <div className="text-sm text-muted-foreground">
-                      {getTeamName(project.team_id)}
-                    </div>
-                    {project.is_public ? (
-                      <Eye className="h-4 w-4 text-muted-foreground" />
+            {paginatedProjects.map((project) => {
+              const status = statusConfig[project.status] || statusConfig.DRAFT;
+              const techStack = project.techStack || [];
+              return (
+                <Card
+                  key={project.id}
+                  className="hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => navigate(`/admin/innovation/projects/${project.id}`)}
+                >
+                  <CardContent className="p-4 flex items-center gap-4">
+                    {project.avatar ? (
+                      <Avatar className="h-12 w-12 shrink-0">
+                        <AvatarImage src={project.avatar} alt={project.name} />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {project.name?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
                     ) : (
-                      <EyeOff className="h-4 w-4 text-muted-foreground" />
+                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shrink-0">
+                        <FolderOpen className="h-6 w-6 text-white" />
+                      </div>
                     )}
-                    <Button variant="outline" size="sm">
-                      View
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-foreground">
+                          {project.name}
+                        </h3>
+                        <Badge className={cn('text-xs', status.color)}>
+                          {status.label}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {project.description}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-4 shrink-0">
+                      <div className="text-sm text-muted-foreground">
+                        {project.team?.name || 'Solo Project'}
+                      </div>
+                      <Button variant="outline" size="sm">
+                        View
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
@@ -428,205 +374,11 @@ export function ProjectsPage() {
         {/* Floating Create Button (Mobile) */}
         <Button
           className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 lg:hidden"
-          onClick={() => setShowCreateModal(true)}
+          onClick={() => navigate('/innovation/submit-project')}
         >
           <Plus className="h-6 w-6" />
         </Button>
       </div>
-
-      {/* Create Project Modal - Multi-step */}
-      <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Submit New Idea</DialogTitle>
-            <DialogDescription>
-              Share your innovation idea with the community
-            </DialogDescription>
-          </DialogHeader>
-
-          {/* Progress Steps */}
-          <div className="flex items-center justify-between mb-6">
-            {steps.map((step, i) => (
-              <div key={step.number} className="flex items-center">
-                <div
-                  className={cn(
-                    'h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors',
-                    currentStep >= step.number
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-muted text-muted-foreground'
-                  )}
-                >
-                  {step.number}
-                </div>
-                {i < steps.length - 1 && (
-                  <div
-                    className={cn(
-                      'h-0.5 w-12 mx-2',
-                      currentStep > step.number ? 'bg-blue-600' : 'bg-muted'
-                    )}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
-
-          <div className="space-y-4 py-2">
-            {currentStep === 1 && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="title">Project Title</Label>
-                  <Input
-                    id="title"
-                    placeholder="e.g., Smart Campus Navigator"
-                    value={newProject.title}
-                    onChange={(e) =>
-                      setNewProject({ ...newProject, title: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Short Description</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="A brief overview of your project..."
-                    value={newProject.description}
-                    onChange={(e) =>
-                      setNewProject({
-                        ...newProject,
-                        description: e.target.value,
-                      })
-                    }
-                    rows={3}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="team">Team (optional)</Label>
-                  <Select
-                    value={newProject.teamId}
-                    onValueChange={(v) =>
-                      setNewProject({ ...newProject, teamId: v })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Solo project" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="solo">Solo Project</SelectItem>
-                      {teams
-                        .filter((t) => t.creator_id === currentUser.id)
-                        .map((team) => (
-                          <SelectItem key={team.id} value={team.id.toString()}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-
-            {currentStep === 2 && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="problem">Problem Statement</Label>
-                  <Textarea
-                    id="problem"
-                    placeholder="What problem are you solving?"
-                    value={newProject.problemStatement}
-                    onChange={(e) =>
-                      setNewProject({
-                        ...newProject,
-                        problemStatement: e.target.value,
-                      })
-                    }
-                    rows={4}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="solution">Solution Overview</Label>
-                  <Textarea
-                    id="solution"
-                    placeholder="How does your solution work?"
-                    value={newProject.solutionOverview}
-                    onChange={(e) =>
-                      setNewProject({
-                        ...newProject,
-                        solutionOverview: e.target.value,
-                      })
-                    }
-                    rows={4}
-                  />
-                </div>
-              </>
-            )}
-
-            {currentStep === 3 && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="techStack">Tech Stack</Label>
-                  <Input
-                    id="techStack"
-                    placeholder="e.g., React, Python, Firebase (comma separated)"
-                    value={newProject.techStack}
-                    onChange={(e) =>
-                      setNewProject({
-                        ...newProject,
-                        techStack: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="flex items-center justify-between p-4 rounded-lg border">
-                  <div className="space-y-0.5">
-                    <Label>Make project public</Label>
-                    <p className="text-xs text-muted-foreground">
-                      Public projects appear in the gallery
-                    </p>
-                  </div>
-                  <Switch
-                    checked={newProject.isPublic}
-                    onCheckedChange={(v) =>
-                      setNewProject({ ...newProject, isPublic: v })
-                    }
-                  />
-                </div>
-                <div className="p-4 rounded-lg bg-muted/50 border-dashed border-2 text-center">
-                  <p className="text-sm text-muted-foreground">
-                    File uploads coming soon
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-
-          <DialogFooter className="flex-row gap-2">
-            {currentStep > 1 && (
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep((s) => s - 1)}
-              >
-                Back
-              </Button>
-            )}
-            <div className="flex-1" />
-            {currentStep < 3 ? (
-              <Button
-                onClick={() => setCurrentStep((s) => s + 1)}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                onClick={handleCreateProject}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Submit Idea
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
