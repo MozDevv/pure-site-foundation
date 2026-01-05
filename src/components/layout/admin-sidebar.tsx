@@ -12,6 +12,11 @@ import {
   Grid,
   Trophy,
   LayoutGrid,
+  UserCheck,
+  ClipboardList,
+  GitMerge,
+  UsersRound,
+  Video,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -38,16 +43,8 @@ const navigationSections = [
         title: 'Course Materials',
         icon: Blocks,
         children: [
-          {
-            title: 'Learning Hub',
-            url: '/admin/module-builder',
-            icon: BookOpen,
-          },
-          {
-            title: 'Resource Library',
-            url: '/admin/module-builder/resource-library',
-            icon: BookOpen,
-          },
+          { title: 'Learning Hub', url: '/admin/module-builder', icon: BookOpen },
+          { title: 'Resource Library', url: '/admin/module-builder/resource-library', icon: BookOpen },
         ],
       },
       {
@@ -55,54 +52,35 @@ const navigationSections = [
         icon: LayoutGrid,
         children: [
           { title: 'Overview', url: '/admin/assessments', icon: LayoutGrid },
-          {
-            title: 'Assignments',
-            url: '/admin/assessments/assignments',
-            icon: FileText,
-          },
-          {
-            title: 'Quizzes',
-            url: '/admin/assessments/quizzes',
-            icon: CheckSquare,
-          },
-          {
-            title: 'Submissions',
-            url: '/admin/assessments/submissions',
-            icon: Users,
-          },
-          {
-            title: 'Grades & Performance',
-            url: '/admin/assessments/grades',
-            icon: TrendingUp,
-          },
+          { title: 'Assignments', url: '/admin/assessments/assignments', icon: FileText },
+          { title: 'Quizzes', url: '/admin/assessments/quizzes', icon: CheckSquare },
+          { title: 'Submissions', url: '/admin/assessments/submissions', icon: Users },
+          { title: 'Grades & Performance', url: '/admin/assessments/grades', icon: TrendingUp },
         ],
       },
       { title: 'Timetable', url: '/admin/timetable', icon: Calendar },
       { title: 'Messages', url: '/admin/messages', icon: MessageSquare },
     ],
   },
-
+  {
+    label: 'Mentorship',
+    items: [
+      { title: 'Mentorship Hub', url: '/admin/mentorship', icon: UserCheck },
+      { title: 'Mentor Profiles', url: '/admin/mentorship/mentors', icon: Users },
+      { title: 'Mentee Requests', url: '/admin/mentorship/requests', icon: ClipboardList },
+      { title: 'Matching', url: '/admin/mentorship/matching', icon: GitMerge },
+      { title: 'Mentor Groups', url: '/admin/mentorship/groups', icon: UsersRound },
+      { title: 'Sessions', url: '/admin/mentorship/sessions', icon: Video },
+    ],
+  },
   {
     label: 'Innovation',
     items: [
       { title: 'Innovation Hub', url: '/admin/innovation', icon: Home },
       { title: 'Teams & Clubs', url: '/admin/innovation/teams', icon: Users },
-      {
-        title: 'Projects & Ideas',
-        url: '/admin/innovation/projects',
-        icon: FileText,
-      },
-
-      {
-        title: 'Submissions & Reviews',
-        url: '/admin/innovation/reviews',
-        icon: CheckSquare,
-      },
-      {
-        title: 'Events & Challenges',
-        url: '/admin/innovation/events',
-        icon: Trophy,
-      },
+      { title: 'Projects & Ideas', url: '/admin/innovation/projects', icon: FileText },
+      { title: 'Submissions & Reviews', url: '/admin/innovation/reviews', icon: CheckSquare },
+      { title: 'Events & Challenges', url: '/admin/innovation/events', icon: Trophy },
     ],
   },
   {
