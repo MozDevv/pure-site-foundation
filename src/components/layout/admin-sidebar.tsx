@@ -11,6 +11,7 @@ import {
   CheckSquare,
   Grid,
   Trophy,
+  LayoutGrid,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import {
@@ -46,6 +47,33 @@ const navigationSections = [
             title: 'Resource Library',
             url: '/admin/module-builder/resource-library',
             icon: BookOpen,
+          },
+        ],
+      },
+      {
+        title: 'Assessments',
+        icon: LayoutGrid,
+        children: [
+          { title: 'Overview', url: '/admin/assessments', icon: LayoutGrid },
+          {
+            title: 'Assignments',
+            url: '/admin/assessments/assignments',
+            icon: FileText,
+          },
+          {
+            title: 'Quizzes',
+            url: '/admin/assessments/quizzes',
+            icon: CheckSquare,
+          },
+          {
+            title: 'Submissions',
+            url: '/admin/assessments/submissions',
+            icon: Users,
+          },
+          {
+            title: 'Grades & Performance',
+            url: '/admin/assessments/grades',
+            icon: TrendingUp,
           },
         ],
       },

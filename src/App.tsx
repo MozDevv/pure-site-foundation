@@ -102,7 +102,79 @@ const App = () => (
               path="/admin/innovation/events"
               element={<AdminDashboardPage menu="eventsPage" />}
             />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route
+              path="/admin/assessments/assignments/:id/submit"
+              element={<AdminDashboardPage menu="submitAssignment" />}
+            />
+
+            {/*   {
+    label: "Assessments",
+    items: [
+      { title: "Overview", url: "/admin/assessments", icon: LayoutGrid },
+      { title: "Assignments", url: "/admin/assessments/assignments", icon: FileText },
+      { title: "Quizzes", url: "/admin/assessments/quizzes", icon: CheckSquare },
+      { title: "Submissions", url: "/admin/assessments/submissions", icon: Users },
+      { title: "Grades & Performance", url: "/admin/assessments/grades", icon: TrendingUp },
+    ],
+  },
+  
+      <Route path="/admin" element={<DashboardLayout />}>
+            <Route index element={<Navigate to="/admin/assessments" replace />} />
+            <Route path="assessments" element={<AssessmentsOverview />} />
+            <Route path="assessments/assignments" element={<AssignmentsList />} />
+            <Route path="assessments/assignments/create" element={<CreateAssignment />} />
+            <Route path="assessments/assignments/:id" element={<CreateAssignment />} />
+            <Route path="assessments/quizzes" element={<QuizzesList />} />
+            <Route path="assessments/quizzes/create" element={<CreateQuiz />} />
+            <Route path="assessments/quizzes/:id" element={<CreateQuiz />} />
+            <Route path="assessments/submissions" element={<SubmissionsList />} />
+            <Route path="assessments/submissions/:id" element={<SubmissionReview />} />
+            <Route path="assessments/grades" element={<GradesPerformance />} />
+          </Route>
+  
+  
+  */}
+            <Route
+              path="/admin/assessments"
+              element={<AdminDashboardPage menu="assessmentsOverview" />}
+            />
+            <Route
+              path="/admin/assessments/assignments"
+              element={<AdminDashboardPage menu="assignmentsPage" />}
+            />
+            <Route
+              path="/admin/assessments/quizzes"
+              element={<AdminDashboardPage menu="quizzesPage" />}
+            />
+            <Route
+              path="/admin/assessments/submissions"
+              element={<AdminDashboardPage menu="submissionsPage" />}
+            />
+            <Route
+              path="/admin/assessments/grades"
+              element={<AdminDashboardPage menu="gradesPage" />}
+            />
+            <Route
+              path="/admin/assessments/assignments/create"
+              element={<AdminDashboardPage menu="createAssignment" />}
+            />
+            <Route
+              path="/admin/assessments/assignments/:id"
+              element={<AdminDashboardPage menu="editAssignment" />}
+            />
+            <Route
+              path="/admin/assessments/quizzes/create"
+              element={<AdminDashboardPage menu="createQuiz" />}
+            />
+            <Route
+              path="/admin/assessments/quizzes/:id"
+              element={<AdminDashboardPage menu="editQuiz" />}
+            />
+            <Route
+              path="/admin/assessments/submissions/:id"
+              element={<AdminDashboardPage menu="submissionReview" />}
+            />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

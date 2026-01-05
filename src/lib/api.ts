@@ -1,8 +1,8 @@
 /* eslint-disable no-useless-catch */
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:8080/api'; //
-// export const API_BASE_URL = 'https://techaipath.com/api';
+// export const API_BASE_URL = 'http://localhost:8080/api'; //
+export const API_BASE_URL = 'https://techaipath.com/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -147,6 +147,42 @@ POST
   approveProject: (projectId: string) =>
     `/v1/workflow/projects/${projectId}/approve`,
   getAllApprovals: '/v1/workflow/approvals',
+
+  // LMS - Quizzes
+  getAllQuizzes: '/lms/quizzes',
+  getQuizById: (id: string) => `/lms/quizzes/${id}`,
+  createQuiz: '/lms/quizzes',
+  updateQuiz: (id: string) => `/lms/quizzes/${id}`,
+  deleteQuiz: (id: string) => `/lms/quizzes/${id}`,
+
+  // LMS - Assignments
+  getAllAssignments: '/lms/assignments',
+  getAssignmentById: (id: string) => `/lms/assignments/${id}`,
+  createAssignment: '/lms/assignments',
+  updateAssignment: (id: string) => `/lms/assignments/${id}`,
+  deleteAssignment: (id: string) => `/lms/assignments/${id}`,
+
+  // LMS - Submissions
+  getAllSubmissions: '/lms/submissions',
+  createSubmission: '/lms/submissions',
+  uploadSubmission: '/lms/submissions/upload',
+  getSubmissionById: (id: string) => `/lms/submissions/${id}`,
+  gradeSubmission: (id: string) => `/lms/submissions/${id}/grade`,
+
+  // LMS - Quiz Attempts
+  getAllQuizAttempts: '/lms/quiz-attempts',
+  createQuizAttempt: '/lms/quiz-attempts',
+
+  // Users
+  getCurrentUser: '/users/me',
+
+  // LMS - Grades Export
+  exportGrades: '/lms/grades/export',
+
+  // LMS - Analytics
+  getStudentPerformance: '/lms/analytics/student-performance',
+  getCourseAnalytics: '/lms/analytics/course',
+  // uploadSubmission: '/lms/submissions/upload',
 };
 
 export const apiService = {

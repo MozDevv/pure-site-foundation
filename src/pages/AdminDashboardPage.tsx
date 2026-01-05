@@ -15,6 +15,15 @@ import { ReviewsPage } from './innovation/ReviewsPage';
 import { EventsPage } from './innovation/EventsPage';
 import { InnovationProvider } from '@/components/innovation-hub/InnovationContext';
 import { TeamSetupWizard } from '@/components/setup-wizard/TeamSetupWizard';
+import AssessmentsOverview from '@/components/assessments/AssessmentsOverview';
+import AssignmentsList from '@/components/assessments/AssignmentsList';
+import CreateAssignment from '@/components/assessments/CreateAssignment';
+import QuizzesList from '@/components/assessments/QuizzesList';
+import CreateQuiz from '@/components/assessments/CreateQuiz';
+import SubmissionsList from '@/components/assessments/SubmissionsList';
+import SubmissionReview from '@/components/assessments/SubmissionReview';
+import GradesPerformance from '@/components/assessments/GradesPerformance';
+import AssignmentSubmit from '@/components/assessments/AssignmentSubmit';
 
 const mockAdmin = {
   firstName: 'Admin',
@@ -58,6 +67,28 @@ export default function AdminDashboardPage({ menu = 'userManagement' }) {
                 <EventsPage />
               ) : menu === 'submitProject' ? (
                 <TeamSetupWizard isOpen={true} onClose={() => {}} />
+              ) : menu === 'assessmentsOverview' ? (
+                <AssessmentsOverview />
+              ) : menu === 'assignmentsPage' ? (
+                <AssignmentsList />
+              ) : menu === 'createAssignment' ? (
+                <CreateAssignment />
+              ) : menu === 'editAssignment' ? (
+                <CreateAssignment />
+              ) : menu === 'quizzesPage' ? (
+                <QuizzesList />
+              ) : menu === 'createQuiz' ? (
+                <CreateQuiz />
+              ) : menu === 'editQuiz' ? (
+                <CreateQuiz />
+              ) : menu === 'submissionsPage' ? (
+                <SubmissionsList />
+              ) : menu === 'submissionReview' ? (
+                <SubmissionReview />
+              ) : menu === 'gradesPage' ? (
+                <GradesPerformance />
+              ) : menu === 'submitAssignment' ? (
+                <AssignmentSubmit />
               ) : (
                 <AdminDashboard />
               )}

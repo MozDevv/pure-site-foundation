@@ -61,11 +61,14 @@ USER STORIES
 >
 > - Create and manage assignments & quizzes
 > - Set:
->
->   - Title, description (rich text)
->   - Instructions & resources
->   - Due date & late submission rules
->   - Submission types (file, repo link, URL)
+>   assignments should be tied to courses.
+
+    - Dropdown For courses
+
+> - Title, description (rich text)
+> - Instructions & resources
+> - Due date & late submission rules
+> - Submission types (file, repo link, URL)
 >
 > - Define grading method:
 >
@@ -183,5 +186,3 @@ USER STORIES
 > - Reusable components and clean structure
 >
 > Build the module so it integrates seamlessly into an existing LMS and is scalable, maintainable, and visually polished.
-
-.
