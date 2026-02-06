@@ -81,6 +81,7 @@ const SignInPage = () => {
           localStorage.setItem('rememberMe', 'true');
         }
         const user = {
+          roleId: response.data.roleId,
           role: response.data.role || 'Student',
           name: response.data.name || '',
           email: response.data.email || '',

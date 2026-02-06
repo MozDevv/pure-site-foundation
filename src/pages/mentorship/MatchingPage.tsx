@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { 
-  Search, 
-  ArrowRight,
-  CheckCircle,
-  Users,
-  Star
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, ArrowRight, CheckCircle, Users, Star } from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -31,24 +31,78 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useMentorship } from '@/components/mentorship/MentorshipContext';
-import { Mentor, MenteeRequest, MentorGroup } from '@/types/mentorship';
+import {
+  Mentor,
+  MenteeRequest,
+  MentorGroup,
+  RequestStatus,
+} from '@/types/mentorship';
+
+// Helper to safely get user data from mentee (handles both nested and flat structure)
+const getMenteeUser = (mentee: MenteeRequest['mentee'] | null | undefined) => {
+  if (!mentee) return null;
+  const m = mentee as unknown as Record<string, unknown>;
+  if ('firstName' in m && typeof m.firstName === 'string') {
+    return m as {
+      firstName: string;
+      lastName: string;
+      email?: string;
+      avatar?: string;
+      profilePicture?: string;
+    };
+  }
+  const user = (m as { user?: Record<string, unknown> }).user;
+  return (user || m) as {
+    firstName: string;
+    lastName: string;
+    email?: string;
+    avatar?: string;
+    profilePicture?: string;
+  };
+};
+
+// Helper to safely get mentor user data (handles both nested and flat structure)
+const getMentorUser = (mentor: Mentor | null | undefined) => {
+  if (!mentor) return null;
+  const m = mentor as unknown as Record<string, unknown>;
+  if ('firstName' in m && typeof m.firstName === 'string') {
+    return m as {
+      firstName: string;
+      lastName: string;
+      avatar?: string;
+      profilePicture?: string;
+    };
+  }
+  const user = (m as { user?: Record<string, unknown> }).user;
+  return (user || m) as {
+    firstName: string;
+    lastName: string;
+    avatar?: string;
+    profilePicture?: string;
+  };
+};
+
+// Normalize status to lowercase for comparison
+const normalizeStatus = (status: string) => status?.toLowerCase();
 
 export function MatchingPage() {
   const location = useLocation();
-  const { 
-    mentors, 
-    requests, 
+  const {
+    mentors,
+    requests,
     groups,
     matches,
-    fetchMentors, 
+    fetchMentors,
     fetchRequests,
     fetchGroups,
     fetchMatches,
     createMatch,
-    loading 
+    loading,
   } = useMentorship();
 
-  const [selectedRequest, setSelectedRequest] = useState<MenteeRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<MenteeRequest | null>(
+    null
+  );
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<MentorGroup | null>(null);
   const [matchDialogOpen, setMatchDialogOpen] = useState(false);
@@ -66,23 +120,35 @@ export function MatchingPage() {
   // Auto-select request if passed from requests page
   useEffect(() => {
     if (location.state?.requestId) {
-      const request = requests.find(r => r.id === location.state.requestId);
+      const request = requests.find((r) => r.id === location.state.requestId);
       if (request) {
         setSelectedRequest(request);
       }
     }
   }, [location.state, requests]);
 
-  const availableMentors = mentors.filter(m => 
-    m.status === 'active' && 
-    m.currentMenteeCount < m.maxMentees &&
-    (searchMentor === '' || 
-      m.user.firstName.toLowerCase().includes(searchMentor.toLowerCase()) ||
-      m.user.lastName.toLowerCase().includes(searchMentor.toLowerCase()) ||
-      m.expertise.some(e => e.toLowerCase().includes(searchMentor.toLowerCase())))
-  );
+  const availableMentors = mentors.filter((m) => {
+    const mentorUser = getMentorUser(m);
+    const mentorStatus = normalizeStatus(m.status);
+    return (
+      mentorStatus === 'active' &&
+      m.currentMenteeCount < m.maxMentees &&
+      (searchMentor === '' ||
+        mentorUser?.firstName
+          ?.toLowerCase()
+          .includes(searchMentor.toLowerCase()) ||
+        mentorUser?.lastName
+          ?.toLowerCase()
+          .includes(searchMentor.toLowerCase()) ||
+        m.expertise?.some((e) =>
+          e.toLowerCase().includes(searchMentor.toLowerCase())
+        ))
+    );
+  });
 
-  const pendingRequests = requests.filter(r => r.status === 'pending');
+  const pendingRequests = requests.filter(
+    (r) => normalizeStatus(r.status) === 'pending'
+  );
 
   const handleCreateMatch = async () => {
     if (!selectedRequest || !selectedMentor) return;
@@ -104,11 +170,17 @@ export function MatchingPage() {
     setMeetingFrequency('Weekly');
   };
 
-  const getCompatibilityScore = (mentor: Mentor, request: MenteeRequest): number => {
-    const expertiseMatch = request.requestedExpertise.filter(exp =>
-      mentor.expertise.some(e => e.toLowerCase().includes(exp.toLowerCase()))
+  const getCompatibilityScore = (
+    mentor: Mentor,
+    request: MenteeRequest
+  ): number => {
+    const expertiseMatch = request.requestedExpertise.filter((exp) =>
+      mentor.expertise.some((e) => e.toLowerCase().includes(exp.toLowerCase()))
     ).length;
-    const score = Math.min((expertiseMatch / request.requestedExpertise.length) * 100, 100);
+    const score = Math.min(
+      (expertiseMatch / request.requestedExpertise.length) * 100,
+      100
+    );
     return Math.round(score);
   };
 
@@ -130,12 +202,14 @@ export function MatchingPage() {
               <span>Pending Requests</span>
               <Badge variant="secondary">{pendingRequests.length}</Badge>
             </CardTitle>
-            <CardDescription>Select a request to match with a mentor</CardDescription>
+            <CardDescription>
+              Select a request to match with a mentor
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="space-y-3">
-                {[1, 2, 3].map(i => (
+                {[1, 2, 3].map((i) => (
                   <Skeleton key={i} className="h-20" />
                 ))}
               </div>
@@ -145,41 +219,55 @@ export function MatchingPage() {
               </p>
             ) : (
               <div className="space-y-3 max-h-96 overflow-y-auto">
-                {pendingRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className={`p-4 rounded-lg border cursor-pointer transition-all ${
-                      selectedRequest?.id === request.id
-                        ? 'border-primary bg-primary/5'
-                        : 'hover:bg-muted/50'
-                    }`}
-                    onClick={() => setSelectedRequest(request)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={request.mentee.user.avatar} />
-                        <AvatarFallback>
-                          {request.mentee.user.firstName[0]}{request.mentee.user.lastName[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium">
-                          {request.mentee.user.firstName} {request.mentee.user.lastName}
-                        </p>
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {request.requestedExpertise.slice(0, 2).map(exp => (
-                            <Badge key={exp} variant="secondary" className="text-xs">
-                              {exp}
-                            </Badge>
-                          ))}
+                {pendingRequests.map((request) => {
+                  const menteeUser = getMenteeUser(request.mentee);
+                  return (
+                    <div
+                      key={request.id}
+                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                        selectedRequest?.id === request.id
+                          ? 'border-primary bg-primary/5'
+                          : 'hover:bg-muted/50'
+                      }`}
+                      onClick={() => setSelectedRequest(request)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage
+                            src={
+                              menteeUser?.avatar || menteeUser?.profilePicture
+                            }
+                          />
+                          <AvatarFallback>
+                            {menteeUser?.firstName?.[0]}
+                            {menteeUser?.lastName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium">
+                            {menteeUser?.firstName} {menteeUser?.lastName}
+                          </p>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {request.requestedExpertise
+                              ?.slice(0, 2)
+                              .map((exp) => (
+                                <Badge
+                                  key={exp}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
+                                  {exp}
+                                </Badge>
+                              ))}
+                          </div>
                         </div>
+                        {selectedRequest?.id === request.id && (
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        )}
                       </div>
-                      {selectedRequest?.id === request.id && (
-                        <CheckCircle className="h-5 w-5 text-primary" />
-                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
@@ -206,7 +294,7 @@ export function MatchingPage() {
             </div>
             {loading ? (
               <div className="space-y-3">
-                {[1, 2, 3].map(i => (
+                {[1, 2, 3].map((i) => (
                   <Skeleton key={i} className="h-20" />
                 ))}
               </div>
@@ -217,9 +305,10 @@ export function MatchingPage() {
             ) : (
               <div className="space-y-3 max-h-80 overflow-y-auto">
                 {availableMentors.map((mentor) => {
-                  const compatScore = selectedRequest 
-                    ? getCompatibilityScore(mentor, selectedRequest) 
+                  const compatScore = selectedRequest
+                    ? getCompatibilityScore(mentor, selectedRequest)
                     : null;
+                  const mentorUser = getMentorUser(mentor);
                   return (
                     <div
                       key={mentor.id}
@@ -232,15 +321,20 @@ export function MatchingPage() {
                     >
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarImage src={mentor.user.avatar} />
+                          <AvatarImage
+                            src={
+                              mentorUser?.avatar || mentorUser?.profilePicture
+                            }
+                          />
                           <AvatarFallback>
-                            {mentor.user.firstName[0]}{mentor.user.lastName[0]}
+                            {mentorUser?.firstName?.[0]}
+                            {mentorUser?.lastName?.[0]}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="font-medium">
-                              {mentor.user.firstName} {mentor.user.lastName}
+                              {mentorUser?.firstName} {mentorUser?.lastName}
                             </p>
                             {mentor.rating && (
                               <span className="flex items-center text-sm text-muted-foreground">
@@ -250,21 +344,30 @@ export function MatchingPage() {
                             )}
                           </div>
                           <div className="flex flex-wrap gap-1 mt-1">
-                            {mentor.expertise.slice(0, 2).map(exp => (
-                              <Badge key={exp} variant="secondary" className="text-xs">
+                            {mentor.expertise?.slice(0, 2).map((exp) => (
+                              <Badge
+                                key={exp}
+                                variant="secondary"
+                                className="text-xs"
+                              >
                                 {exp}
                               </Badge>
                             ))}
                           </div>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {mentor.currentMenteeCount}/{mentor.maxMentees} mentees
+                            {mentor.currentMenteeCount}/{mentor.maxMentees}{' '}
+                            mentees
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
                           {compatScore !== null && (
-                            <Badge 
-                              variant={compatScore >= 70 ? 'default' : 'secondary'}
-                              className={compatScore >= 70 ? 'bg-green-600' : ''}
+                            <Badge
+                              variant={
+                                compatScore >= 70 ? 'default' : 'secondary'
+                              }
+                              className={
+                                compatScore >= 70 ? 'bg-green-600' : ''
+                              }
                             >
                               {compatScore}% match
                             </Badge>
@@ -284,89 +387,129 @@ export function MatchingPage() {
       </div>
 
       {/* Create Match Button */}
-      {selectedRequest && selectedMentor && (
-        <Card className="bg-primary/5 border-primary">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={selectedRequest.mentee.user.avatar} />
-                  <AvatarFallback>
-                    {selectedRequest.mentee.user.firstName[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <ArrowRight className="h-6 w-6 text-primary" />
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={selectedMentor.user.avatar} />
-                  <AvatarFallback>
-                    {selectedMentor.user.firstName[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="ml-4">
-                  <p className="font-semibold">
-                    {selectedRequest.mentee.user.firstName} {selectedRequest.mentee.user.lastName}
-                    <span className="text-muted-foreground font-normal mx-2">→</span>
-                    {selectedMentor.user.firstName} {selectedMentor.user.lastName}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Ready to create mentorship match
-                  </p>
+      {selectedRequest &&
+        selectedMentor &&
+        (() => {
+          const selectedMenteeUser = getMenteeUser(selectedRequest.mentee);
+          const selectedMentorUser = getMentorUser(selectedMentor);
+          return (
+            <Card className="bg-primary/5 border-primary">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={
+                          selectedMenteeUser?.avatar ||
+                          selectedMenteeUser?.profilePicture
+                        }
+                      />
+                      <AvatarFallback>
+                        {selectedMenteeUser?.firstName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <ArrowRight className="h-6 w-6 text-primary" />
+                    <Avatar className="h-12 w-12">
+                      <AvatarImage
+                        src={
+                          selectedMentorUser?.avatar ||
+                          selectedMentorUser?.profilePicture
+                        }
+                      />
+                      <AvatarFallback>
+                        {selectedMentorUser?.firstName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="ml-4">
+                      <p className="font-semibold">
+                        {selectedMenteeUser?.firstName}{' '}
+                        {selectedMenteeUser?.lastName}
+                        <span className="text-muted-foreground font-normal mx-2">
+                          →
+                        </span>
+                        {selectedMentorUser?.firstName}{' '}
+                        {selectedMentorUser?.lastName}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        Ready to create mentorship match
+                      </p>
+                    </div>
+                  </div>
+                  <Button size="lg" onClick={() => setMatchDialogOpen(true)}>
+                    <Users className="mr-2 h-4 w-4" />
+                    Create Match
+                  </Button>
                 </div>
-              </div>
-              <Button size="lg" onClick={() => setMatchDialogOpen(true)}>
-                <Users className="mr-2 h-4 w-4" />
-                Create Match
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
       {/* Active Matches */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Active Matches</CardTitle>
-          <CardDescription>Currently active mentor-mentee pairs</CardDescription>
+          <CardDescription>
+            Currently active mentor-mentee pairs
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          {matches.filter(m => m.status === 'active').length === 0 ? (
+          {matches.filter((m) => normalizeStatus(m.status) === 'active')
+            .length === 0 ? (
             <p className="text-center text-muted-foreground py-8">
               No active matches
             </p>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {matches.filter(m => m.status === 'active').map((match) => (
-                <div key={match.id} className="p-4 rounded-lg border">
-                  <div className="flex items-center gap-3 mb-3">
-                    <Avatar>
-                      <AvatarImage src={match.mentor.user.avatar} />
-                      <AvatarFallback>
-                        {match.mentor.user.firstName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                    <ArrowRight className="h-4 w-4 text-muted-foreground" />
-                    <Avatar>
-                      <AvatarImage src={match.mentee.user.avatar} />
-                      <AvatarFallback>
-                        {match.mentee.user.firstName[0]}
-                      </AvatarFallback>
-                    </Avatar>
-                  </div>
-                  <p className="font-medium text-sm">
-                    {match.mentor.user.firstName} → {match.mentee.user.firstName}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {match.completedSessions} sessions completed
-                  </p>
-                  <Badge variant="outline" className="mt-2 text-xs">
-                    {match.meetingFrequency}
-                  </Badge>
-                </div>
-              ))}
+              {matches
+                .filter((m) => normalizeStatus(m.status) === 'active')
+                .map((match) => {
+                  const matchMentorUser = getMentorUser(match.mentor);
+                  const matchMenteeUser = getMenteeUser(match.mentee);
+                  return (
+                    <div key={match.id} className="p-4 rounded-lg border">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Avatar>
+                          <AvatarImage
+                            src={
+                              matchMentorUser?.avatar ||
+                              matchMentorUser?.profilePicture
+                            }
+                          />
+                          <AvatarFallback>
+                            {matchMentorUser?.firstName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                        <Avatar>
+                          <AvatarImage
+                            src={
+                              matchMenteeUser?.avatar ||
+                              matchMenteeUser?.profilePicture
+                            }
+                          />
+                          <AvatarFallback>
+                            {matchMenteeUser?.firstName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                      </div>
+                      <p className="font-medium text-sm">
+                        {matchMentorUser?.firstName} →{' '}
+                        {matchMenteeUser?.firstName}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {match.completedSessions} sessions completed
+                      </p>
+                      <Badge variant="outline" className="mt-2 text-xs">
+                        {match.meetingFrequency}
+                      </Badge>
+                    </div>
+                  );
+                })}
             </div>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Match Dialog */}
       <Dialog open={matchDialogOpen} onOpenChange={setMatchDialogOpen}>
@@ -378,37 +521,56 @@ export function MatchingPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="flex items-center justify-center gap-4">
-              <div className="text-center">
-                <Avatar className="h-16 w-16 mx-auto">
-                  <AvatarImage src={selectedMentor?.user.avatar} />
-                  <AvatarFallback>
-                    {selectedMentor?.user.firstName[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <p className="mt-2 font-medium text-sm">
-                  {selectedMentor?.user.firstName}
-                </p>
-                <p className="text-xs text-muted-foreground">Mentor</p>
-              </div>
-              <ArrowRight className="h-6 w-6 text-muted-foreground" />
-              <div className="text-center">
-                <Avatar className="h-16 w-16 mx-auto">
-                  <AvatarImage src={selectedRequest?.mentee.user.avatar} />
-                  <AvatarFallback>
-                    {selectedRequest?.mentee.user.firstName[0]}
-                  </AvatarFallback>
-                </Avatar>
-                <p className="mt-2 font-medium text-sm">
-                  {selectedRequest?.mentee.user.firstName}
-                </p>
-                <p className="text-xs text-muted-foreground">Mentee</p>
-              </div>
-            </div>
+            {(() => {
+              const dialogMentorUser = getMentorUser(selectedMentor);
+              const dialogMenteeUser = getMenteeUser(selectedRequest?.mentee);
+              return (
+                <div className="flex items-center justify-center gap-4">
+                  <div className="text-center">
+                    <Avatar className="h-16 w-16 mx-auto">
+                      <AvatarImage
+                        src={
+                          dialogMentorUser?.avatar ||
+                          dialogMentorUser?.profilePicture
+                        }
+                      />
+                      <AvatarFallback>
+                        {dialogMentorUser?.firstName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="mt-2 font-medium text-sm">
+                      {dialogMentorUser?.firstName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Mentor</p>
+                  </div>
+                  <ArrowRight className="h-6 w-6 text-muted-foreground" />
+                  <div className="text-center">
+                    <Avatar className="h-16 w-16 mx-auto">
+                      <AvatarImage
+                        src={
+                          dialogMenteeUser?.avatar ||
+                          dialogMenteeUser?.profilePicture
+                        }
+                      />
+                      <AvatarFallback>
+                        {dialogMenteeUser?.firstName?.[0]}
+                      </AvatarFallback>
+                    </Avatar>
+                    <p className="mt-2 font-medium text-sm">
+                      {dialogMenteeUser?.firstName}
+                    </p>
+                    <p className="text-xs text-muted-foreground">Mentee</p>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="space-y-2">
               <Label>Meeting Frequency</Label>
-              <Select value={meetingFrequency} onValueChange={setMeetingFrequency}>
+              <Select
+                value={meetingFrequency}
+                onValueChange={setMeetingFrequency}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -419,26 +581,30 @@ export function MatchingPage() {
                 </SelectContent>
               </Select>
             </div>
-
+            {/* 
             <div className="space-y-2">
               <Label>Add to Group (Optional)</Label>
-              <Select 
-                value={selectedGroup?.id || ''} 
-                onValueChange={(val) => setSelectedGroup(groups.find(g => g.id === val) || null)}
+              <Select
+                value={selectedGroup?.id || ''}
+                onValueChange={(val) =>
+                  setSelectedGroup(groups.find((g) => g.id === val) || null)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select a group" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">No group</SelectItem>
-                  {groups.filter(g => g.mentorId === selectedMentor?.id).map(group => (
-                    <SelectItem key={group.id} value={group.id}>
-                      {group.name}
-                    </SelectItem>
-                  ))}
+                  {groups
+                    .filter((g) => g.mentorId === selectedMentor?.id)
+                    .map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             <div className="space-y-2">
               <Label>Goals</Label>
@@ -454,9 +620,7 @@ export function MatchingPage() {
             <Button variant="outline" onClick={() => setMatchDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateMatch}>
-              Create Match
-            </Button>
+            <Button onClick={handleCreateMatch}>Create Match</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

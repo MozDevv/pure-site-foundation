@@ -6,10 +6,19 @@ interface IncompleteTeamIdStore {
   setIncompleteTeamId: (id: string | null) => void;
 }
 
-export const useIncompleteTeamIdStore = create<IncompleteTeamIdStore>((set) => ({
-  incompleteTeamId: null,
-  setIncompleteTeamId: (id) => set({ incompleteTeamId: id }),
-}));
+const stateFactory = (key: string) =>
+  create<any>((set) => ({
+    [key]: null,
+    [`set${key.charAt(0).toUpperCase() + key.slice(1)}`]: (value: any) =>
+      set({ [key]: value }),
+  }));
+
+export const useIncompleteTeamIdStore = create<IncompleteTeamIdStore>(
+  (set) => ({
+    incompleteTeamId: null,
+    setIncompleteTeamId: (id) => set({ incompleteTeamId: id }),
+  })
+);
 
 interface SelectedTeamStore {
   selectedTeamId: string | null;
@@ -38,3 +47,5 @@ export const useTeamResourceStore = create<TeamResourceStore>((set) => ({
   setResourceType: (type) => set({ resourceType: type }),
   setResources: (resources) => set({ resources }),
 }));
+export const useActiveRoomStore = stateFactory('activeRoom2');
+export const useMessagesStore = stateFactory('messages2');

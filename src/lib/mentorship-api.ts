@@ -1,5 +1,4 @@
 // Mentorship Module API Layer
-// These are dummy endpoints - implement your own backend logic
 
 import {
   Mentor,
@@ -11,6 +10,7 @@ import {
   MenteeGoal,
   MentorshipStats,
 } from '@/types/mentorship';
+import { apiService, endpoints } from './api';
 
 // Dummy data for development
 const dummyMentors: Mentor[] = [
@@ -103,7 +103,12 @@ const dummyMentors: Mentor[] = [
     },
     status: 'pending_approval',
     bio: 'Business consultant specializing in entrepreneurship and startup strategy.',
-    expertise: ['Entrepreneurship', 'Business Strategy', 'Fundraising', 'Leadership'],
+    expertise: [
+      'Entrepreneurship',
+      'Business Strategy',
+      'Fundraising',
+      'Leadership',
+    ],
     availability: 'Weekday mornings',
     maxMentees: 3,
     currentMenteeCount: 0,
@@ -183,7 +188,8 @@ const dummyRequests: MenteeRequest[] = [
     requestedExpertise: ['Machine Learning', 'Python'],
     goals: 'Learn data science and build ML projects for portfolio',
     preferredMeetingFrequency: 'Bi-weekly',
-    additionalNotes: 'I have basic Python knowledge and completed some online courses',
+    additionalNotes:
+      'I have basic Python knowledge and completed some online courses',
     status: 'pending',
     createdAt: '2024-12-20T10:00:00Z',
     updatedAt: '2024-12-20T10:00:00Z',
@@ -195,7 +201,8 @@ const dummyRequests: MenteeRequest[] = [
     requestedExpertise: ['UX Design', 'Portfolio Building'],
     goals: 'Create a strong UX portfolio and land an internship',
     preferredMeetingFrequency: 'Weekly',
-    additionalNotes: 'Currently completing UX bootcamp, need guidance on portfolio projects',
+    additionalNotes:
+      'Currently completing UX bootcamp, need guidance on portfolio projects',
     status: 'pending',
     createdAt: '2024-12-28T10:00:00Z',
     updatedAt: '2024-12-28T10:00:00Z',
@@ -228,7 +235,8 @@ const dummyMatches: MentorshipMatch[] = [
     status: 'active',
     matchedBy: 'admin-1',
     matchedAt: '2024-09-05T14:00:00Z',
-    goals: 'Help Alex transition to software engineering with focus on React and job search',
+    goals:
+      'Help Alex transition to software engineering with focus on React and job search',
     meetingFrequency: 'Weekly',
     nextSessionDate: '2025-01-08T18:00:00Z',
     totalSessions: 16,
@@ -242,7 +250,8 @@ const dummyGroups: MentorGroup[] = [
   {
     id: 'group-1',
     name: 'Career Development Circle',
-    description: 'Group mentoring focused on tech career development, resume building, and interview prep',
+    description:
+      'Group mentoring focused on tech career development, resume building, and interview prep',
     mentorId: 'mentor-1',
     mentor: dummyMentors[0],
     maxMembers: 8,
@@ -257,7 +266,8 @@ const dummyGroups: MentorGroup[] = [
   {
     id: 'group-2',
     name: 'ML Study Group',
-    description: 'Weekly study sessions covering machine learning concepts and hands-on projects',
+    description:
+      'Weekly study sessions covering machine learning concepts and hands-on projects',
     mentorId: 'mentor-2',
     mentor: dummyMentors[1],
     maxMembers: 10,
@@ -281,12 +291,13 @@ const dummySessions: MentorshipSession[] = [
     menteeIds: ['mentee-1'],
     mentees: [dummyMentees[0]],
     title: 'React Portfolio Review',
-    description: 'Review Alex\'s portfolio projects and discuss improvements',
+    description: "Review Alex's portfolio projects and discuss improvements",
     scheduledAt: '2025-01-08T18:00:00Z',
     duration: 60,
     meetingLink: 'https://zoom.us/j/123456789',
     status: 'scheduled',
-    agenda: '1. Review portfolio\n2. Discuss React best practices\n3. Plan next steps',
+    agenda:
+      '1. Review portfolio\n2. Discuss React best practices\n3. Plan next steps',
     createdAt: '2025-01-02T10:00:00Z',
     updatedAt: '2025-01-02T10:00:00Z',
   },
@@ -339,7 +350,8 @@ const dummyGoals: MenteeGoal[] = [
     targetDate: '2025-02-01',
     status: 'in_progress',
     progress: 66,
-    mentorNotes: 'Great progress on 2 projects. Focus on testing for the third.',
+    mentorNotes:
+      'Great progress on 2 projects. Focus on testing for the third.',
     createdAt: '2024-09-10T10:00:00Z',
     updatedAt: '2025-01-02T10:00:00Z',
   },
@@ -370,7 +382,7 @@ const dummyGoals: MenteeGoal[] = [
 ];
 
 // Helper function to simulate API latency
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // API Endpoints (dummy implementations - replace with real API calls)
 export const mentorshipApi = {
@@ -379,34 +391,94 @@ export const mentorshipApi = {
     await delay(300);
     return {
       totalMentors: dummyMentors.length,
-      activeMentors: dummyMentors.filter(m => m.status === 'active').length,
+      activeMentors: dummyMentors.filter((m) => m.status === 'active').length,
       totalMentees: dummyMentees.length,
-      pendingRequests: dummyRequests.filter(r => r.status === 'pending').length,
-      activeMatches: dummyMatches.filter(m => m.status === 'active').length,
-      upcomingSessions: dummySessions.filter(s => s.status === 'scheduled').length,
+      pendingRequests: dummyRequests.filter((r) => r.status === 'pending')
+        .length,
+      activeMatches: dummyMatches.filter((m) => m.status === 'active').length,
+      upcomingSessions: dummySessions.filter((s) => s.status === 'scheduled')
+        .length,
       totalGroups: dummyGroups.length,
-      completedSessions: dummySessions.filter(s => s.status === 'completed').length,
+      completedSessions: dummySessions.filter((s) => s.status === 'completed')
+        .length,
     };
   },
 
-  // Mentors
-  getMentors: async (filters?: { status?: string; expertise?: string }): Promise<Mentor[]> => {
-    await delay(400);
-    let result = [...dummyMentors];
-    if (filters?.status) {
-      result = result.filter(m => m.status === filters.status);
-    }
-    if (filters?.expertise) {
-      result = result.filter(m => 
-        m.expertise.some(e => e.toLowerCase().includes(filters.expertise!.toLowerCase()))
+  // Mentors - Fetches from users API where isMentor is true or role is Mentor
+  getMentors: async (filters?: {
+    status?: string;
+    expertise?: string;
+  }): Promise<Mentor[]> => {
+    try {
+      const response = await apiService.getWithParams(endpoints.getAllUsers, {
+        pageSize: 100, // Get all users to filter mentors
+      });
+
+      // Filter users who are mentors (isMentor === true or role === 'Mentor')
+      const mentorUsers = (response.data?.data || []).filter(
+        (user: Record<string, unknown>) =>
+          user.isMentor === true || user.role === 'Mentor'
       );
+
+      console.log('mentorUsers:', mentorUsers);
+
+      // Map user data to Mentor type
+      let result: Mentor[] = mentorUsers.map(
+        (user: Record<string, unknown>) => ({
+          id: user.id as string,
+          userId: user.id as string,
+          user: {
+            id: user.id as string,
+            username: user.username as string,
+            firstName: user.firstName as string,
+            lastName: user.lastName as string,
+            email: user.email as string,
+            avatar: user.profilePicture as string,
+            profilePicture: user.profilePicture as string,
+            roleName: user.role as string,
+          },
+          status:
+            (user.status as string)?.toLowerCase() === 'active'
+              ? 'active'
+              : (user.status as string)?.toLowerCase() ===
+                'registered_not_confirmed'
+              ? 'pending_approval'
+              : 'inactive',
+          bio: (user.mentorBio as string) || '',
+          expertise: (user.expertise as string[]) || [],
+          availability: (user.preferredMeetingFrequency as string) || '',
+          maxMentees: (user.maxMentees as number) || 5,
+          currentMenteeCount: (user.currentMenteeCount as number) || 0,
+          yearsOfExperience: (user.yearsOfExperience as number) || 0,
+          totalSessions: 0,
+          createdAt: user.createdAt as string,
+          updatedAt: user.updatedAt as string,
+        })
+      );
+      console.log('Mapped Mentors:', result);
+
+      // // Apply filters
+      // if (filters?.status) {
+      //   result = result.filter((m) => m.status === filters.status);
+      // }
+      // if (filters?.expertise) {
+      //   result = result.filter((m) =>
+      //     m.expertise.some((e) =>
+      //       e.toLowerCase().includes(filters.expertise!.toLowerCase())
+      //     )
+      //   );
+      // }
+
+      return result;
+    } catch (error) {
+      console.error('Error fetching mentors:', error);
+      throw error;
     }
-    return result;
   },
 
   getMentor: async (id: string): Promise<Mentor | null> => {
     await delay(200);
-    return dummyMentors.find(m => m.id === id) || null;
+    return dummyMentors.find((m) => m.id === id) || null;
   },
 
   createMentor: async (data: Partial<Mentor>): Promise<Mentor> => {
@@ -430,11 +502,18 @@ export const mentorshipApi = {
     return newMentor;
   },
 
-  updateMentor: async (id: string, data: Partial<Mentor>): Promise<Mentor | null> => {
+  updateMentor: async (
+    id: string,
+    data: Partial<Mentor>
+  ): Promise<Mentor | null> => {
     await delay(300);
-    const index = dummyMentors.findIndex(m => m.id === id);
+    const index = dummyMentors.findIndex((m) => m.id === id);
     if (index === -1) return null;
-    dummyMentors[index] = { ...dummyMentors[index], ...data, updatedAt: new Date().toISOString() };
+    dummyMentors[index] = {
+      ...dummyMentors[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
     return dummyMentors[index];
   },
 
@@ -448,76 +527,139 @@ export const mentorshipApi = {
     await delay(400);
     let result = [...dummyMentees];
     if (filters?.status) {
-      result = result.filter(m => m.status === filters.status);
+      result = result.filter((m) => m.status === filters.status);
     }
     return result;
   },
 
   getMentee: async (id: string): Promise<Mentee | null> => {
     await delay(200);
-    return dummyMentees.find(m => m.id === id) || null;
+    return dummyMentees.find((m) => m.id === id) || null;
   },
 
-  // Requests
-  getRequests: async (filters?: { status?: string }): Promise<MenteeRequest[]> => {
-    await delay(400);
-    let result = [...dummyRequests];
-    if (filters?.status) {
-      result = result.filter(r => r.status === filters.status);
+  // Requests - Using real API endpoints
+  getRequests: async (filters?: {
+    status?: string;
+  }): Promise<MenteeRequest[]> => {
+    try {
+      const response = await apiService.getWithParams(
+        endpoints.getAllMenteeRequests,
+        filters
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching mentee requests:', error);
+      throw error;
     }
-    return result;
   },
 
   getRequest: async (id: string): Promise<MenteeRequest | null> => {
-    await delay(200);
-    return dummyRequests.find(r => r.id === id) || null;
+    try {
+      const response = await apiService.get(endpoints.getMenteeRequestById(id));
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching mentee request:', error);
+      throw error;
+    }
   },
 
-  createRequest: async (data: Partial<MenteeRequest>): Promise<MenteeRequest> => {
-    await delay(300);
-    const newRequest: MenteeRequest = {
-      id: `request-${Date.now()}`,
-      menteeId: data.menteeId || '',
-      mentee: data.mentee!,
-      requestedExpertise: data.requestedExpertise || [],
-      goals: data.goals || '',
-      preferredMeetingFrequency: data.preferredMeetingFrequency || 'Weekly',
-      additionalNotes: data.additionalNotes,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    dummyRequests.push(newRequest);
-    return newRequest;
+  createRequest: async (
+    data: Partial<MenteeRequest>
+  ): Promise<MenteeRequest> => {
+    try {
+      const response = await apiService.post(endpoints.createMenteeRequest, {
+        requestedExpertise: data.requestedExpertise || [],
+        goals: data.goals || '',
+        preferredMeetingFrequency: data.preferredMeetingFrequency || 'Weekly',
+        additionalNotes: data.additionalNotes,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating mentee request:', error);
+      throw error;
+    }
   },
 
-  updateRequest: async (id: string, data: Partial<MenteeRequest>): Promise<MenteeRequest | null> => {
-    await delay(300);
-    const index = dummyRequests.findIndex(r => r.id === id);
-    if (index === -1) return null;
-    dummyRequests[index] = { ...dummyRequests[index], ...data, updatedAt: new Date().toISOString() };
-    return dummyRequests[index];
+  updateRequest: async (
+    id: string,
+    data: Partial<MenteeRequest>
+  ): Promise<MenteeRequest | null> => {
+    try {
+      const response = await apiService.put(
+        endpoints.getMenteeRequestById(id),
+        data
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating mentee request:', error);
+      throw error;
+    }
+  },
+
+  updateRequestStatus: async (
+    id: string,
+    status: string
+  ): Promise<MenteeRequest | null> => {
+    try {
+      const response = await apiService.put(
+        endpoints.updateMenteeRequestStatus(id),
+        { status }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error updating request status:', error);
+      throw error;
+    }
+  },
+
+  assignMentorToRequest: async (
+    id: string,
+    mentorId: string
+  ): Promise<MenteeRequest | null> => {
+    try {
+      const response = await apiService.put(
+        endpoints.assignMentorToRequest(id),
+        { mentorId }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Error assigning mentor to request:', error);
+      throw error;
+    }
+  },
+
+  deleteRequest: async (id: string): Promise<void> => {
+    try {
+      await apiService.delete(endpoints.deleteMenteeRequest(id));
+    } catch (error) {
+      console.error('Error deleting mentee request:', error);
+      throw error;
+    }
   },
 
   // Matches
-  getMatches: async (filters?: { status?: string; mentorId?: string; menteeId?: string }): Promise<MentorshipMatch[]> => {
+  getMatches: async (filters?: {
+    status?: string;
+    mentorId?: string;
+    menteeId?: string;
+  }): Promise<MentorshipMatch[]> => {
     await delay(400);
     let result = [...dummyMatches];
     if (filters?.status) {
-      result = result.filter(m => m.status === filters.status);
+      result = result.filter((m) => m.status === filters.status);
     }
     if (filters?.mentorId) {
-      result = result.filter(m => m.mentorId === filters.mentorId);
+      result = result.filter((m) => m.mentorId === filters.mentorId);
     }
     if (filters?.menteeId) {
-      result = result.filter(m => m.menteeId === filters.menteeId);
+      result = result.filter((m) => m.menteeId === filters.menteeId);
     }
     return result;
   },
 
   getMatch: async (id: string): Promise<MentorshipMatch | null> => {
     await delay(200);
-    return dummyMatches.find(m => m.id === id) || null;
+    return dummyMatches.find((m) => m.id === id) || null;
   },
 
   createMatch: async (data: {
@@ -528,73 +670,63 @@ export const mentorshipApi = {
     goals: string;
     meetingFrequency: string;
   }): Promise<MentorshipMatch> => {
-    await delay(300);
-    const mentor = dummyMentors.find(m => m.id === data.mentorId);
-    const mentee = dummyMentees.find(m => m.id === data.menteeId);
-    const group = data.groupId ? dummyGroups.find(g => g.id === data.groupId) : undefined;
-    
-    const newMatch: MentorshipMatch = {
-      id: `match-${Date.now()}`,
-      mentorId: data.mentorId,
-      mentor: mentor!,
-      menteeId: data.menteeId,
-      mentee: mentee!,
-      groupId: data.groupId,
-      group,
-      status: 'active',
-      matchedBy: 'admin-current',
-      matchedAt: new Date().toISOString(),
-      goals: data.goals,
-      meetingFrequency: data.meetingFrequency,
-      totalSessions: 0,
-      completedSessions: 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    dummyMatches.push(newMatch);
-
-    // Update request if provided
-    if (data.requestId) {
-      const reqIndex = dummyRequests.findIndex(r => r.id === data.requestId);
-      if (reqIndex !== -1) {
-        dummyRequests[reqIndex].status = 'matched';
-        dummyRequests[reqIndex].assignedMentorId = data.mentorId;
-        dummyRequests[reqIndex].assignedMentor = mentor;
+    try {
+      // The API endpoint assigns a mentor to a mentee request
+      // POST /mentee-requests/{requestId}/assign-mentor?mentorId={mentorId}
+      if (!data.requestId) {
+        throw new Error('Request ID is required to create a match');
       }
-    }
 
-    return newMatch;
+      const response = await apiService.patch(
+        endpoints.assignMentorToRequest(data.requestId, data.mentorId)
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error('Error creating match:', error);
+      throw error;
+    }
   },
 
-  updateMatch: async (id: string, data: Partial<MentorshipMatch>): Promise<MentorshipMatch | null> => {
+  updateMatch: async (
+    id: string,
+    data: Partial<MentorshipMatch>
+  ): Promise<MentorshipMatch | null> => {
     await delay(300);
-    const index = dummyMatches.findIndex(m => m.id === id);
+    const index = dummyMatches.findIndex((m) => m.id === id);
     if (index === -1) return null;
-    dummyMatches[index] = { ...dummyMatches[index], ...data, updatedAt: new Date().toISOString() };
+    dummyMatches[index] = {
+      ...dummyMatches[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
     return dummyMatches[index];
   },
 
   // Groups
-  getGroups: async (filters?: { mentorId?: string; status?: string }): Promise<MentorGroup[]> => {
+  getGroups: async (filters?: {
+    mentorId?: string;
+    status?: string;
+  }): Promise<MentorGroup[]> => {
     await delay(400);
     let result = [...dummyGroups];
     if (filters?.mentorId) {
-      result = result.filter(g => g.mentorId === filters.mentorId);
+      result = result.filter((g) => g.mentorId === filters.mentorId);
     }
     if (filters?.status) {
-      result = result.filter(g => g.status === filters.status);
+      result = result.filter((g) => g.status === filters.status);
     }
     return result;
   },
 
   getGroup: async (id: string): Promise<MentorGroup | null> => {
     await delay(200);
-    return dummyGroups.find(g => g.id === id) || null;
+    return dummyGroups.find((g) => g.id === id) || null;
   },
 
   createGroup: async (data: Partial<MentorGroup>): Promise<MentorGroup> => {
     await delay(300);
-    const mentor = dummyMentors.find(m => m.id === data.mentorId);
+    const mentor = dummyMentors.find((m) => m.id === data.mentorId);
     const newGroup: MentorGroup = {
       id: `group-${Date.now()}`,
       name: data.name || '',
@@ -614,48 +746,57 @@ export const mentorshipApi = {
     return newGroup;
   },
 
-  updateGroup: async (id: string, data: Partial<MentorGroup>): Promise<MentorGroup | null> => {
+  updateGroup: async (
+    id: string,
+    data: Partial<MentorGroup>
+  ): Promise<MentorGroup | null> => {
     await delay(300);
-    const index = dummyGroups.findIndex(g => g.id === id);
+    const index = dummyGroups.findIndex((g) => g.id === id);
     if (index === -1) return null;
-    dummyGroups[index] = { ...dummyGroups[index], ...data, updatedAt: new Date().toISOString() };
+    dummyGroups[index] = {
+      ...dummyGroups[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
     return dummyGroups[index];
   },
 
   // Sessions
-  getSessions: async (filters?: { 
-    mentorId?: string; 
-    menteeId?: string; 
-    groupId?: string; 
-    status?: string 
+  getSessions: async (filters?: {
+    mentorId?: string;
+    menteeId?: string;
+    groupId?: string;
+    status?: string;
   }): Promise<MentorshipSession[]> => {
     await delay(400);
     let result = [...dummySessions];
     if (filters?.mentorId) {
-      result = result.filter(s => s.mentorId === filters.mentorId);
+      result = result.filter((s) => s.mentorId === filters.mentorId);
     }
     if (filters?.menteeId) {
-      result = result.filter(s => s.menteeIds.includes(filters.menteeId!));
+      result = result.filter((s) => s.menteeIds.includes(filters.menteeId!));
     }
     if (filters?.groupId) {
-      result = result.filter(s => s.groupId === filters.groupId);
+      result = result.filter((s) => s.groupId === filters.groupId);
     }
     if (filters?.status) {
-      result = result.filter(s => s.status === filters.status);
+      result = result.filter((s) => s.status === filters.status);
     }
     return result;
   },
 
   getSession: async (id: string): Promise<MentorshipSession | null> => {
     await delay(200);
-    return dummySessions.find(s => s.id === id) || null;
+    return dummySessions.find((s) => s.id === id) || null;
   },
 
-  createSession: async (data: Partial<MentorshipSession>): Promise<MentorshipSession> => {
+  createSession: async (
+    data: Partial<MentorshipSession>
+  ): Promise<MentorshipSession> => {
     await delay(300);
-    const mentor = dummyMentors.find(m => m.id === data.mentorId);
-    const mentees = dummyMentees.filter(m => data.menteeIds?.includes(m.id));
-    
+    const mentor = dummyMentors.find((m) => m.id === data.mentorId);
+    const mentees = dummyMentees.filter((m) => data.menteeIds?.includes(m.id));
+
     const newSession: MentorshipSession = {
       id: `session-${Date.now()}`,
       matchId: data.matchId,
@@ -678,23 +819,33 @@ export const mentorshipApi = {
     return newSession;
   },
 
-  updateSession: async (id: string, data: Partial<MentorshipSession>): Promise<MentorshipSession | null> => {
+  updateSession: async (
+    id: string,
+    data: Partial<MentorshipSession>
+  ): Promise<MentorshipSession | null> => {
     await delay(300);
-    const index = dummySessions.findIndex(s => s.id === id);
+    const index = dummySessions.findIndex((s) => s.id === id);
     if (index === -1) return null;
-    dummySessions[index] = { ...dummySessions[index], ...data, updatedAt: new Date().toISOString() };
+    dummySessions[index] = {
+      ...dummySessions[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
     return dummySessions[index];
   },
 
   // Goals
-  getGoals: async (filters?: { menteeId?: string; matchId?: string }): Promise<MenteeGoal[]> => {
+  getGoals: async (filters?: {
+    menteeId?: string;
+    matchId?: string;
+  }): Promise<MenteeGoal[]> => {
     await delay(400);
     let result = [...dummyGoals];
     if (filters?.menteeId) {
-      result = result.filter(g => g.menteeId === filters.menteeId);
+      result = result.filter((g) => g.menteeId === filters.menteeId);
     }
     if (filters?.matchId) {
-      result = result.filter(g => g.matchId === filters.matchId);
+      result = result.filter((g) => g.matchId === filters.matchId);
     }
     return result;
   },
@@ -717,11 +868,18 @@ export const mentorshipApi = {
     return newGoal;
   },
 
-  updateGoal: async (id: string, data: Partial<MenteeGoal>): Promise<MenteeGoal | null> => {
+  updateGoal: async (
+    id: string,
+    data: Partial<MenteeGoal>
+  ): Promise<MenteeGoal | null> => {
     await delay(300);
-    const index = dummyGoals.findIndex(g => g.id === id);
+    const index = dummyGoals.findIndex((g) => g.id === id);
     if (index === -1) return null;
-    dummyGoals[index] = { ...dummyGoals[index], ...data, updatedAt: new Date().toISOString() };
+    dummyGoals[index] = {
+      ...dummyGoals[index],
+      ...data,
+      updatedAt: new Date().toISOString(),
+    };
     return dummyGoals[index];
   },
 };

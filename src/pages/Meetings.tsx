@@ -117,22 +117,26 @@ const fetchEvents = async () => {
     const data = await response.data;
 
     // Transform API data to calendar format
-    return data.map((event) => ({
-      id: event.id,
-      title: event.title,
-      description: event.description,
-      start: new Date(event.startTime),
-      end: new Date(event.endTime),
-      meetLink: event.meetLink,
-      location: event.isTeamEvent ? 'Virtual' : 'Conference Room',
-      attendees: event.attendeesObj || [],
-      creatorId: event.ownerId,
-      tags: event.isTeamEvent ? ['team'] : ['personal'],
-      hasMeetLink: event.hasMeetLink,
-      teamId: event.teamId,
-      courseName: event.courseName,
-      guests: event.guests || [],
-    }));
+    return (
+      data &&
+      data?.map((event) => ({
+        id: event.id,
+        title: event.title,
+        description: event.description,
+        start: new Date(event.startTime),
+        end: new Date(event.endTime),
+        meetLink: event.meetLink,
+        location: event.isTeamEvent ? 'Virtual' : 'Conference Room',
+        attendees: event.attendeesObj || [],
+        creatorId: event.ownerId,
+        tags: event.isTeamEvent ? ['team'] : ['personal'],
+        hasMeetLink: event.hasMeetLink,
+        teamId: event.teamId,
+        courseName: event.courseName,
+        guests: event.guests || [],
+        hostLink: event.hostLink,
+      }))
+    );
   } catch (error) {
     if (
       error?.response?.data?.error === 'invalid_grant' ||
@@ -625,7 +629,7 @@ const Meetings = () => {
             </p>
           </div>
           <div className="flex gap-3">
-            <Button
+            {/* <Button
               variant="outline"
               className="flex items-center gap-2"
               onClick={handleConnectGoogleCalendar}
@@ -633,7 +637,7 @@ const Meetings = () => {
             >
               <CalendarDays className="h-4 w-4" />
               Connect Google Calendar
-            </Button>
+            </Button> */}
 
             <Dialog open={connectModalOpen} onOpenChange={setConnectModalOpen}>
               <DialogTrigger asChild></DialogTrigger>
@@ -758,7 +762,7 @@ const Meetings = () => {
                           ) : (
                             <BigCalendar
                               localizer={localizer}
-                              events={events}
+                              events={Array.isArray(events) ? events : []}
                               startAccessor="start"
                               endAccessor="end"
                               titleAccessor="title"
@@ -814,7 +818,7 @@ const Meetings = () => {
                               Today
                             </h3>
                             <div className="grid grid-cols-4 gap-6 mb-6">
-                              {todayEvents.map((event) => (
+                              {todayEvents?.map((event) => (
                                 <MeetingCard key={event.id} meeting={event} />
                               ))}
                             </div>
@@ -827,7 +831,7 @@ const Meetings = () => {
                               This Week
                             </h3>
                             <div className="grid grid-cols-4 gap-6 mb-6">
-                              {weekEvents.map((event) => (
+                              {weekEvents?.map((event) => (
                                 <MeetingCard key={event.id} meeting={event} />
                               ))}
                             </div>
@@ -840,7 +844,7 @@ const Meetings = () => {
                               This Month
                             </h3>
                             <div className="grid grid-cols-4 gap-6 mb-6">
-                              {monthEvents.map((event) => (
+                              {monthEvents?.map((event) => (
                                 <MeetingCard key={event.id} meeting={event} />
                               ))}
                             </div>
@@ -1040,29 +1044,43 @@ const Meetings = () => {
                   </div>
                 </div>
 
-                {selectedEvent?.meetLink && (
-                  <div className="flex items-center gap-3 p-4 rounded-lg border border-green-200 bg-green-50">
-                    <Video className="h-5 w-5 text-green-600" />
-                    <span className="text-sm font-medium text-green-800">
-                      Google Meet link available
-                    </span>
-                    <a
-                      href={selectedEvent.meetLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-auto"
-                    >
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-green-300 text-green-700 hover:bg-green-100"
-                      >
-                        Join Meeting
-                        <ExternalLink className="h-4 w-4 ml-1" />
-                      </Button>
-                    </a>
-                  </div>
-                )}
+                {selectedEvent?.meetLink &&
+                  (() => {
+                    let userName = '';
+                    try {
+                      const userRaw = localStorage.getItem('user');
+                      if (userRaw) {
+                        const userObj = JSON.parse(userRaw);
+                        userName =
+                          userObj?.firstName + ' ' + userObj?.lastName || '';
+                      }
+                    } catch {}
+                    const encodedName = encodeURIComponent(userName);
+                    const joinUrl = selectedEvent.meetLink;
+                    return (
+                      <div className="flex items-center gap-3 p-4 rounded-lg border border-green-200 bg-green-50">
+                        <Video className="h-5 w-5 text-green-600" />
+                        <span className="text-sm font-medium text-green-800">
+                          Meeting Link available
+                        </span>
+                        <a
+                          href={joinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto"
+                        >
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-green-300 text-green-700 hover:bg-green-100"
+                          >
+                            Join Meeting
+                            <ExternalLink className="h-4 w-4 ml-1" />
+                          </Button>
+                        </a>
+                      </div>
+                    );
+                  })()}
               </div>
 
               <div className="space-y-4">
@@ -1084,7 +1102,8 @@ const Meetings = () => {
                               <div className="flex flex-wrap gap-2">
                                 {selectedEvent.attendeesObj
                                   .filter((a) => a.role === 'Student')
-                                  .map((attendee) => (
+
+                                  ?.map((attendee) => (
                                     <div
                                       key={attendee.id}
                                       className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
@@ -1117,7 +1136,7 @@ const Meetings = () => {
                               <div className="flex flex-wrap gap-2">
                                 {selectedEvent.attendeesObj
                                   .filter((a) => a.role === 'Tutor')
-                                  .map((attendee) => (
+                                  ?.map((attendee) => (
                                     <div
                                       key={attendee.id}
                                       className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
@@ -1149,7 +1168,7 @@ const Meetings = () => {
                   <div>
                     <h4 className="font-medium mb-2">Guests</h4>
                     <div className="flex flex-wrap gap-2">
-                      {selectedEvent.guests.map((guest, idx) => (
+                      {selectedEvent?.guests?.map((guest, idx) => (
                         <div
                           key={guest.email || idx}
                           className="flex items-center gap-2 bg-muted px-3 py-1 rounded-full"
@@ -1179,24 +1198,51 @@ const Meetings = () => {
                   </div>
                 )}
 
-                {/* Tags */}
-                {selectedEvent?.tags && selectedEvent.tags.length > 0 && (
-                  <div>
-                    <h4 className="font-medium mb-3">Tags</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedEvent.tags.map((tag) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className="capitalize"
+                {selectedEvent?.hostLink &&
+                  (() => {
+                    let userName = '';
+                    try {
+                      const userRaw = localStorage.getItem('user');
+                      if (userRaw) {
+                        const userObj = JSON.parse(userRaw);
+                        userName =
+                          userObj?.firstName + ' ' + userObj?.lastName || '';
+                      }
+                    } catch {}
+                    const encodedName = encodeURIComponent(userName);
+                    const joinUrl = `${selectedEvent.hostLink}${
+                      selectedEvent.hostLink.includes('#') ? '&' : '#'
+                    }userInfo.displayName=${encodedName}`;
+                    return (
+                      <div className="flex items-center gap-4 p-4 rounded-xl border border-blue-200 bg-blue-50 shadow-sm">
+                        <div className="flex items-center gap-2">
+                          <Video className="h-6 w-6 text-blue-600" />
+                          <span className="text-sm font-semibold text-blue-800">
+                            Speaker Link
+                          </span>
+                        </div>
+                        <span className="text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded">
+                          Moderator
+                        </span>
+                        <a
+                          href={joinUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-auto"
                         >
-                          <Tag className="h-3 w-3 mr-1" />
-                          {tag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="bg-blue-600 text-white hover:bg-blue-700"
+                            title="Open Google Meet"
+                          >
+                            Join Now
+                            <ExternalLink className="h-4 w-4 ml-2" />
+                          </Button>
+                        </a>
+                      </div>
+                    );
+                  })()}
               </div>
             </div>
 
@@ -1333,13 +1379,13 @@ const Meetings = () => {
                   checked={addMeetingLink}
                   onCheckedChange={setAddMeetingLink}
                 />
-                <Label htmlFor="add-meet-link">Add Google Meet link</Label>
+                <Label htmlFor="add-meet-link">Add Meeting link</Label>
               </div>
               <div className="z-[999999]">
                 <Label>Attendees</Label>
                 <div className="flex items-center gap-2 mt-1 flex-wrap">
                   {selectedAttendees.length > 0 ? (
-                    selectedAttendees.map((id) => {
+                    selectedAttendees?.map((id) => {
                       const user = usersData?.find((u) => u.id === id);
                       console.log('Attendee user:', user);
                       return (

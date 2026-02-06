@@ -98,6 +98,14 @@ interface User {
   role: string;
   enabled: boolean;
   authorities: Authority[];
+  // Mentor fields
+  isMentor?: boolean;
+  expertise?: string[];
+  yearsOfExperience?: number;
+  maxMentees?: number;
+  currentMenteeCount?: number;
+  preferredMeetingFrequency?: string;
+  mentorBio?: string;
   accountNonExpired: boolean;
   credentialsNonExpired: boolean;
   accountNonLocked: boolean;
@@ -465,29 +473,29 @@ function UserManagement() {
                             Unlock
                           </Button>
                         )}
-                      {user.role === 'Student' && (
-  <>
-    {user.status === 'REGISTERED_NOT_CONFIRMED' ? (
-      <Button
-        size="sm"
-        onClick={() => handleAction(user, 'approve')}
-        className="gap-1 bg-green-500 hover:bg-green-600 text-white"
-      >
-        <CheckCircle className="h-3 w-3" />
-        Approve
-      </Button>
-    ) : user.status === 'EMAIL_NOT_CONFIRMED' ? (
-      <Button
-        size="sm"
-        onClick={() => handleAction(user, 'approve')}
-        className="gap-1 bg-green-500 hover:bg-green-600 text-white"
-      >
-        <CheckCircle className="h-3 w-3" />
-        Resend Activation Email
-      </Button>
-    ) : null}
-  </>
-)}
+                        {user.role === 'Student' && (
+                          <>
+                            {user.status === 'REGISTERED_NOT_CONFIRMED' ? (
+                              <Button
+                                size="sm"
+                                onClick={() => handleAction(user, 'approve')}
+                                className="gap-1 bg-green-500 hover:bg-green-600 text-white"
+                              >
+                                <CheckCircle className="h-3 w-3" />
+                                Approve
+                              </Button>
+                            ) : user.status === 'EMAIL_NOT_CONFIRMED' ? (
+                              <Button
+                                size="sm"
+                                onClick={() => handleAction(user, 'approve')}
+                                className="gap-1 bg-green-500 hover:bg-green-600 text-white"
+                              >
+                                <CheckCircle className="h-3 w-3" />
+                                Resend Activation Email
+                              </Button>
+                            ) : null}
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -730,6 +738,56 @@ function ViewUserDialog({
               <Users className="h-12 w-12 mx-auto mb-4" />
               <p>Classes Assigned (Coming Soon)</p>
             </div>
+          ) : user.isMentor ? (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Badge className="bg-[#6A1B9A] text-white mb-4">Mentor</Badge>
+              </div>
+              <div className="col-span-2">
+                <Label className="text-muted-foreground">Expertise Areas</Label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {user.expertise?.map((skill, index) => (
+                    <Badge key={index} variant="secondary">
+                      {skill}
+                    </Badge>
+                  )) || <span className="text-muted-foreground">N/A</span>}
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">
+                  Years of Experience
+                </Label>
+                <div className="font-medium">
+                  {user.yearsOfExperience ?? 'N/A'} years
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">
+                  Preferred Meeting Frequency
+                </Label>
+                <div className="font-medium capitalize">
+                  {user.preferredMeetingFrequency?.replace('-', ' ') || 'N/A'}
+                </div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Max Mentees</Label>
+                <div className="font-medium">{user.maxMentees ?? 'N/A'}</div>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">
+                  Current Mentee Count
+                </Label>
+                <div className="font-medium">
+                  {user.currentMenteeCount ?? 0}
+                </div>
+              </div>
+              <div className="col-span-2">
+                <Label className="text-muted-foreground">Mentor Bio</Label>
+                <div className="font-medium mt-1 p-3 bg-muted rounded-md">
+                  {user.mentorBio || 'No bio provided'}
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground">
               <p>No additional profile information available</p>
@@ -829,6 +887,14 @@ function CreateUserForm({
     password: '',
     role: 'Student',
     profilePicture: '',
+    // Mentor fields
+    isMentor: false,
+    expertise: [] as string[],
+    yearsOfExperience: 0,
+    maxMentees: 5,
+    currentMenteeCount: 0,
+    preferredMeetingFrequency: 'weekly',
+    mentorBio: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -1021,6 +1087,231 @@ function CreateUserForm({
             </div>
           </div>
         </div>
+
+        {/* Mentor Toggle */}
+        <div className="col-span-2 border-t pt-4">
+          <div className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id="isMentor"
+              checked={formData.isMentor}
+              onChange={(e) =>
+                setFormData({ ...formData, isMentor: e.target.checked })
+              }
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <Label htmlFor="isMentor" className="cursor-pointer">
+              Register as Mentor
+            </Label>
+          </div>
+        </div>
+
+        {/* Mentor Fields - Only shown when isMentor is true */}
+        {formData.isMentor && (
+          <>
+            <div className="col-span-2">
+              <Label>Expertise Areas *</Label>
+              {/* Selected expertise as badges */}
+              <div className="flex flex-wrap gap-2 mt-2 mb-3 min-h-[32px] p-2 border rounded-md bg-muted/30">
+                {formData.expertise.length === 0 ? (
+                  <span className="text-sm text-muted-foreground">
+                    No expertise selected
+                  </span>
+                ) : (
+                  formData.expertise.map((skill, index) => (
+                    <Badge
+                      key={index}
+                      variant="secondary"
+                      className="gap-1 cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          expertise: formData.expertise.filter(
+                            (_, i) => i !== index
+                          ),
+                        })
+                      }
+                    >
+                      {skill}
+                      <XCircle className="h-3 w-3" />
+                    </Badge>
+                  ))
+                )}
+              </div>
+              {/* Suggested expertise options */}
+              <span className="text-xs text-muted-foreground mb-2 block">
+                Click to add expertise:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  'React',
+                  'Python',
+                  'JavaScript',
+                  'TypeScript',
+                  'Node.js',
+                  'Machine Learning',
+                  'Data Science',
+                  'Cloud Computing',
+                  'DevOps',
+                  'Mobile Development',
+                  'UI/UX Design',
+                  'Backend Development',
+                  'Frontend Development',
+                  'Database Management',
+                  'Cybersecurity',
+                  'AI/ML',
+                  'Blockchain',
+                  'System Design',
+                  'Java',
+                  'C++',
+                ]
+                  .filter((skill) => !formData.expertise.includes(skill))
+                  .map((skill) => (
+                    <Badge
+                      key={skill}
+                      variant="outline"
+                      className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                      onClick={() =>
+                        setFormData({
+                          ...formData,
+                          expertise: [...formData.expertise, skill],
+                        })
+                      }
+                    >
+                      + {skill}
+                    </Badge>
+                  ))}
+              </div>
+              {/* Custom expertise input */}
+              <div className="flex gap-2 mt-3">
+                <Input
+                  id="customExpertise"
+                  placeholder="Add custom expertise..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      const value = (e.target as HTMLInputElement).value.trim();
+                      if (value && !formData.expertise.includes(value)) {
+                        setFormData({
+                          ...formData,
+                          expertise: [...formData.expertise, value],
+                        });
+                        (e.target as HTMLInputElement).value = '';
+                      }
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const input = document.getElementById(
+                      'customExpertise'
+                    ) as HTMLInputElement;
+                    const value = input?.value.trim();
+                    if (value && !formData.expertise.includes(value)) {
+                      setFormData({
+                        ...formData,
+                        expertise: [...formData.expertise, value],
+                      });
+                      input.value = '';
+                    }
+                  }}
+                >
+                  Add
+                </Button>
+              </div>
+              {formData.isMentor && formData.expertise.length === 0 && (
+                <span className="text-xs text-destructive mt-1">
+                  Please select at least one expertise area
+                </span>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="yearsOfExperience">Years of Experience *</Label>
+              <Input
+                id="yearsOfExperience"
+                type="number"
+                min="0"
+                value={formData.yearsOfExperience}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    yearsOfExperience: parseInt(e.target.value) || 0,
+                  })
+                }
+                required={formData.isMentor}
+              />
+            </div>
+            <div>
+              <Label htmlFor="maxMentees">Max Mentees *</Label>
+              <Input
+                id="maxMentees"
+                type="number"
+                min="1"
+                value={formData.maxMentees}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    maxMentees: parseInt(e.target.value) || 1,
+                  })
+                }
+                required={formData.isMentor}
+              />
+            </div>
+            {/* <div>
+              <Label htmlFor="currentMenteeCount">Current Mentee Count</Label>
+              <Input
+                id="currentMenteeCount"
+                type="number"
+                min="0"
+                value={formData.currentMenteeCount}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    currentMenteeCount: parseInt(e.target.value) || 0,
+                  })
+                }
+              />
+            </div> */}
+            <div>
+              <Label htmlFor="preferredMeetingFrequency">
+                Preferred Meeting Frequency *
+              </Label>
+              <Select
+                value={formData.preferredMeetingFrequency}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, preferredMeetingFrequency: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="twice-weekly">Twice Weekly</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="bi-weekly">Bi-Weekly</SelectItem>
+                  <SelectItem value="monthly">Monthly</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="col-span-2">
+              <Label htmlFor="mentorBio">Mentor Bio *</Label>
+              <textarea
+                id="mentorBio"
+                className="w-full min-h-[100px] px-3 py-2 border rounded-md text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                placeholder="Tell potential mentees about yourself, your experience, and what you can offer..."
+                value={formData.mentorBio}
+                onChange={(e) =>
+                  setFormData({ ...formData, mentorBio: e.target.value })
+                }
+                required={formData.isMentor}
+              />
+            </div>
+          </>
+        )}
       </div>
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onClose}>

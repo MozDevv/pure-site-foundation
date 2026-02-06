@@ -31,6 +31,13 @@ import { MentorRequestsPage } from './mentorship/MentorRequestsPage';
 import { MatchingPage } from './mentorship/MatchingPage';
 import { MentorGroupsPage } from './mentorship/MentorGroupsPage';
 import { SessionsPage } from './mentorship/SessionsPage';
+import { MyMenteesPage } from './mentorship/MyMenteesPage';
+import { FindMentorPage } from './mentorship/FindMentorPage';
+import { StudentMyMentorPage } from './mentorship/StudentMyMentorPage';
+import { StudentSessionsPage } from './mentorship/StudentSessionsPage';
+import { ChatLayout } from '@/components/chat/ChatLayout';
+import { FirestoreChatLayout } from '@/components/chat/firestore/FirestoreChatLayout';
+import CreateMenus from './CreateMenus';
 
 const mockAdmin = {
   firstName: 'Admin',
@@ -109,6 +116,18 @@ export default function AdminDashboardPage({ menu = 'userManagement' }) {
                   <MentorGroupsPage />
                 ) : menu === 'sessionsPage' ? (
                   <SessionsPage />
+                ) : menu === 'myMenteesPage' ? (
+                  <MyMenteesPage />
+                ) : menu === 'findMentor' ? (
+                  <FindMentorPage />
+                ) : menu === 'myMentor' ? (
+                  <StudentMyMentorPage />
+                ) : menu === 'mySessions' ? (
+                  <StudentSessionsPage />
+                ) : menu === 'chat' ? (
+                  <FirestoreChatLayout />
+                ) : menu === 'menuSetups' ? (
+                  <CreateMenus />
                 ) : (
                   <AdminDashboard />
                 )}

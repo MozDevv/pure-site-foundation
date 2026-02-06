@@ -2,6 +2,7 @@
 import axios from 'axios';
 
 // export const API_BASE_URL = 'http://localhost:8080/api'; //
+
 export const API_BASE_URL = 'https://techaipath.com/api';
 
 const api = axios.create({
@@ -183,6 +184,60 @@ POST
   getStudentPerformance: '/lms/analytics/student-performance',
   getCourseAnalytics: '/lms/analytics/course',
   // uploadSubmission: '/lms/submissions/upload',
+
+  // Mentorship
+  getAllMenteeRequests: '/mentee-requests',
+  createMenteeRequest: '/mentee-requests',
+  updateMenteeRequestStatus: (id: string) => `/mentee-requests/${id}/status`,
+  assignMentorToRequest: (id: string, mentorId: string) =>
+    `/mentee-requests/${id}/assign-mentor?mentorId=${mentorId}`,
+  getMenteeRequestById: (id: string) => `/mentee-requests/${id}`,
+  deleteMenteeRequest: (id: string) => `/mentee-requests/${id}`,
+  /**GET
+/api/mentee-requests/by-mentor
+
+
+GET
+/api/mentee-requests/by-mentee */
+
+  getMenteeRequestsByMentor: '/mentee-requests/by-mentor',
+  getMenteeRequestsByMentee: '/mentee-requests/by-mentee',
+  /**GET
+/api/menus
+
+
+POST
+/api/menus
+
+
+POST
+/api/menus/{menuId}/toggle-role/{roleId}
+
+
+POST
+/api/menus/populate
+
+
+GET
+/api/menus/{id}
+
+
+DELETE
+/api/menus/{id}
+
+
+GET
+/api/menus/by-role/{roleId} */
+  //MENUS
+  // getAllRoles: "/roles/all",
+  getAllMenus: '/menus',
+  createMenu: '/menus',
+  toggleMenuRole: (menuId: string, roleId: string) =>
+    `/menus/${menuId}/toggle-role/${roleId}`,
+  populateMenus: '/menus/populate',
+  getMenuById: (id: string) => `/menus/${id}`,
+  deleteMenu: (id: string) => `/menus/${id}`,
+  getMenusByRole: (roleId: string) => `/menus/by-role/${roleId}`,
 };
 
 export const apiService = {
@@ -209,6 +264,15 @@ export const apiService = {
     try {
       setAuthorizationHeader();
       const response = await api.post(endpoint, data);
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  },
+  patch: async (endpoint, data?) => {
+    try {
+      setAuthorizationHeader();
+      const response = await api.patch(endpoint, data);
       return response;
     } catch (error) {
       throw error;

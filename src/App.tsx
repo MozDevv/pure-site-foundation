@@ -42,7 +42,19 @@ const App = () => (
             {/* Student Routes */}
             <Route path="/student" element={<StudentDashboardPage />} />
             <Route path="/student/timetable" element={<TimetablePage />} />
-            <Route path="/student/*" element={<StudentDashboardPage />} />
+            <Route
+              path="/admin/mentorship"
+              element={<AdminDashboardPage menu="findMentor" />}
+            />
+            <Route
+              path="/admin/mentorship/my-mentor"
+              element={<AdminDashboardPage menu="myMentor" />}
+            />
+            <Route
+              path="/admin/mentorship/sessions"
+              element={<AdminDashboardPage menu="mySessions" />}
+            />
+            <Route path="/student/*" element={<AdminDashboardPage />} />
 
             {/* Tutor Routes */}
             <Route path="/tutor" element={<TutorDashboardPage />} />
@@ -105,6 +117,14 @@ const App = () => (
             <Route
               path="/admin/assessments/assignments/:id/submit"
               element={<AdminDashboardPage menu="submitAssignment" />}
+            />
+            <Route
+              path="/admin/chat"
+              element={<AdminDashboardPage menu="chat" />}
+            />
+            <Route
+              path="/admin/menu-setups"
+              element={<AdminDashboardPage menu="menuSetups" />}
             />
 
             {/*   {
@@ -173,6 +193,36 @@ const App = () => (
             <Route
               path="/admin/assessments/submissions/:id"
               element={<AdminDashboardPage menu="submissionReview" />}
+            />
+
+            {/* Mentorship Routes */}
+            <Route
+              path="/admin/mentorship"
+              element={<AdminDashboardPage menu="mentorshipDashboard" />}
+            />
+            <Route
+              path="/admin/mentorship/mentors"
+              element={<AdminDashboardPage menu="mentorsPage" />}
+            />
+            <Route
+              path="/admin/mentorship/requests"
+              element={<AdminDashboardPage menu="mentorRequestsPage" />}
+            />
+            <Route
+              path="/admin/mentorship/matching"
+              element={<AdminDashboardPage menu="matchingPage" />}
+            />
+            <Route
+              path="/admin/mentorship/groups"
+              element={<AdminDashboardPage menu="mentorGroupsPage" />}
+            />
+            <Route
+              path="/admin/mentorship/sessions"
+              element={<AdminDashboardPage menu="sessionsPage" />}
+            />
+            <Route
+              path="/admin/mentorship/my-mentees"
+              element={<AdminDashboardPage menu="myMenteesPage" />}
             />
 
             <Route path="*" element={<NotFound />} />

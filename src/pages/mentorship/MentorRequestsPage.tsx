@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react';
-import { 
-  Search, 
-  Filter, 
+import {
+  Search,
+  Filter,
   CheckCircle,
   XCircle,
   Clock,
   ArrowRight,
-  User
+  User,
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -29,10 +35,25 @@ import { MenteeRequest, RequestStatus } from '@/types/mentorship';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 
-const statusConfig: Record<RequestStatus, { label: string; icon: React.ElementType; color: string }> = {
-  pending: { label: 'Pending', icon: Clock, color: 'bg-amber-100 text-amber-700' },
-  approved: { label: 'Approved', icon: CheckCircle, color: 'bg-green-100 text-green-700' },
-  rejected: { label: 'Rejected', icon: XCircle, color: 'bg-red-100 text-red-700' },
+const statusConfig: Record<
+  RequestStatus,
+  { label: string; icon: React.ElementType; color: string }
+> = {
+  pending: {
+    label: 'Pending',
+    icon: Clock,
+    color: 'bg-amber-100 text-amber-700',
+  },
+  approved: {
+    label: 'Approved',
+    icon: CheckCircle,
+    color: 'bg-green-100 text-green-700',
+  },
+  rejected: {
+    label: 'Rejected',
+    icon: XCircle,
+    color: 'bg-red-100 text-red-700',
+  },
   matched: { label: 'Matched', icon: User, color: 'bg-blue-100 text-blue-700' },
 };
 
@@ -40,7 +61,9 @@ export function MentorRequestsPage() {
   const navigate = useNavigate();
   const { requests, fetchRequests, updateRequest, loading } = useMentorship();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRequest, setSelectedRequest] = useState<MenteeRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] = useState<MenteeRequest | null>(
+    null
+  );
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [activeTab, setActiveTab] = useState('pending');
@@ -49,21 +72,73 @@ export function MentorRequestsPage() {
     fetchRequests();
   }, [fetchRequests]);
 
-  const filteredRequests = requests.filter(request => {
-    const matchesSearch = 
-      request.mentee.user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.mentee.user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.requestedExpertise.some(e => e.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesTab = activeTab === 'all' || request.status === activeTab;
+  // Helper to safely get user data from mentee (handles both nested and flat structure)
+  const getMenteeUser = (request: MenteeRequest) => {
+    const mentee = request.mentee as unknown as Record<string, unknown>;
+    // Check if it's the flat structure (mentee has firstName directly) or nested (mentee.user)
+    if ('firstName' in mentee && typeof mentee.firstName === 'string') {
+      return mentee as {
+        firstName: string;
+        lastName: string;
+        email: string;
+        avatar?: string;
+        profilePicture?: string;
+      };
+    }
+    const user = (mentee as { user?: Record<string, unknown> }).user;
+    return (user || mentee) as {
+      firstName: string;
+      lastName: string;
+      email: string;
+      avatar?: string;
+      profilePicture?: string;
+    };
+  };
+
+  // Helper to safely get mentor user data (handles both nested and flat structure)
+  const getMentorUser = (mentor: MenteeRequest['assignedMentor']) => {
+    if (!mentor) return null;
+    const m = mentor as unknown as Record<string, unknown>;
+    if ('firstName' in m && typeof m.firstName === 'string') {
+      return m as {
+        firstName: string;
+        lastName: string;
+        avatar?: string;
+        profilePicture?: string;
+      };
+    }
+    const user = (m as { user?: Record<string, unknown> }).user;
+    return (user || m) as {
+      firstName: string;
+      lastName: string;
+      avatar?: string;
+      profilePicture?: string;
+    };
+  };
+
+  // Normalize status to lowercase for comparison
+  const normalizeStatus = (status: string) =>
+    status?.toLowerCase() as RequestStatus;
+
+  const filteredRequests = requests.filter((request) => {
+    const user = getMenteeUser(request);
+    const matchesSearch =
+      user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.requestedExpertise?.some((e) =>
+        e.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    const requestStatus = normalizeStatus(request.status);
+    const matchesTab = activeTab === 'all' || requestStatus === activeTab;
     return matchesSearch && matchesTab;
   });
 
   const handleReject = async () => {
     if (!selectedRequest) return;
-    await updateRequest(selectedRequest.id, { 
+    await updateRequest(selectedRequest.id, {
       status: 'rejected',
       reviewNotes: rejectReason,
-      reviewedAt: new Date().toISOString()
+      reviewedAt: new Date().toISOString(),
     });
     setRejectDialogOpen(false);
     setRejectReason('');
@@ -71,10 +146,12 @@ export function MentorRequestsPage() {
   };
 
   const handleMatchNow = (request: MenteeRequest) => {
-    navigate('/admin/mentorship/matching', { state: { requestId: request.id } });
+    navigate('/admin/mentorship/matching', {
+      state: { requestId: request.id },
+    });
   };
 
-  const pendingCount = requests.filter(r => r.status === 'pending').length;
+  const pendingCount = requests.filter((r) => r.status === 'pending').length;
 
   return (
     <div className="space-y-6">
@@ -123,7 +200,7 @@ export function MentorRequestsPage() {
         <TabsContent value={activeTab} className="mt-6">
           {loading ? (
             <div className="space-y-4">
-              {[1, 2, 3].map(i => (
+              {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-32" />
               ))}
             </div>
@@ -136,9 +213,12 @@ export function MentorRequestsPage() {
           ) : (
             <div className="space-y-4">
               {filteredRequests.map((request) => {
-                const StatusIcon = statusConfig[request.status].icon;
+                const status = normalizeStatus(request.status);
+                const statusInfo = statusConfig[status] || statusConfig.pending;
+                const StatusIcon = statusInfo.icon;
+                const user = getMenteeUser(request);
                 return (
-                  <Card 
+                  <Card
                     key={request.id}
                     className="hover:shadow-md transition-shadow"
                   >
@@ -146,54 +226,70 @@ export function MentorRequestsPage() {
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-4">
                           <Avatar className="h-12 w-12">
-                            <AvatarImage src={request.mentee.user.avatar} />
+                            <AvatarImage
+                              src={user.avatar || user.profilePicture}
+                            />
                             <AvatarFallback>
-                              {request.mentee.user.firstName[0]}{request.mentee.user.lastName[0]}
+                              {user.firstName?.[0]}
+                              {user.lastName?.[0]}
                             </AvatarFallback>
                           </Avatar>
                           <div className="space-y-1">
                             <div className="flex items-center gap-2">
                               <h3 className="font-semibold">
-                                {request.mentee.user.firstName} {request.mentee.user.lastName}
+                                {user.firstName} {user.lastName}
                               </h3>
-                              <Badge className={statusConfig[request.status].color}>
+                              <Badge className={statusInfo.color}>
                                 <StatusIcon className="mr-1 h-3 w-3" />
-                                {statusConfig[request.status].label}
+                                {statusInfo.label}
                               </Badge>
                             </div>
                             <p className="text-sm text-muted-foreground">
-                              {request.mentee.user.email}
+                              {user.email}
                             </p>
                             <div className="flex flex-wrap gap-1 mt-2">
-                              {request.requestedExpertise.map(exp => (
-                                <Badge key={exp} variant="secondary" className="text-xs">
+                              {request.requestedExpertise.map((exp) => (
+                                <Badge
+                                  key={exp}
+                                  variant="secondary"
+                                  className="text-xs"
+                                >
                                   {exp}
                                 </Badge>
                               ))}
                             </div>
                             <p className="text-sm mt-2">
-                              <span className="font-medium">Goals:</span> {request.goals}
+                              <span className="font-medium">Goals:</span>{' '}
+                              {request.goals}
                             </p>
                             {request.additionalNotes && (
                               <p className="text-sm text-muted-foreground mt-1">
-                                <span className="font-medium">Notes:</span> {request.additionalNotes}
+                                <span className="font-medium">Notes:</span>{' '}
+                                {request.additionalNotes}
                               </p>
                             )}
                             <p className="text-xs text-muted-foreground mt-2">
-                              Submitted {format(new Date(request.createdAt), 'MMM d, yyyy')} • 
-                              Prefers {request.preferredMeetingFrequency.toLowerCase()} meetings
+                              Submitted{' '}
+                              {format(
+                                new Date(request.createdAt),
+                                'MMM d, yyyy'
+                              )}{' '}
+                              • Prefers{' '}
+                              {request.preferredMeetingFrequency.toLowerCase()}{' '}
+                              meetings
                             </p>
                           </div>
                         </div>
 
                         <div className="flex flex-col items-end gap-2">
-                          {request.status === 'pending' && (
+                          {status === 'pending' && (
                             <>
                               <Button onClick={() => handleMatchNow(request)}>
-                                Match Now <ArrowRight className="ml-2 h-4 w-4" />
+                                Match Now{' '}
+                                <ArrowRight className="ml-2 h-4 w-4" />
                               </Button>
-                              <Button 
-                                variant="outline" 
+                              <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={() => {
                                   setSelectedRequest(request);
@@ -205,23 +301,39 @@ export function MentorRequestsPage() {
                               </Button>
                             </>
                           )}
-                          {request.status === 'matched' && request.assignedMentor && (
-                            <div className="text-right">
-                              <p className="text-sm font-medium">Matched with</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={request.assignedMentor.user.avatar} />
-                                  <AvatarFallback>
-                                    {request.assignedMentor.user.firstName[0]}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-sm">
-                                  {request.assignedMentor.user.firstName} {request.assignedMentor.user.lastName}
-                                </span>
-                              </div>
-                            </div>
-                          )}
-                          {request.status === 'rejected' && request.reviewNotes && (
+                          {status === 'matched' &&
+                            request.assignedMentor &&
+                            (() => {
+                              const mentorUser = getMentorUser(
+                                request.assignedMentor
+                              );
+                              if (!mentorUser) return null;
+                              return (
+                                <div className="text-right">
+                                  <p className="text-sm font-medium">
+                                    Matched with
+                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Avatar className="h-8 w-8">
+                                      <AvatarImage
+                                        src={
+                                          mentorUser.avatar ||
+                                          mentorUser.profilePicture
+                                        }
+                                      />
+                                      <AvatarFallback>
+                                        {mentorUser.firstName?.[0]}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm">
+                                      {mentorUser.firstName}{' '}
+                                      {mentorUser.lastName}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+                            })()}
+                          {status === 'rejected' && request.reviewNotes && (
                             <p className="text-sm text-muted-foreground max-w-xs text-right">
                               {request.reviewNotes}
                             </p>
@@ -253,7 +365,10 @@ export function MentorRequestsPage() {
             rows={4}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setRejectDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleReject}>
