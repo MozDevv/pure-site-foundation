@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import DOMPurify from 'dompurify';
 import {
   format,
   isPast,
@@ -377,7 +378,7 @@ export default function AssignmentSubmit() {
                 </h4>
                 <div
                   className="prose prose-sm max-w-none text-muted-foreground"
-                  dangerouslySetInnerHTML={{ __html: assignment.instructions }}
+                  dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(assignment.instructions) }}
                 />
               </div>
 

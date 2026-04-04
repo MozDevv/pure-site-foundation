@@ -17,6 +17,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export default function QuizzesList() {
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+  const userRole = (user?.role || 'Student').toLowerCase();
+  const isStudent = userRole === 'student';
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+  const canCreate = userRole === 'tutor' || userRole === 'mentor' || isAdmin;
+  const basePath = isStudent ? '/student' : isAdmin ? '/admin' : '/tutor';
+
   const [searchQuery, setSearchQuery] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -48,12 +55,14 @@ export default function QuizzesList() {
             Create and manage course quizzes
           </p>
         </div>
-        <Button asChild>
-          <Link to="/admin/assessments/quizzes/create">
-            <Plus className="mr-2 h-4 w-4" />
-            New Quiz
-          </Link>
-        </Button>
+        {canCreate && (
+          <Button asChild>
+            <Link to={`${basePath}/assessments/quizzes/create`}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Quiz
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -122,12 +131,14 @@ export default function QuizzesList() {
           <p className="mt-1 text-sm text-muted-foreground">
             Try adjusting your search or filter criteria
           </p>
-          <Button className="mt-4" asChild>
-            <Link to="/admin/assessments/quizzes/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Quiz
-            </Link>
-          </Button>
+          {canCreate && (
+            <Button className="mt-4" asChild>
+              <Link to={`${basePath}/assessments/quizzes/create`}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Quiz
+              </Link>
+            </Button>
+          )}
         </div>
       ) : (
         <div className={cn(

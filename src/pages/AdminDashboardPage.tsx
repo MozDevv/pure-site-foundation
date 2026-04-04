@@ -39,15 +39,6 @@ import { ChatLayout } from '@/components/chat/ChatLayout';
 import { FirestoreChatLayout } from '@/components/chat/firestore/FirestoreChatLayout';
 import CreateMenus from './CreateMenus';
 
-const mockAdmin = {
-  firstName: 'Admin',
-  lastName: 'User',
-  name: 'Admin User',
-  email: 'admin@techai.',
-  avatar: '/placeholder.svg',
-  role: 'Admin',
-};
-
 export default function AdminDashboardPage({ menu = 'userManagement' }) {
   return (
     <SidebarProvider>
@@ -55,9 +46,9 @@ export default function AdminDashboardPage({ menu = 'userManagement' }) {
         <MentorshipProvider>
           <div className="min-h-screen flex w-full bg-background">
             <AdminSidebar />
-            <div className="flex-1 flex flex-col">
-              <Header user={mockAdmin} />
-              <main className="flex-1 p-6">
+            <div className="flex-1 flex flex-col min-w-0">
+              <Header />
+              <main className="flex-1 p-3 sm:p-4 lg:p-6 overflow-x-hidden">
                 {menu === 'userManagement' ? (
                   <UserManagement />
                 ) : menu === 'coursesManagement' ? (
@@ -116,14 +107,8 @@ export default function AdminDashboardPage({ menu = 'userManagement' }) {
                   <MentorGroupsPage />
                 ) : menu === 'sessionsPage' ? (
                   <SessionsPage />
-                ) : menu === 'myMenteesPage' ? (
-                  <MyMenteesPage />
                 ) : menu === 'findMentor' ? (
                   <FindMentorPage />
-                ) : menu === 'myMentor' ? (
-                  <StudentMyMentorPage />
-                ) : menu === 'mySessions' ? (
-                  <StudentSessionsPage />
                 ) : menu === 'chat' ? (
                   <FirestoreChatLayout />
                 ) : menu === 'menuSetups' ? (

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiService, endpoints } from '@/lib/api';
+import { motion } from 'framer-motion';
+import { SkeletonPage } from '@/components/ui/animations';
 import {
   Table,
   TableBody,
@@ -14,13 +16,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerFooter,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+} from '@/components/ui/smart-drawer';
 import {
   Sheet,
   SheetContent,
@@ -71,6 +73,19 @@ import { cn } from '@/lib/utils';
 import { toast } from '@/hooks/use-toast';
 import { CourseCreationStepper } from './course-creation-stepper';
 import ProjectMembers from './ProjectMembers';
+import { ViewToggle } from '@/components/ui/view-toggle';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { useCurrency } from '@/hooks/useCurrency';
+import { CurrencySelector } from '@/components/ui/currency-selector';
 import {
   Accordion,
   AccordionSummary,
@@ -139,6 +154,10 @@ export default function CoursesManagement() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDrawerOpen, setIsViewDrawerOpen] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
+  const { formatPrice } = useCurrency();
   const [formData, setFormData] = useState<CourseFormData>({
     code: '',
     title: '',
@@ -151,6 +170,15 @@ export default function CoursesManagement() {
     enrolledStudentIds: [],
     tutorIds: [],
   });
+
+  // Fetch current user to determine role
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => apiService.get(endpoints.getCurrentUser).then(res => res.data),
+  });
+
+  const isStudent = currentUser?.role === 'Student' || currentUser?.role === 'STUDENT';
+  const canManage = !isStudent && !['Reviewer', 'REVIEWER'].includes(currentUser?.role || '');
 
   // Fetch courses
   const { data: coursesData, isLoading: coursesLoading } = useQuery({
@@ -176,8 +204,9 @@ export default function CoursesManagement() {
       setIsCreateDialogOpen(false);
       resetForm();
     },
-    onError: () => {
-      toast({ title: 'Failed to create course', variant: 'destructive' });
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || error?.response?.data || error?.message || 'Failed to create course';
+      toast({ title: typeof message === 'string' ? message : 'Failed to create course', description: typeof message !== 'string' ? JSON.stringify(message) : undefined, variant: 'destructive' });
     },
   });
 
@@ -191,8 +220,8 @@ export default function CoursesManagement() {
       setIsEditDialogOpen(false);
       resetForm();
     },
-    onError: () => {
-      toast({ title: 'Failed to update course', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: error?.response?.data?.message || 'Failed to update course', variant: 'destructive' });
     },
   });
 
@@ -204,18 +233,27 @@ export default function CoursesManagement() {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast({ title: 'Course deleted successfully', variant: 'default' });
     },
-    onError: () => {
-      toast({ title: 'Failed to delete course', variant: 'destructive' });
+    onError: (error: any) => {
+      toast({ title: error?.response?.data?.message || 'Failed to delete course', variant: 'destructive' });
     },
   });
+
+  if (coursesLoading) {
+    return <SkeletonPage />;
+  }
 
   const courses: Course[] = coursesData || [];
   const users: User[] = usersData?.data || [];
   const students = users.filter((u) => u.role === 'Student');
   const tutors = users.filter((u) => u.role === 'Tutor');
 
-  // Filter courses
+  // Filter courses — students only see courses they are enrolled in
   const filteredCourses = courses.filter((course) => {
+    // Role-based visibility: students only see their enrolled courses
+    if (isStudent && currentUser?.id) {
+      const enrolled = course.enrolledStudentIds?.includes(currentUser.id);
+      if (!enrolled) return false;
+    }
     const matchesSearch =
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -306,9 +344,16 @@ export default function CoursesManagement() {
   };
 
   const handleDeleteClick = (courseId: string) => {
-    if (window.confirm('Are you sure you want to delete this course?')) {
-      deleteCourseMutation.mutate(courseId);
+    setCourseToDelete(courseId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (courseToDelete) {
+      deleteCourseMutation.mutate(courseToDelete);
     }
+    setDeleteDialogOpen(false);
+    setCourseToDelete(null);
   };
 
   const toggleStudent = (studentId: string) => {
@@ -347,27 +392,29 @@ export default function CoursesManagement() {
   };
 
   return (
-    <div className="">
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="">
       {!selectedCourse ? (
         <div className="space-y-6">
           {/* Header */}
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-foreground">
-                Courses Management
+                {isStudent ? 'My Courses' : 'Courses Management'}
               </h1>
               <p className="text-muted-foreground mt-1">
-                Manage and organize all courses
+                {isStudent ? 'View your enrolled courses' : 'Manage and organize all courses'}
               </p>
             </div>
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              size="lg"
-              variant="hero"
-            >
-              <Plus className="mr-2 h-5 w-5" />
-              Add Course
-            </Button>
+            {canManage && (
+              <Button
+                onClick={() => setIsCreateDialogOpen(true)}
+                size="lg"
+                variant="hero"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                Add Course
+              </Button>
+            )}
           </div>
 
           {/* Stats Cards */}
@@ -423,21 +470,72 @@ export default function CoursesManagement() {
 
           {/* Courses Table */}
           <Card>
-            <CardHeader>
-              <CardTitle>All Courses ({filteredCourses.length})</CardTitle>
-              <CardDescription>
-                View and manage all courses in the system
-              </CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
+              <div>
+                <CardTitle>All Courses ({filteredCourses.length})</CardTitle>
+                <CardDescription>
+                  View and manage all courses in the system
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <CurrencySelector className="w-[130px]" />
+                <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
+              </div>
             </CardHeader>
             <CardContent>
               {coursesLoading ? (
-                <div className="text-center py-8">Loading courses...</div>
+                <SkeletonPage />
               ) : filteredCourses.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   No courses found. Create one to get started!
                 </div>
+              ) : viewMode === 'grid' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredCourses.map((course) => (
+                    <Card key={course.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => handleViewClick(course)}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <Badge variant="outline" className="font-mono text-xs">{course.code}</Badge>
+                          <Badge variant="secondary">{course.category}</Badge>
+                        </div>
+                        <CardTitle className="text-lg mt-2">{course.title}</CardTitle>
+                        {course.shortDescription && (
+                          <CardDescription className="line-clamp-2">{course.shortDescription}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
+                          <div className="flex items-center gap-1">
+                            <Users className="h-3.5 w-3.5" />
+                            <span>{course.enrolledStudentIds?.length || 0} students</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <GraduationCap className="h-3.5 w-3.5" />
+                            <span>{course.tutorIds?.length || 0} tutors</span>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-semibold">{formatPrice(course.priceCents)}</span>
+                          <span className="text-muted-foreground">
+                            {course.startDate ? format(new Date(course.startDate), 'MMM yyyy') : 'TBD'}
+                          </span>
+                        </div>
+                        {canManage && (
+                          <div className="flex gap-1 mt-3 pt-3 border-t">
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEditClick(course); }}>
+                              <Edit className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteClick(course.id); }}>
+                              <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                            </Button>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               ) : (
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -466,8 +564,7 @@ export default function CoursesManagement() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
-                              <DollarSign className="h-3 w-3" />
-                              {(course.priceCents / 100).toFixed(2)}
+                              {formatPrice(course.priceCents)}
                             </div>
                           </TableCell>
                           <TableCell>
@@ -504,20 +601,24 @@ export default function CoursesManagement() {
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleEditClick(course)}
-                              >
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDeleteClick(course.id)}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
+                              {canManage && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditClick(course)}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDeleteClick(course.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
@@ -528,6 +629,24 @@ export default function CoursesManagement() {
               )}
             </CardContent>
           </Card>
+
+          {/* Delete Confirmation Dialog */}
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Course</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this course? This action cannot be undone and will remove all associated data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
 
           {/* Create Course Stepper */}
           <CourseCreationStepper
@@ -543,7 +662,7 @@ export default function CoursesManagement() {
           />
 
           {/* Edit Dialog */}
-          <Dialog
+          <SmartDrawer
             open={isEditDialogOpen}
             onOpenChange={(open) => {
               if (!open) {
@@ -552,19 +671,19 @@ export default function CoursesManagement() {
               }
             }}
           >
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Edit Course</DialogTitle>
-                <DialogDescription>
+            <SmartDrawerContent defaultWidth={768}>
+              <SmartDrawerHeader>
+                <SmartDrawerTitle>Edit Course</SmartDrawerTitle>
+                <SmartDrawerDescription>
                   Update the course information
-                </DialogDescription>
-              </DialogHeader>
+                </SmartDrawerDescription>
+              </SmartDrawerHeader>
 
               <div className="space-y-6 py-4">
                 {/* Basic Information */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Basic Information</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="code">
                         Course Code <span className="text-destructive">*</span>
@@ -668,7 +787,7 @@ export default function CoursesManagement() {
                 {/* Dates */}
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Schedule</h3>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Start Date</Label>
                       <Popover>
@@ -824,7 +943,7 @@ export default function CoursesManagement() {
                 </div>
               </div>
 
-              <DialogFooter>
+              <SmartDrawerFooter>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -837,9 +956,9 @@ export default function CoursesManagement() {
                 <Button onClick={handleUpdateCourse} variant="hero">
                   Save Changes
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </SmartDrawerFooter>
+            </SmartDrawerContent>
+          </SmartDrawer>
 
           {/* View Course Drawer */}
         </div>
@@ -873,7 +992,7 @@ export default function CoursesManagement() {
 
           {selectedCourse && (
             <Tabs defaultValue="overview" className="mt-6">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
                 <TabsTrigger value="students">Students</TabsTrigger>
                 <TabsTrigger value="tutors">Tutors</TabsTrigger>
@@ -907,11 +1026,11 @@ export default function CoursesManagement() {
                       <p className="text-sm">{selectedCourse.description}</p>
                     </div>
                     <Separator />
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label className="text-muted-foreground">Price</Label>
                         <p className="font-medium text-lg">
-                          ${(selectedCourse.priceCents / 100).toFixed(2)}
+                          {formatPrice(selectedCourse.priceCents)}
                         </p>
                       </div>
                       <div>
@@ -927,7 +1046,7 @@ export default function CoursesManagement() {
                       </div>
                     </div>
                     <Separator />
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <Label className="text-muted-foreground">
                           Start Date
@@ -1042,6 +1161,6 @@ export default function CoursesManagement() {
           )}
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

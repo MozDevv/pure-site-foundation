@@ -27,14 +27,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerFooter,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerTrigger,
+} from '@/components/ui/smart-drawer';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,13 +46,18 @@ import { MentorshipSession, SessionStatus } from '@/types/mentorship';
 import { format } from 'date-fns';
 
 const statusConfig: Record<SessionStatus, { label: string; icon: React.ElementType; color: string }> = {
-  scheduled: { label: 'Scheduled', icon: Calendar, color: 'bg-blue-100 text-blue-700' },
-  completed: { label: 'Completed', icon: CheckCircle, color: 'bg-green-100 text-green-700' },
-  cancelled: { label: 'Cancelled', icon: XCircle, color: 'bg-red-100 text-red-700' },
-  no_show: { label: 'No Show', icon: XCircle, color: 'bg-amber-100 text-amber-700' },
+  scheduled: { label: 'Scheduled', icon: Calendar, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
+  completed: { label: 'Completed', icon: CheckCircle, color: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' },
+  cancelled: { label: 'Cancelled', icon: XCircle, color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
+  no_show: { label: 'No Show', icon: XCircle, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
 };
 
 export function SessionsPage() {
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+  const userRole = (user?.role || 'Student').toLowerCase();
+  const isStudent = userRole === 'student';
+  const canSchedule = ['tutor', 'mentor', 'admin', 'super_admin'].includes(userRole);
+
   const { 
     sessions, 
     matches, 
@@ -150,20 +155,22 @@ export function SessionsPage() {
             Schedule and track mentorship sessions
           </p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Schedule Session
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Schedule Session</DialogTitle>
-              <DialogDescription>
+        <SmartDrawer open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          {canSchedule && (
+            <SmartDrawerTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Schedule Session
+              </Button>
+            </SmartDrawerTrigger>
+          )}
+          <SmartDrawerContent>
+            <SmartDrawerHeader>
+              <SmartDrawerTitle>Schedule Session</SmartDrawerTitle>
+              <SmartDrawerDescription>
                 Create a new mentorship session
-              </DialogDescription>
-            </DialogHeader>
+              </SmartDrawerDescription>
+            </SmartDrawerHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Session Title</Label>
@@ -299,7 +306,7 @@ export function SessionsPage() {
                 />
               </div>
             </div>
-            <DialogFooter>
+            <SmartDrawerFooter>
               <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
                 Cancel
               </Button>
@@ -309,9 +316,9 @@ export function SessionsPage() {
               >
                 Schedule
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </SmartDrawerFooter>
+          </SmartDrawerContent>
+        </SmartDrawer>
       </div>
 
       {/* Search */}
@@ -442,6 +449,7 @@ export function SessionsPage() {
                               </a>
                             </Button>
                           )}
+                          {!isStudent && (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon">
@@ -473,6 +481,7 @@ export function SessionsPage() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          )}
                         </div>
                       </div>
                     </CardContent>
@@ -485,30 +494,30 @@ export function SessionsPage() {
       </Tabs>
 
       {/* Notes Dialog */}
-      <Dialog open={notesDialogOpen} onOpenChange={setNotesDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Session Notes</DialogTitle>
-            <DialogDescription>
+      <SmartDrawer open={notesDialogOpen} onOpenChange={setNotesDialogOpen}>
+        <SmartDrawerContent>
+          <SmartDrawerHeader>
+            <SmartDrawerTitle>Session Notes</SmartDrawerTitle>
+            <SmartDrawerDescription>
               Add notes for this session
-            </DialogDescription>
-          </DialogHeader>
+            </SmartDrawerDescription>
+          </SmartDrawerHeader>
           <Textarea
             placeholder="Enter session notes..."
             value={sessionNotes}
             onChange={(e) => setSessionNotes(e.target.value)}
             rows={6}
           />
-          <DialogFooter>
+          <SmartDrawerFooter>
             <Button variant="outline" onClick={() => setNotesDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleAddNotes}>
               Save Notes
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SmartDrawerFooter>
+        </SmartDrawerContent>
+      </SmartDrawer>
     </div>
   );
 }

@@ -92,22 +92,32 @@ export function ApplicationSuccess({
         {/* Confirmation Message */}
         <Card className="shadow-elegant mb-8">
           <CardContent className="pt-6">
-            <div className="flex items-center gap-4 p-4 bg-green-50 border border-green-200 rounded-lg mb-6">
+            <div className="flex items-center gap-4 p-4 bg-green-50 border border-green-200 rounded-lg mb-6 dark:bg-green-950 dark:border-green-800">
               <Mail className="w-6 h-6 text-green-600" />
               <div>
-                <h3 className="font-semibold text-green-800">Next Steps</h3>
-                <p className="text-green-700">
+                <h3 className="font-semibold text-green-800 dark:text-green-300">Next Steps</h3>
+                <p className="text-green-700 dark:text-green-400">
                   We've captured your details. Please wait for a confirmation
                   email with further instructions within 48 hours.
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-4 p-4 bg-amber-50 border border-amber-200 rounded-lg dark:bg-amber-950 dark:border-amber-800">
+              <Mail className="w-6 h-6 text-amber-600" />
+              <div>
+                <h3 className="font-semibold text-amber-800 dark:text-amber-300">Check Your Spam Folder</h3>
+                <p className="text-amber-700 dark:text-amber-400">
+                  If you don't see the activation email in your inbox within a few minutes, please check your spam/junk folder. The email may have been filtered there.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950 dark:border-blue-800">
               <Clock className="w-6 h-6 text-blue-600" />
               <div>
-                <h3 className="font-semibold text-blue-800">Processing Time</h3>
-                <p className="text-blue-700">
+                <h3 className="font-semibold text-blue-800 dark:text-blue-300">Processing Time</h3>
+                <p className="text-blue-700 dark:text-blue-400">
                   Our team will review your application and get back to you
                   soon.
                 </p>

@@ -17,6 +17,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 export default function AssignmentsList() {
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+  const userRole = (user?.role || 'Student').toLowerCase();
+  const isStudent = userRole === 'student';
+  const basePath = isStudent ? '/student' : (userRole === 'admin' || userRole === 'super_admin') ? '/admin' : '/tutor';
+
   const [searchQuery, setSearchQuery] = useState("");
   const [courseFilter, setCourseFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
@@ -48,12 +53,14 @@ export default function AssignmentsList() {
             Create and manage course assignments
           </p>
         </div>
-        <Button asChild>
-          <Link to="/admin/assessments/assignments/create">
-            <Plus className="mr-2 h-4 w-4" />
-            New Assignment
-          </Link>
-        </Button>
+        {!isStudent && (
+          <Button asChild>
+            <Link to={`${basePath}/assessments/assignments/create`}>
+              <Plus className="mr-2 h-4 w-4" />
+              New Assignment
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -69,7 +76,7 @@ export default function AssignmentsList() {
             />
           </div>
           <Select value={courseFilter} onValueChange={setCourseFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-full sm:w-48">
               <Filter className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Filter by course" />
             </SelectTrigger>
@@ -122,12 +129,14 @@ export default function AssignmentsList() {
           <p className="mt-1 text-sm text-muted-foreground">
             Try adjusting your search or filter criteria
           </p>
-          <Button className="mt-4" asChild>
-            <Link to="/admin/assessments/assignments/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Assignment
-            </Link>
-          </Button>
+          {!isStudent && (
+            <Button className="mt-4" asChild>
+              <Link to={`${basePath}/assessments/assignments/create`}>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Assignment
+              </Link>
+            </Button>
+          )}
         </div>
       ) : (
         <div className={cn(

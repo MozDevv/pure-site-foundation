@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Search,
   Plus,
@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import { apiService, endpoints } from '@/lib/api';
 import { CreateTeam } from '@/components/CreateTeam';
+import { useQuery } from '@tanstack/react-query';
 
 interface Team {
   id: string;
@@ -29,52 +30,20 @@ interface Team {
 }
 
 export function TeamsPage() {
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'my' | 'open'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showCreateTeam, setShowCreateTeam] = useState(false);
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchTeams();
-  }, []);
-
-  const fetchTeams = async () => {
-    setLoading(true);
-    try {
+  const { data: teams = [], isLoading: loading } = useQuery({
+    queryKey: ['innovation-teams'],
+    queryFn: async () => {
       const response = await apiService.get(endpoints.getUserTeams);
-      if (response.status === 200) {
-        setTeams(response.data || []);
-      }
-    } catch (error) {
-      console.error('Error fetching teams:', error);
-      // Mock data for development
-      setTeams([
-        {
-          id: '1',
-          name: 'AI Innovators',
-          description: 'Building the future with AI',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          teamMembers: [{ id: '1' }, { id: '2' }, { id: '3' }],
-          allTeamRoles: [],
-        },
-        {
-          id: '2',
-          name: 'Code Warriors',
-          description: 'Passionate developers team',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          teamMembers: [{ id: '1' }, { id: '2' }],
-          allTeamRoles: [],
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const filteredTeams = teams.filter(
     (team) =>

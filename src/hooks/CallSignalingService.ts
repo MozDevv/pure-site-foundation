@@ -6,10 +6,14 @@ type CallAcceptedCallback = (roomId: string) => void;
 
 const RECONNECT_DELAY_MS = 2000;
 const MAX_RETRIES = 10;
-function getWsBaseUrl(apiBaseUrl: string) {
+function getWsBaseUrl(apiBaseUrl: string): string {
   // Remove protocol and path, keep only domain:port
-  const match = apiBaseUrl.match(/^https?:\/\/([^/]+)/i);
-  return match ? match[1] : apiBaseUrl;
+  if (apiBaseUrl.startsWith('http')) {
+    const match = apiBaseUrl.match(/^https?:\/\/([^/]+)/i);
+    if (match) return match[1];
+  }
+  // Relative URL (e.g. '/api') — fall back to current page host
+  return window.location.host;
 }
 export function useCallSignaling() {
   const wsRef = useRef<WebSocket | null>(null);
@@ -27,7 +31,8 @@ export function useCallSignaling() {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const wsDomain = getWsBaseUrl(API_BASE_URL);
-    const wsProtocol = API_BASE_URL.startsWith('https') ? 'wss' : 'ws';
+    // Always derive protocol from the page protocol to avoid mixed-content blocks
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const wsUrl = `${wsProtocol}://${wsDomain.replace(
       /:([0-9]+)\/api$/,
       ':8080'

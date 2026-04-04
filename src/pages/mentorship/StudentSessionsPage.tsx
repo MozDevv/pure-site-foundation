@@ -24,13 +24,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerFooter,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+} from '@/components/ui/smart-drawer';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useMentorship } from '@/components/mentorship/MentorshipContext';
@@ -43,22 +43,22 @@ const statusConfig: Record<
   scheduled: {
     label: 'Scheduled',
     icon: Clock,
-    color: 'text-blue-600 bg-blue-100',
+    color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
   },
   completed: {
     label: 'Completed',
     icon: CheckCircle,
-    color: 'text-green-600 bg-green-100',
+    color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
   },
   cancelled: {
     label: 'Cancelled',
     icon: XCircle,
-    color: 'text-red-600 bg-red-100',
+    color: 'text-red-600 bg-red-100 dark:bg-red-900/30 dark:text-red-400',
   },
   no_show: {
     label: 'No Show',
     icon: AlertCircle,
-    color: 'text-amber-600 bg-amber-100',
+    color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400',
   },
 };
 
@@ -277,7 +277,7 @@ export function StudentSessionsPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+            <div className="h-10 w-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
               <Clock className="h-5 w-5 text-blue-600" />
             </div>
             <div>
@@ -288,7 +288,7 @@ export function StudentSessionsPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+            <div className="h-10 w-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-green-600" />
             </div>
             <div>
@@ -301,7 +301,7 @@ export function StudentSessionsPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 bg-amber-100 rounded-full flex items-center justify-center">
+            <div className="h-10 w-10 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
               <Star className="h-5 w-5 text-amber-600" />
             </div>
             <div>
@@ -317,8 +317,8 @@ export function StudentSessionsPage() {
         </Card>
         <Card>
           <CardContent className="p-4 flex items-center gap-4">
-            <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <Video className="h-5 w-5 text-purple-600" />
+            <div className="h-10 w-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+              <Video className="h-5 w-5 text-blue-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{sessions.length}</p>
@@ -378,17 +378,17 @@ export function StudentSessionsPage() {
       </Tabs>
 
       {/* Feedback Dialog */}
-      <Dialog
+      <SmartDrawer
         open={!!feedbackSession}
         onOpenChange={() => setFeedbackSession(null)}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Session Feedback</DialogTitle>
-            <DialogDescription>
+        <SmartDrawerContent>
+          <SmartDrawerHeader>
+            <SmartDrawerTitle>Session Feedback</SmartDrawerTitle>
+            <SmartDrawerDescription>
               Share your feedback for "{feedbackSession?.title}"
-            </DialogDescription>
-          </DialogHeader>
+            </SmartDrawerDescription>
+          </SmartDrawerHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -425,7 +425,7 @@ export function StudentSessionsPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <SmartDrawerFooter>
             <Button variant="outline" onClick={() => setFeedbackSession(null)}>
               Cancel
             </Button>
@@ -435,9 +435,9 @@ export function StudentSessionsPage() {
             >
               {submitting ? 'Submitting...' : 'Submit Feedback'}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SmartDrawerFooter>
+        </SmartDrawerContent>
+      </SmartDrawer>
     </div>
   );
 }

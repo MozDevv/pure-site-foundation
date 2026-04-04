@@ -22,14 +22,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerFooter,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerTrigger,
+} from '@/components/ui/smart-drawer';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +44,10 @@ export function MentorGroupsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<MentorGroup | null>(null);
+
+  const _user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+  const _role = (_user?.role || 'Student').toLowerCase();
+  const canManageGroups = ['tutor', 'mentor', 'admin', 'super_admin'].includes(_role);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -84,9 +88,9 @@ export function MentorGroupsPage() {
   };
 
   const statusColors: Record<string, string> = {
-    active: 'bg-green-100 text-green-700',
-    inactive: 'bg-gray-100 text-gray-700',
-    full: 'bg-amber-100 text-amber-700',
+    active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+    inactive: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    full: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
   };
 
   return (
@@ -99,20 +103,22 @@ export function MentorGroupsPage() {
             Manage group mentorship sessions and member assignments
           </p>
         </div>
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Group
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create Mentor Group</DialogTitle>
-              <DialogDescription>
+        <SmartDrawer open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+          {canManageGroups && (
+            <SmartDrawerTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Create Group
+              </Button>
+            </SmartDrawerTrigger>
+          )}
+          <SmartDrawerContent>
+            <SmartDrawerHeader>
+              <SmartDrawerTitle>Create Mentor Group</SmartDrawerTitle>
+              <SmartDrawerDescription>
                 Set up a new group mentorship program
-              </DialogDescription>
-            </DialogHeader>
+              </SmartDrawerDescription>
+            </SmartDrawerHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
                 <Label>Group Name</Label>
@@ -178,16 +184,16 @@ export function MentorGroupsPage() {
                 />
               </div>
             </div>
-            <DialogFooter>
+            <SmartDrawerFooter>
               <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
                 Cancel
               </Button>
               <Button onClick={handleCreateGroup} disabled={!formData.name || !formData.mentorId}>
                 Create Group
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </SmartDrawerFooter>
+          </SmartDrawerContent>
+        </SmartDrawer>
       </div>
 
       {/* Search */}
@@ -213,13 +219,15 @@ export function MentorGroupsPage() {
           <CardContent className="flex flex-col items-center justify-center py-12">
             <Users className="h-12 w-12 text-muted-foreground mb-4" />
             <p className="text-muted-foreground">No groups found</p>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => setCreateDialogOpen(true)}
-            >
-              Create your first group
-            </Button>
+            {canManageGroups && (
+              <Button 
+                variant="outline" 
+                className="mt-4"
+                onClick={() => setCreateDialogOpen(true)}
+              >
+                Create your first group
+              </Button>
+            )}
           </CardContent>
         </Card>
       ) : (
@@ -239,11 +247,13 @@ export function MentorGroupsPage() {
                     </CardDescription>
                   </div>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
+                    {canManageGroups && (
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    )}
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(group.id, 'active'); }}>
                         Set Active
@@ -298,21 +308,21 @@ export function MentorGroupsPage() {
       )}
 
       {/* Group Detail Dialog */}
-      <Dialog open={!!selectedGroup} onOpenChange={() => setSelectedGroup(null)}>
-        <DialogContent className="max-w-2xl">
+      <SmartDrawer open={!!selectedGroup} onOpenChange={() => setSelectedGroup(null)}>
+        <SmartDrawerContent defaultWidth={672}>
           {selectedGroup && (
             <>
-              <DialogHeader>
+              <SmartDrawerHeader>
                 <div className="flex items-center justify-between">
                   <div>
-                    <DialogTitle className="text-2xl">{selectedGroup.name}</DialogTitle>
-                    <DialogDescription>{selectedGroup.description}</DialogDescription>
+                    <SmartDrawerTitle className="text-2xl">{selectedGroup.name}</SmartDrawerTitle>
+                    <SmartDrawerDescription>{selectedGroup.description}</SmartDrawerDescription>
                   </div>
                   <Badge className={statusColors[selectedGroup.status]}>
                     {selectedGroup.status}
                   </Badge>
                 </div>
-              </DialogHeader>
+              </SmartDrawerHeader>
               <div className="space-y-6 mt-4">
                 <div className="flex items-center gap-4">
                   <Avatar className="h-14 w-14">
@@ -376,8 +386,8 @@ export function MentorGroupsPage() {
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SmartDrawerContent>
+      </SmartDrawer>
     </div>
   );
 }

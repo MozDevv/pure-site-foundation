@@ -18,7 +18,7 @@ import { Call } from '@mui/icons-material';
 import { useCallSignaling } from '@/hooks/CallSignalingService';
 import { showIncomingCallToast } from '@/hooks/showIncomingCallToast';
 
-export const FirestoreChatPanel: React.FC = () => {
+export const FirestoreChatPanel: React.FC<{ className?: string; onBack?: () => void }> = ({ className, onBack }) => {
   const {
     rooms,
     users,
@@ -215,11 +215,11 @@ export const FirestoreChatPanel: React.FC = () => {
   ]);
 
   return (
-    <div className="flex-1 flex flex-col bg-background overflow-x-hidden">
+    <div className={`flex-1 flex flex-col bg-background overflow-x-hidden ${className || ''}`}>
       {/* Header */}
             {meetingLink && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-5xl h-[90vh] flex flex-col">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-5xl max-h-[90vh] flex flex-col m-4 sm:m-0">
             <div className="flex justify-end p-2">
               <Button
                 variant="ghost"
@@ -240,6 +240,11 @@ export const FirestoreChatPanel: React.FC = () => {
       <div className="p-4 border-b border-border bg-card/50">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            {onBack && (
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 md:hidden" onClick={onBack}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+              </Button>
+            )}
             <div>
               <h2 className="text-lg font-semibold text-foreground">
                 {getRoomName()}
@@ -300,7 +305,7 @@ export const FirestoreChatPanel: React.FC = () => {
 
       {/* Messages */}
       <ScrollArea className="flex-1 px-4">
-        <div className="py-4 space-y-2 h-[65vh]  overflow-y-auto overflow-x-hidden">
+        <div className="py-4 space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden">
           {messages2?.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">

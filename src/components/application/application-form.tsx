@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -32,22 +32,68 @@ import {
 import { toast } from '@/hooks/use-toast';
 import { Progress } from '@/components/ui/progress';
 import { API_BASE_URL, apiService, endpoints } from '@/lib/api';
-import { CheckCircle, ArrowLeft, Loader2 } from 'lucide-react';
+import { CheckCircle, ArrowLeft, Loader2, CalendarIcon, Save } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { ApplicationSuccess } from './application-success';
 import axios from 'axios';
+import { format } from 'date-fns';
+import { Calendar } from '@/components/ui/calendar';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import {
+  SearchableSelect,
+  MultiSelectSearch,
+  InstitutionSearch,
+  SuggestTextarea,
+} from '@/components/ui/searchable-inputs';
+import { PhoneInput, isValidPhoneNumber, normalizePhoneNumber } from '@/components/ui/phone-input';
+import {
+  COUNTRIES,
+  FIELDS_OF_STUDY,
+  PROGRAMMING_LANGUAGES,
+  TECH_INTERESTS,
+  INSTITUTIONS,
+  MOTIVATION_SUGGESTIONS,
+  CAREER_GOAL_SUGGESTIONS,
+} from '@/lib/application-data';
+
+const STORAGE_KEY = 'techai_application_progress';
+
+function calculateAge(dob: Date): number {
+  const today = new Date();
+  let age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+  return age;
+}
 
 const applicationSchema = z.object({
   // Personal Information
-  firstName: z.string().min(2, 'First name must be at least 2 characters'),
-  lastName: z.string().min(2, 'Last name must be at least 2 characters'),
-  email: z.string().email('Please enter a valid email address'),
-  phone: z.string().min(10, 'Please enter a valid phone number'),
-  age: z
-    .number()
-    .min(16, 'Must be at least 16 years old')
-    .max(100, 'Invalid age'),
-  location: z.string().min(2, 'Please enter your city'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string()
+    .min(1, 'Email address is required')
+    .regex(
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/,
+      'Please enter a valid email address (e.g. name@gmail.com, user@outlook.com)'
+    ),
+  phone: z.string()
+    .min(7, 'Phone number is too short')
+    .refine((val) => isValidPhoneNumber(val), {
+      message: 'Please enter a valid phone number',
+    }),
+  dateOfBirth: z.date({ required_error: 'Please select your date of birth' }).refine(
+    (date) => calculateAge(date) >= 16,
+    'You must be at least 16 years old'
+  ),
+  location: z.string().min(2, 'Please select your country'),
+  applyingAs: z.enum(['Student', 'Mentor', 'Tutor'], {
+    required_error: 'Please select your role (Student, Mentor, or Tutor)',
+  }),
 
   // Education Background
   educationLevel: z.string().min(1, 'Please select your education level'),
@@ -86,71 +132,189 @@ export function ApplicationForm() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [submittedData, setSubmittedData] =
     useState<ApplicationFormData | null>(null);
+  const [hasRestoredProgress, setHasRestoredProgress] = useState(false);
   const totalSteps = 5;
+
+  // Load saved progress from localStorage
+  const getSavedProgress = useCallback((): Partial<ApplicationFormData> & { _step?: number } | null => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      // Restore dateOfBirth as Date object
+      if (parsed.dateOfBirth) {
+        parsed.dateOfBirth = new Date(parsed.dateOfBirth);
+      }
+      return parsed;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const savedProgress = getSavedProgress();
 
   const form = useForm<ApplicationFormData>({
     resolver: zodResolver(applicationSchema),
     defaultValues: {
-      receiveUpdates: false,
-      agreeTerms: false,
+      firstName: savedProgress?.firstName || '',
+      lastName: savedProgress?.lastName || '',
+      email: savedProgress?.email || '',
+      phone: savedProgress?.phone || '',
+      dateOfBirth: savedProgress?.dateOfBirth || undefined,
+      location: savedProgress?.location || '',
+      applyingAs: savedProgress?.applyingAs || 'Student',
+      educationLevel: savedProgress?.educationLevel || '',
+      fieldOfStudy: savedProgress?.fieldOfStudy || '',
+      institutionName: savedProgress?.institutionName || '',
+      programmingExperience: savedProgress?.programmingExperience || '',
+      programmingLanguages: savedProgress?.programmingLanguages || '',
+      techInterests: savedProgress?.techInterests || '',
+      motivation: savedProgress?.motivation || '',
+      careerGoals: savedProgress?.careerGoals || '',
+      availableHours: savedProgress?.availableHours || '',
+      portfolioLinks: savedProgress?.portfolioLinks || '',
+      hearAboutUs: savedProgress?.hearAboutUs || '',
+      additionalInfo: savedProgress?.additionalInfo || '',
+      receiveUpdates: savedProgress?.receiveUpdates || false,
+      agreeTerms: false, // never restore this — user must re-agree
     },
   });
+
+  // Restore step from saved progress
+  useEffect(() => {
+    if (!hasRestoredProgress && savedProgress?._step) {
+      setStep(savedProgress._step);
+      setHasRestoredProgress(true);
+      toast({ title: 'Progress restored', description: 'Your previous application progress has been restored.', duration: 3000 });
+    }
+  }, [hasRestoredProgress, savedProgress]);
+
+  // Auto-save form progress on changes
+  const saveProgress = useCallback(() => {
+    const values = form.getValues();
+    const toSave = { ...values, _step: step };
+    // Serialize Date
+    if (toSave.dateOfBirth instanceof Date) {
+      (toSave as any).dateOfBirth = toSave.dateOfBirth.toISOString();
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+  }, [form, step]);
+
+  const watchApplyingAs = form.watch('applyingAs');
+  const watchEducationLevel = form.watch('educationLevel');
+  const watchDateOfBirth = form.watch('dateOfBirth');
 
   const onSubmit = async (data: ApplicationFormData) => {
     setIsSubmitting(true);
 
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-      toast({
-        title: 'Error',
-        description: 'User ID not found. Please complete step 1 first.',
-        variant: 'destructive',
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
-    const profileData = {
-      userId,
-      educationLevel: data.educationLevel,
-      fieldOfStudy: data.fieldOfStudy,
-      institutionName: data.institutionName,
-      programmingExperience: data.programmingExperience,
-      programmingLanguages: data.programmingLanguages,
-      techInterests: data.techInterests,
-      motivation: data.motivation,
-      careerGoals: data.careerGoals,
-      availableHours: data.availableHours,
-      portfolioLinks: data.portfolioLinks,
-      hearAboutUs: data.hearAboutUs,
-      additionalInfo: data.additionalInfo,
-      agreeTerms: data.agreeTerms,
-      receiveUpdates: data.receiveUpdates,
-    };
-
     try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Step 1: Register the user first
+      const isMentor = data.applyingAs === 'Mentor';
+      const isTutor = data.applyingAs === 'Tutor';
+      
+      // Generate a secure random password (users will set their own via email verification)
+      const array = new Uint8Array(18);
+      crypto.getRandomValues(array);
+      const randomPassword = Array.from(array, b => b.toString(36).padStart(2, '0')).join('').slice(0, 24);
+      
+      const registrationData = {
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        username: data.email, // Use email as username
+        role: data.applyingAs, // 'Student', 'Mentor', or 'Tutor'
+        isMentor: isMentor,
+        phoneNumber: normalizePhoneNumber(data.phone),
+        age: String(calculateAge(data.dateOfBirth)),
+        dateOfBirth: format(data.dateOfBirth, 'yyyy-MM-dd'),
+        location: data.location,
+        password: randomPassword,
+        profilePicture: '',
+        status: 'EMAIL_NOT_CONFIRMED',
+      };
 
-      const res = await axios.post(
-        `${API_BASE_URL}${endpoints.createProfile}`,
-        profileData
+      const registrationRes = await axios.post(
+        `${API_BASE_URL}${endpoints.register}`,
+        registrationData
       );
-      if (res.status === 201 || res.status === 200) {
+      
+      if (registrationRes.status !== 200 && registrationRes.status !== 201) {
+        throw new Error('Registration failed');
+      }
+
+      const userId = registrationRes.data.id;
+      const registrationToken = registrationRes.data.token;
+      localStorage.setItem('userId', userId);
+
+      // Step 2: Create the user profile with additional information
+      // Use the JWT token from registration to authenticate the profile creation request
+      const profileData = {
+        userId,
+        educationLevel: data.educationLevel,
+        fieldOfStudy: data.fieldOfStudy,
+        institutionName: data.institutionName,
+        programmingExperience: data.programmingExperience,
+        programmingLanguages: data.programmingLanguages,
+        techInterests: data.techInterests,
+        motivation: data.motivation,
+        careerGoals: data.careerGoals,
+        availableHours: data.availableHours,
+        portfolioLinks: data.portfolioLinks,
+        hearAboutUs: data.hearAboutUs,
+        additionalInfo: data.additionalInfo,
+        agreeTerms: data.agreeTerms,
+        receiveUpdates: data.receiveUpdates,
+      };
+
+      const profileRes = await axios.post(
+        `${API_BASE_URL}${endpoints.createProfile}`,
+        profileData,
+        {
+          headers: {
+            Authorization: `Bearer ${registrationToken}`,
+          },
+        }
+      );
+      
+      if (profileRes.status === 201 || profileRes.status === 200) {
         setSubmittedData(data);
         setIsSubmitted(true);
+        
+        // Clear saved progress
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem('applicationStep1');
+        
         toast({
-          title: 'Application Submitted!',
-          description: 'Your application has been successfully submitted.',
+          title: 'Application Submitted Successfully!',
+          description: 'A verification email has been sent to your inbox. Please also check your Spam/Junk folder if you don\'t see it within a few minutes.',
+          duration: 8000,
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Submission error:', error);
+      
+      // Clear userId if it was set, since the full process didn't complete
+      localStorage.removeItem('userId');
+      
+      // Extract error message from response
+      let errorTitle = 'Application Submission Failed';
+      let errorMessage = 'There was a problem submitting your application. Please try again.';
+      
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+        if (error.response.data.message.includes('email')) {
+          errorTitle = 'Email Already Registered';
+        }
+      } else if (error?.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
       toast({
-        title: 'Submission Error',
-        description: 'There was a problem submitting your application.',
+        title: errorTitle,
+        description: errorMessage,
         variant: 'destructive',
+        duration: 8000,
       });
-      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -165,24 +329,23 @@ export function ApplicationForm() {
         'lastName',
         'email',
         'phone',
-        'age',
+        'dateOfBirth',
         'location',
+        'applyingAs',
       ];
     } else if (step === 2) {
       fieldsToValidate = ['educationLevel'];
     } else if (step === 3) {
       fieldsToValidate = ['programmingExperience'];
     } else if (step === 4) {
-      fieldsToValidate = ['motivation', 'careerGoals', 'availableHours'];
+      fieldsToValidate = ['availableHours'];
     } else if (step === 5) {
-      fieldsToValidate = ['hearAboutUs', 'agreeTerms'];
+      fieldsToValidate = ['agreeTerms'];
     }
 
     const isValid = await form.trigger(fieldsToValidate);
     if (isValid) {
-      if (step === 1) {
-        await handleSaveStepOne(form.getValues());
-      }
+      saveProgress();
       if (step < totalSteps) {
         setStep(step + 1);
       }
@@ -190,53 +353,13 @@ export function ApplicationForm() {
   };
 
   const prevStep = () => {
-    if (step > 1) setStep(step - 1);
+    if (step > 1) {
+      saveProgress();
+      setStep(step - 1);
+    }
   };
 
   const progress = (step / totalSteps) * 100;
-
-  const handleSaveStepOne = async (data: any) => {
-    /**{
-  "email": "string",
-  "firstName": "string",
-  "lastName": "string",
-  "username": "string",
-  "phoneNumber": "string",
-  "age": "string",
-  "location": "string",
-  "password": "string",
-  "profilePicture": "string",
-  "status": "string",
-} */
-    try {
-      const applicationData = {
-        email: data.email,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        // username: data.username,
-        role: 'Student',
-        phoneNumber: data.phoneNumber,
-        age: data.age,
-        location: data.location,
-        password: data.password,
-        // profilePicture: data.profilePicture,
-      };
-
-      const res = await axios.post(
-        `${API_BASE_URL}${endpoints.register}`,
-        applicationData
-      );
-      if (res.status === 200) {
-        localStorage.setItem('userId', res.data.id);
-        toast({
-          title: 'Step 1 Saved',
-          description: 'Your personal information has been saved successfully.',
-        });
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   // Success page after submission
   if (isSubmitted && submittedData) {
@@ -288,6 +411,61 @@ export function ApplicationForm() {
               >
                 {/* Step 1: Personal Information */}
                 {step === 1 && (
+                  <div className="space-y-6">
+                    <FormField
+                      control={form.control}
+                      name="applyingAs"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>I am applying as *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your role" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="Student">
+                                <div className="flex flex-col py-1">
+                                  <span className="font-medium">Student</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Join to learn and grow your tech skills
+                                  </span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="Mentor">
+                                <div className="flex flex-col py-1">
+                                  <span className="font-medium">Mentor</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Help guide students on their learning journey (requires approval)
+                                  </span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="Tutor">
+                                <div className="flex flex-col py-1">
+                                  <span className="font-medium">Tutor</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    Teach courses and manage educational content (requires approval)
+                                  </span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            {watchApplyingAs === 'Student' 
+                              ? 'Students get instant access after email verification' 
+                              : watchApplyingAs === 'Mentor'
+                              ? 'Mentor applications require admin approval (typically 1-2 business days)'
+                              : 'Tutor applications require admin approval (typically 1-2 business days)'}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Separator />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
                       control={form.control}
@@ -339,32 +517,64 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Phone Number *</FormLabel>
                           <FormControl>
-                            <Input
-                              type="tel"
-                              placeholder="+1 (555) 123-4567"
-                              {...field}
+                            <PhoneInput
+                              value={field.value}
+                              onChange={(val) => field.onChange(val)}
+                              defaultCountry="KE"
+                              error={!!form.formState.errors.phone}
                             />
                           </FormControl>
+                          <FormDescription>Enter your local number (e.g. 0712345678) or international format</FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
                     <FormField
                       control={form.control}
-                      name="age"
+                      name="dateOfBirth"
                       render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Age *</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              placeholder="25"
-                              {...field}
-                              onChange={(e) =>
-                                field.onChange(parseInt(e.target.value))
-                              }
-                            />
-                          </FormControl>
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Date of Birth *</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant="outline"
+                                  className={cn(
+                                    'w-full pl-3 text-left font-normal h-10',
+                                    !field.value && 'text-muted-foreground'
+                                  )}
+                                >
+                                  {field.value ? (
+                                    format(field.value, 'PPP')
+                                  ) : (
+                                    <span>Pick your date of birth</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date > new Date() || date < new Date('1920-01-01')
+                                }
+                                defaultMonth={field.value || new Date(new Date().getFullYear() - 20, 0)}
+                                captionLayout="dropdown-buttons"
+                                fromYear={1920}
+                                toYear={new Date().getFullYear()}
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          {field.value && (
+                            <FormDescription>
+                              Age: {calculateAge(field.value)} years old
+                            </FormDescription>
+                          )}
                           <FormMessage />
                         </FormItem>
                       )}
@@ -374,14 +584,21 @@ export function ApplicationForm() {
                       name="location"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Location (City) *</FormLabel>
+                          <FormLabel>Country *</FormLabel>
                           <FormControl>
-                            <Input placeholder="New York" {...field} />
+                            <SearchableSelect
+                              options={COUNTRIES}
+                              value={field.value}
+                              onChange={field.onChange}
+                              placeholder="Search country..."
+                              allowCustom
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
                   </div>
                 )}
 
@@ -430,9 +647,12 @@ export function ApplicationForm() {
                           <FormItem>
                             <FormLabel>Field of Study</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="Computer Science"
-                                {...field}
+                              <SearchableSelect
+                                options={FIELDS_OF_STUDY}
+                                value={field.value || ''}
+                                onChange={field.onChange}
+                                placeholder="Search field of study..."
+                                allowCustom
                               />
                             </FormControl>
                             <FormMessage />
@@ -446,11 +666,17 @@ export function ApplicationForm() {
                           <FormItem>
                             <FormLabel>Institution Name</FormLabel>
                             <FormControl>
-                              <Input
-                                placeholder="University of Technology"
-                                {...field}
+                              <InstitutionSearch
+                                institutions={INSTITUTIONS}
+                                value={field.value || ''}
+                                onChange={field.onChange}
+                                educationLevel={watchEducationLevel}
+                                placeholder="Search institution..."
                               />
                             </FormControl>
+                            <FormDescription>
+                              Search by name, abbreviation, or country
+                            </FormDescription>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -497,13 +723,16 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Programming Languages</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Python, JavaScript, Java"
-                              {...field}
+                            <MultiSelectSearch
+                              options={PROGRAMMING_LANGUAGES}
+                              selected={field.value ? field.value.split(', ').filter(Boolean) : []}
+                              onChange={(items) => field.onChange(items.join(', '))}
+                              placeholder="Search and select languages..."
+                              allowCustom
                             />
                           </FormControl>
                           <FormDescription>
-                            List any programming languages you're familiar with
+                            Select the programming languages you're familiar with
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -516,13 +745,16 @@ export function ApplicationForm() {
                         <FormItem>
                           <FormLabel>Areas of Interest in Tech/AI</FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="Data Analytics, Machine Learning, Mobile Apps"
-                              {...field}
+                            <MultiSelectSearch
+                              options={TECH_INTERESTS}
+                              selected={field.value ? field.value.split(', ').filter(Boolean) : []}
+                              onChange={(items) => field.onChange(items.join(', '))}
+                              placeholder="Search and select interests..."
+                              allowCustom
                             />
                           </FormControl>
                           <FormDescription>
-                            What areas of technology and AI interest you most?
+                            Select the areas of technology and AI that interest you most
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -543,14 +775,15 @@ export function ApplicationForm() {
                             Why do you want to join the program? *
                           </FormLabel>
                           <FormControl>
-                            <Textarea
-                              placeholder="Tell us about your motivation for joining TechAI ..."
-                              className="min-h-[120px]"
-                              {...field}
+                            <SuggestTextarea
+                              suggestions={MOTIVATION_SUGGESTIONS}
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder="Tell us about your motivation for joining TechAI ... (click for suggestions)"
                             />
                           </FormControl>
                           <FormDescription>
-                            Minimum 50 characters required
+                            Type your motivation or click a suggestion to get started
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -565,14 +798,15 @@ export function ApplicationForm() {
                             Career goals after completing the program *
                           </FormLabel>
                           <FormControl>
-                            <Textarea
-                              placeholder="Describe your career aspirations after completing the program..."
-                              className="min-h-[120px]"
-                              {...field}
+                            <SuggestTextarea
+                              suggestions={CAREER_GOAL_SUGGESTIONS}
+                              value={field.value || ''}
+                              onChange={field.onChange}
+                              placeholder="Describe your career aspirations... (click for suggestions)"
                             />
                           </FormControl>
                           <FormDescription>
-                            Minimum 50 characters required
+                            Type your goals or click a suggestion to get started
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -732,14 +966,27 @@ export function ApplicationForm() {
 
                 {/* Navigation Buttons */}
                 <div className="flex justify-between pt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={prevStep}
-                    disabled={step === 1}
-                  >
-                    Previous
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={prevStep}
+                      disabled={step === 1}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        saveProgress();
+                        toast({ title: 'Progress saved', description: 'You can return later to complete your application.', duration: 3000 });
+                      }}
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      Save Progress
+                    </Button>
+                  </div>
 
                   {step < totalSteps ? (
                     <Button type="button" variant="hero" onClick={nextStep}>

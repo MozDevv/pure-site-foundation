@@ -281,10 +281,10 @@ export function MyMenteesPage() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Topics</CardTitle>
-            <Sparkles className="h-4 w-4 text-purple-500" />
+            <Sparkles className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-blue-600">
               {uniqueExpertise.length}
             </div>
           </CardContent>
@@ -756,7 +756,7 @@ export function MyMenteesPage() {
                       </h4>
                       <div className="space-y-4">
                         <div className="flex items-start gap-4">
-                          <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                          <div className="h-8 w-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center shrink-0">
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           </div>
                           <div>
@@ -771,7 +771,7 @@ export function MyMenteesPage() {
 
                         {selectedMentee.reviewedAt && (
                           <div className="flex items-start gap-4">
-                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
                               <BookOpen className="h-4 w-4 text-blue-600" />
                             </div>
                             <div>
@@ -801,8 +801,8 @@ export function MyMenteesPage() {
 
                         {selectedMentee.status?.toLowerCase() === 'matched' && (
                           <div className="flex items-start gap-4">
-                            <div className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
-                              <Users className="h-4 w-4 text-purple-600" />
+                            <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                              <Users className="h-4 w-4 text-blue-600" />
                             </div>
                             <div>
                               <p className="font-medium">Matched with You</p>

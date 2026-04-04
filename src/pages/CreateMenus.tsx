@@ -13,7 +13,9 @@ import {
   Chip,
 } from '@mui/material';
 import { apiService, endpoints } from '@/lib/api';
-import { navigationSections } from '@/components/layout/admin-sidebar';
+import { getNavigationSections } from '@/components/layout/admin-sidebar';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 
 const CreateMenus = () => {
   const [roles, setRoles] = useState([]);
@@ -21,6 +23,10 @@ const CreateMenus = () => {
   const [selectedRole, setSelectedRole] = useState(null);
   const [roleMenus, setRoleMenus] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [menuSearch, setMenuSearch] = useState('');
+  
+  // Get full navigation structure (using Admin role to get all menus)
+  const navigationSections = getNavigationSections('Admin');
 
   const populateMenusFromNavigation = async (navigationSections) => {
     const menuNames = new Set();
@@ -46,9 +52,16 @@ const CreateMenus = () => {
     return apiService.post(endpoints.populateMenus, payload);
   };
   useEffect(() => {
-    populateMenusFromNavigation(navigationSections);
-    fetchRoles();
-    fetchMenus();
+    const init = async () => {
+      try {
+        await populateMenusFromNavigation(navigationSections);
+      } catch (e) {
+        // ignore populate errors
+      }
+      await fetchMenus();
+      await fetchRoles();
+    };
+    init();
   }, []);
 
   const fetchRoles = async () => {
@@ -84,6 +97,27 @@ const CreateMenus = () => {
 
   const findMenuId = (name) => menus.find((m) => m.name === name)?.id;
 
+  // Filter sections and items by search term
+  const filteredSections = menuSearch.trim()
+    ? navigationSections
+        .map((section) => ({
+          ...section,
+          items: section.items
+            .map((item) => {
+              const parentMatch = item.title.toLowerCase().includes(menuSearch.toLowerCase());
+              const matchedChildren = item.children?.filter((c) =>
+                c.title.toLowerCase().includes(menuSearch.toLowerCase())
+              );
+              if (parentMatch) return item;
+              if (matchedChildren && matchedChildren.length > 0)
+                return { ...item, children: matchedChildren };
+              return null;
+            })
+            .filter(Boolean),
+        }))
+        .filter((section) => section.items.length > 0)
+    : navigationSections;
+
   return (
     <Grid container spacing={3}>
       {/* Roles - Left Side */}
@@ -117,21 +151,35 @@ const CreateMenus = () => {
 
       {/* Menus - Right Side */}
       <Grid item xs={12} md={8}>
-        <Paper sx={{ p: 3, borderRadius: 2, minHeight: 400 }}>
+        <Paper sx={{ p: { xs: 2, sm: 3 }, borderRadius: 2, minHeight: { xs: 'auto', md: 400 } }}>
           {selectedRole ? (
             <>
-              <Box
-                sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2 }}
-              >
-                <Typography variant="h6">
-                  Permissions for <strong>{selectedRole.name}</strong>
-                </Typography>
-                {loading && (
-                  <Chip label="Loading..." size="small" color="primary" />
-                )}
+              <Box sx={{ mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <Typography variant="h6">
+                    Permissions for <strong>{selectedRole.name}</strong>
+                  </Typography>
+                  {loading && (
+                    <Chip label="Loading..." size="small" color="primary" />
+                  )}
+                </Box>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search menus..."
+                    value={menuSearch}
+                    onChange={(e) => setMenuSearch(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
               </Box>
 
-              {navigationSections.map((section) => (
+              {filteredSections.length === 0 ? (
+                <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
+                  <Typography variant="body2">No menus match "{menuSearch}"</Typography>
+                </Box>
+              ) : (
+                filteredSections.map((section) => (
                 <Box key={section.label} sx={{ mb: 4 }}>
                   <Typography
                     variant="subtitle1"
@@ -169,7 +217,7 @@ const CreateMenus = () => {
                     ))}
                   </List>
                 </Box>
-              ))}
+              )))}
             </>
           ) : (
             <Box sx={{ py: 10, textAlign: 'center', color: 'text.secondary' }}>

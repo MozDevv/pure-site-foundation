@@ -1,9 +1,9 @@
 /* eslint-disable no-useless-catch */
 import axios from 'axios';
 
-// export const API_BASE_URL = 'http://localhost:8080/api'; //
-
-export const API_BASE_URL = 'https://techaipath.com/api';
+// In development: VITE_API_BASE_URL defaults to '/api' which Vite proxies to the hosted backend.
+// In production build: VITE_API_BASE_URL is set to 'https://techaipath.com/api'.
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string;
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,7 +25,7 @@ api.interceptors.response.use(
       alert('Session expired. Please log in again.');
       // Optionally, clear token and redirect to login:
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      window.location.href = '/signin';
     }
     return Promise.reject(error);
   }
@@ -55,6 +55,8 @@ const setAuthorizationHeader = () => {
  */
 export const endpoints = {
   login: '/v1/auth/login',
+  googleLogin: '/v1/auth/google',
+  logout: '/v1/auth/logout',
   register: '/v1/auth/register',
   getProfile: '/v1/auth/profile',
   updateProfile: '/v1/auth/profile',
@@ -65,6 +67,12 @@ export const endpoints = {
   activateAccount: (userId: string) => `/v1/auth/activate?userId=${userId}`,
   approveStudentApplication: (userId: string) =>
     `/v1/auth/approve-student?userId=${userId}`,
+  approveUser: (userId: string) => `/v1/auth/approve-user?userId=${userId}`,
+  lockUser: (userId: string) => `/users/${userId}/lock`,
+  unlockUser: (userId: string) => `/users/${userId}/unlock`,
+  suspendUser: (userId: string) => `/users/${userId}/suspend`,
+  activateUser: (userId: string) => `/users/${userId}/activate`,
+  changeUserRole: (userId: string) => `/users/${userId}/role`,
 
   // Courses
   getAllCourses: '/courses',
@@ -86,7 +94,24 @@ export const endpoints = {
   addTutorsToCourse: (courseId: string) =>
     `/courses/add-members/${courseId}?isStudents=false`,
   createEvent: '/events/create',
+  createPersonalEvent: '/events/create-personal',
   getUserEvents: '/events',
+  checkEventConflicts: (startTime: string, endTime: string) =>
+    `/events/check-conflicts?startTime=${startTime}&endTime=${endTime}`,
+  getEventRsvps: (eventId: string) => `/events/${eventId}/rsvps`,
+  respondToRsvp: (eventId: string) => `/events/${eventId}/rsvp`,
+  getMyRsvp: (eventId: string) => `/events/${eventId}/rsvp/mine`,
+  getRsvpCounts: (eventId: string) => `/events/${eventId}/rsvp/counts`,
+
+  // Calendar Notes
+  getCalendarNotes: '/calendar-notes',
+  getCalendarNotesByDate: (date: string) => `/calendar-notes/date/${date}`,
+  getCalendarNotesRange: (start: string, end: string) =>
+    `/calendar-notes/range?start=${start}&end=${end}`,
+  createCalendarNote: '/calendar-notes',
+  updateCalendarNote: (noteId: string) => `/calendar-notes/${noteId}`,
+  toggleCalendarNote: (noteId: string) => `/calendar-notes/${noteId}/toggle`,
+  deleteCalendarNote: (noteId: string) => `/calendar-notes/${noteId}`,
   getAll: '/course-modules',
   getById: (id: string) => `/course-modules/${id}`,
   create: '/course-modules',
@@ -106,6 +131,12 @@ export const endpoints = {
   updateTeam: '/teams',
   getUserTeams: '/teams',
   getTeamById: (teamId: string) => `/teams/${teamId}`,
+
+  // Audit Log endpoints
+  getAuditLogs: '/audit-logs',
+  getAuditLogsFiltered: '/audit-logs/filter',
+  getAuditLogsByUser: (userId: string) => `/audit-logs/user/${userId}`,
+  getAuditLogStats: '/audit-logs/stats',
 
   // Requirements endpoints
   getTeamRequirements: (teamId: string) => `/requirements/team/${teamId}`,
@@ -185,6 +216,9 @@ POST
   getCourseAnalytics: '/lms/analytics/course',
   // uploadSubmission: '/lms/submissions/upload',
 
+  // Student Dashboard
+  getStudentDashboard: '/student/dashboard',
+
   // Mentorship
   getAllMenteeRequests: '/mentee-requests',
   createMenteeRequest: '/mentee-requests',
@@ -202,6 +236,35 @@ GET
 
   getMenteeRequestsByMentor: '/mentee-requests/by-mentor',
   getMenteeRequestsByMentee: '/mentee-requests/by-mentee',
+
+  // Mentorship Sessions
+  getAllMentorshipSessions: '/mentorship-sessions',
+  createMentorshipSession: '/mentorship-sessions',
+  getMentorshipSessionById: (id: string) => `/mentorship-sessions/${id}`,
+  updateMentorshipSession: (id: string) => `/mentorship-sessions/${id}`,
+  deleteMentorshipSession: (id: string) => `/mentorship-sessions/${id}`,
+  getMentorshipSessionsByMentor: '/mentorship-sessions/by-mentor',
+  getUpcomingMentorshipSessions: '/mentorship-sessions/upcoming',
+  getUpcomingMentorshipSessionsByMentor: '/mentorship-sessions/upcoming/by-mentor',
+  getMentorshipSessionsByGroup: (groupId: string) => `/mentorship-sessions/by-group/${groupId}`,
+  updateMentorshipSessionStatus: (id: string) => `/mentorship-sessions/${id}/status`,
+  addMentorshipSessionFeedback: (id: string) => `/mentorship-sessions/${id}/feedback`,
+
+  // Mentor Groups
+  getAllMentorGroups: '/mentor-groups',
+  createMentorGroup: '/mentor-groups',
+  getMentorGroupById: (id: string) => `/mentor-groups/${id}`,
+  updateMentorGroup: (id: string) => `/mentor-groups/${id}`,
+  deleteMentorGroup: (id: string) => `/mentor-groups/${id}`,
+  getMentorGroupsByMentor: '/mentor-groups/by-mentor',
+  getActiveMentorGroups: '/mentor-groups/active',
+  addMentorGroupMember: (groupId: string, userId: string) => `/mentor-groups/${groupId}/members/${userId}`,
+  removeMentorGroupMember: (groupId: string, userId: string) => `/mentor-groups/${groupId}/members/${userId}`,
+  updateMentorGroupStatus: (id: string) => `/mentor-groups/${id}/status`,
+
+  // Mentorship Stats & Mentors
+  getMentorshipStats: '/mentorship/stats',
+  getMentors: '/mentorship/mentors',
   /**GET
 /api/menus
 
@@ -238,6 +301,226 @@ GET
   getMenuById: (id: string) => `/menus/${id}`,
   deleteMenu: (id: string) => `/menus/${id}`,
   getMenusByRole: (roleId: string) => `/menus/by-role/${roleId}`,
+
+  // Settings
+  getUserSettings: '/settings/user',
+  updateUserSettings: '/settings/user',
+  getSystemSettings: '/settings/system',
+  getSystemSettingsByCategory: (category: string) => `/settings/system/category/${category}`,
+  upsertSystemSetting: '/settings/system',
+  deleteSystemSetting: (key: string) => `/settings/system/${key}`,
+  initializeSystemSettings: '/settings/system/initialize',
+
+  // Notifications
+  getNotifications: '/notifications',
+  getUnreadNotifications: '/notifications/unread',
+  getUnreadCount: '/notifications/unread/count',
+  markNotificationRead: (id: string) => `/notifications/${id}/read`,
+  markAllNotificationsRead: '/notifications/read-all',
+  deleteReadNotifications: '/notifications/read',
+
+  // Meeting Templates
+  getMeetingTemplates: '/meeting-templates',
+  getMyMeetingTemplates: '/meeting-templates/mine',
+  getMeetingTemplateById: (id: string) => `/meeting-templates/${id}`,
+  createMeetingTemplate: '/meeting-templates',
+  updateMeetingTemplate: (id: string) => `/meeting-templates/${id}`,
+  deleteMeetingTemplate: (id: string) => `/meeting-templates/${id}`,
+
+  // Gamification
+  getGamificationProfile: '/gamification/profile',
+  getGamificationProfileById: (userId: string) => `/gamification/profile/${userId}`,
+  getLeaderboard: '/gamification/leaderboard',
+  getStreakLeaderboard: '/gamification/leaderboard/streaks',
+  getPointHistory: '/gamification/points/history',
+  getAllBadges: '/gamification/badges',
+  getMyBadges: '/gamification/badges/mine',
+  getUserBadges: (userId: string) => `/gamification/badges/${userId}`,
+  awardPoints: '/gamification/points/award',
+  createBadge: '/gamification/badges',
+  seedBadges: '/gamification/badges/seed',
+
+  // Discussion Forum
+  getForumCategories: '/forum/categories',
+  getForumCategoriesByCourse: (courseId: string) => `/forum/categories/course/${courseId}`,
+  createForumCategory: '/forum/categories',
+  updateForumCategory: (categoryId: string) => `/forum/categories/${categoryId}`,
+  getForumThreadsByCategory: (categoryId: string) => `/forum/threads/category/${categoryId}`,
+  getForumThread: (threadId: string) => `/forum/threads/${threadId}`,
+  searchForumThreads: '/forum/threads/search',
+  getMyForumThreads: '/forum/threads/mine',
+  createForumThread: '/forum/threads',
+  updateForumThread: (threadId: string) => `/forum/threads/${threadId}`,
+  togglePinThread: (threadId: string) => `/forum/threads/${threadId}/pin`,
+  toggleLockThread: (threadId: string) => `/forum/threads/${threadId}/lock`,
+  deleteForumThread: (threadId: string) => `/forum/threads/${threadId}`,
+  getForumPosts: (threadId: string) => `/forum/posts/thread/${threadId}`,
+  createForumPost: '/forum/posts',
+  updateForumPost: (postId: string) => `/forum/posts/${postId}`,
+  markForumPostAsAnswer: (postId: string) => `/forum/posts/${postId}/answer`,
+  deleteForumPost: (postId: string) => `/forum/posts/${postId}`,
+  toggleForumReaction: (postId: string) => `/forum/posts/${postId}/react`,
+  seedForumCategories: '/forum/seed',
+
+  // Certificates
+  getCertificateTemplates: '/certificates/templates',
+  createCertificateTemplate: '/certificates/templates',
+  updateCertificateTemplate: (templateId: string) => `/certificates/templates/${templateId}`,
+  getMyCertificates: '/certificates/mine',
+  getUserCertificates: (userId: string) => `/certificates/user/${userId}`,
+  getAllCertificates: '/certificates',
+  verifyCertificate: (code: string) => `/certificates/verify/${code}`,
+  issueCertificate: '/certificates/issue',
+  revokeCertificate: (certificateId: string) => `/certificates/${certificateId}/revoke`,
+  seedCertificateTemplates: '/certificates/templates/seed',
+
+  // Attendance
+  recordAttendance: '/attendance',
+  bulkRecordAttendance: '/attendance/bulk',
+  selfCheckIn: (eventId: string) => `/attendance/check-in/${eventId}`,
+  checkOut: (eventId: string) => `/attendance/check-out/${eventId}`,
+  getEventAttendance: (eventId: string) => `/attendance/event/${eventId}`,
+  getMyAttendance: '/attendance/mine',
+  getUserAttendance: (userId: string) => `/attendance/user/${userId}`,
+  getCourseAttendance: (courseId: string) => `/attendance/course/${courseId}`,
+  getUserAttendanceRange: (userId: string) => `/attendance/user/${userId}/range`,
+  getMyAttendanceStats: '/attendance/stats/mine',
+  getUserAttendanceStats: (userId: string) => `/attendance/stats/user/${userId}`,
+  getEventAttendanceStats: (eventId: string) => `/attendance/stats/event/${eventId}`,
+  getCourseAttendanceStats: (courseId: string) => `/attendance/stats/course/${courseId}`,
+
+  // Announcements
+  getAnnouncements: '/announcements',
+  getAllAnnouncementsAdmin: '/announcements/all',
+  getCourseAnnouncements: (courseId: string) => `/announcements/course/${courseId}`,
+  searchAnnouncements: '/announcements/search',
+  createAnnouncement: '/announcements',
+  updateAnnouncement: (announcementId: string) => `/announcements/${announcementId}`,
+  deleteAnnouncement: (announcementId: string) => `/announcements/${announcementId}`,
+  markAnnouncementRead: (announcementId: string) => `/announcements/${announcementId}/read`,
+  getAnnouncementReadStatus: (announcementId: string) => `/announcements/${announcementId}/read-status`,
+
+  // Role Upgrade
+  submitRoleUpgradeRequest: '/role-upgrade/request',
+  getMyRoleUpgradeRequests: '/role-upgrade/mine',
+  getPendingRoleUpgradeRequests: '/role-upgrade/pending',
+  getPendingRoleUpgradeCount: '/role-upgrade/pending/count',
+  getAllRoleUpgradeRequests: '/role-upgrade',
+  approveRoleUpgrade: (requestId: string) => `/role-upgrade/${requestId}/approve`,
+  rejectRoleUpgrade: (requestId: string) => `/role-upgrade/${requestId}/reject`,
+
+  // Code Execution
+  executeCode: '/code/execute',
+  executeCodePiston: '/code/execute/piston',        // Piston engine (playground batch)
+  getPistonRuntimes: '/code/runtimes/piston',       // Piston language list
+  getTerminalInfo:   '/code/terminal/info',          // Interactive terminal info
+  submitCodeForGrading: (assignmentId: string) => `/code/submit/${assignmentId}`,
+  getCodeSubmission: (id: string) => `/code/submissions/${id}`,
+  getMyCodeSubmissions: '/code/submissions/mine',
+  getAssignmentSubmissions: (assignmentId: string) => `/code/submissions/assignment/${assignmentId}`,
+  getCodeQueueStatus: '/code/status',
+  getCodeRuntimes: '/code/runtimes',
+  getCodingAssignments: (courseId: string) => `/code/assignments?courseId=${courseId}`,
+  getCodingAssignment: (id: string) => `/code/assignments/${id}`,
+  createCodingAssignment: '/code/assignments',
+  updateCodingAssignment: (id: string) => `/code/assignments/${id}`,
+  deleteCodingAssignment: (id: string) => `/code/assignments/${id}`,
+  getCodingTestCases: (assignmentId: string) => `/code/assignments/${assignmentId}/test-cases`,
+  addCodingTestCase: (assignmentId: string) => `/code/assignments/${assignmentId}/test-cases`,
+  updateCodingTestCase: (testCaseId: string) => `/code/test-cases/${testCaseId}`,
+  deleteCodingTestCase: (testCaseId: string) => `/code/test-cases/${testCaseId}`,
+
+  // Code Collaboration
+  createCollabSession: '/collab/sessions',
+  joinCollabSession: (sessionId: string) => `/collab/sessions/${sessionId}/join`,
+  getCollabSession: (sessionId: string) => `/collab/sessions/${sessionId}`,
+  leaveCollabSession: (sessionId: string) => `/collab/sessions/${sessionId}`,
+
+  // Support & Helpdesk
+  createSupportTicket: '/support/tickets',
+  getMySupportTickets: '/support/tickets/mine',
+  getSupportTicket: (id: string) => `/support/tickets/${id}`,
+  getSupportTicketByNumber: (num: string) => `/support/tickets/number/${num}`,
+  getAllSupportTickets: '/support/tickets',
+  getSupportTicketsByStatus: (status: string) => `/support/tickets/status/${status}`,
+  getAssignedSupportTickets: '/support/tickets/assigned',
+  updateSupportTicketStatus: (id: string) => `/support/tickets/${id}/status`,
+  assignSupportTicket: (id: string) => `/support/tickets/${id}/assign`,
+  escalateSupportTicket: (id: string) => `/support/tickets/${id}/escalate`,
+  addSupportTicketComment: (ticketId: string) => `/support/tickets/${ticketId}/comments`,
+  getSupportTicketComments: (ticketId: string) => `/support/tickets/${ticketId}/comments`,
+  getSupportTicketStats: '/support/stats',
+
+  // Knowledge Base
+  getKBCategories: '/support/kb/categories',
+  createKBCategory: '/support/kb/categories',
+  updateKBCategory: (id: string) => `/support/kb/categories/${id}`,
+  getKBArticlesByCategory: (categoryId: string) => `/support/kb/categories/${categoryId}/articles`,
+  getKBArticle: (id: string) => `/support/kb/articles/${id}`,
+  getKBArticleBySlug: (slug: string) => `/support/kb/articles/slug/${slug}`,
+  searchKB: '/support/kb/search',
+  getKBFAQs: '/support/kb/faq',
+  getKBVideoGuides: '/support/kb/video-guides',
+  createKBArticle: '/support/kb/articles',
+  updateKBArticle: (id: string) => `/support/kb/articles/${id}`,
+  markKBArticleHelpful: (id: string) => `/support/kb/articles/${id}/helpful`,
+  deleteKBArticle: (id: string) => `/support/kb/articles/${id}`,
+  seedKB: '/support/kb/seed',
+
+  // Learning Paths
+  createLearningPath: '/learning-paths',
+  getPublishedLearningPaths: '/learning-paths',
+  getAllLearningPaths: '/learning-paths/all',
+  getLearningPath: (id: string) => `/learning-paths/${id}`,
+  updateLearningPath: (id: string) => `/learning-paths/${id}`,
+  publishLearningPath: (id: string) => `/learning-paths/${id}/publish`,
+  deleteLearningPath: (id: string) => `/learning-paths/${id}`,
+  addLearningPathStep: (pathId: string) => `/learning-paths/${pathId}/steps`,
+  updateLearningPathStep: (stepId: string) => `/learning-paths/steps/${stepId}`,
+  reorderLearningPathSteps: (pathId: string) => `/learning-paths/${pathId}/steps/reorder`,
+  removeLearningPathStep: (stepId: string) => `/learning-paths/steps/${stepId}`,
+  enrollInLearningPath: (pathId: string) => `/learning-paths/${pathId}/enroll`,
+  getLearningPathProgress: (pathId: string) => `/learning-paths/${pathId}/progress`,
+  completeLearningPathStep: (progressId: string) => `/learning-paths/progress/${progressId}/complete`,
+  getMyEnrolledPaths: '/learning-paths/my-paths',
+
+  // Prerequisites
+  addCoursePrerequisite: '/learning-paths/prerequisites',
+  getCoursePrerequisites: (courseId: string) => `/learning-paths/prerequisites/course/${courseId}`,
+  checkCoursePrerequisites: (courseId: string) => `/learning-paths/prerequisites/check/${courseId}`,
+  removeCoursePrerequisite: (id: string) => `/learning-paths/prerequisites/${id}`,
+
+  // Skill Mastery
+  getMySkills: '/learning-paths/skills/mine',
+  getSkillsByCategory: (category: string) => `/learning-paths/skills/category/${category}`,
+  updateSkillMastery: '/learning-paths/skills/update',
+
+  // Waitlist
+  joinWaitlist: (courseId: string) => `/waitlist/${courseId}`,
+  leaveWaitlist: (courseId: string) => `/waitlist/${courseId}`,
+  getWaitlistPosition: (courseId: string) => `/waitlist/${courseId}/position`,
+  getWaitlist: (courseId: string) => `/waitlist/${courseId}`,
+  promoteFromWaitlist: (courseId: string) => `/waitlist/${courseId}/promote`,
+  getWaitlistCount: (courseId: string) => `/waitlist/${courseId}/count`,
+
+  // Content Versioning
+  createContentVersion: '/content-versions',
+  getContentVersionHistory: (moduleId: string) => `/content-versions/module/${moduleId}`,
+  getContentVersion: (id: string) => `/content-versions/${id}`,
+  getCurrentContentVersion: (moduleId: string) => `/content-versions/module/${moduleId}/current`,
+  publishContentVersion: (id: string) => `/content-versions/${id}/publish`,
+  revertContentVersion: (id: string) => `/content-versions/${id}/revert`,
+  archiveContentVersion: (id: string) => `/content-versions/${id}/archive`,
+  compareContentVersions: '/content-versions/compare',
+
+  // AI Chat
+  aiChat: '/ai/chat',
+
+  // Google Form Enrollments
+  googleFormPendingEnrollments: '/google-form/pending',
+  googleFormEnrollmentsByCourse: (courseId: string) => `/google-form/course/${courseId}`,
+  googleFormCancelEnrollment: (enrollmentId: string) => `/google-form/pending/${enrollmentId}`,
+  googleFormStats: '/google-form/stats',
 };
 
 export const apiService = {

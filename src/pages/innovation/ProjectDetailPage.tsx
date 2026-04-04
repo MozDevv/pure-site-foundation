@@ -103,18 +103,18 @@ interface ProjectData {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  DRAFT: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: FileText },
-  PENDING_REVIEW: { label: 'Pending Review', color: 'bg-amber-100 text-amber-700', icon: Clock },
-  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-100 text-blue-700', icon: AlertCircle },
-  APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
-  REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: XCircle },
-  CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-100 text-orange-700', icon: MessageSquare },
+  DRAFT: { label: 'Draft', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', icon: FileText },
+  PENDING_REVIEW: { label: 'Pending Review', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock },
+  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: AlertCircle },
+  APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle2 },
+  REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
+  CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: MessageSquare },
 };
 
 const memberStatusConfig: Record<string, { label: string; color: string }> = {
-  ACTIVE: { label: 'Active', color: 'bg-emerald-100 text-emerald-700' },
-  INVITED_USER_PENDING_ACCEPTANCE: { label: 'Pending', color: 'bg-amber-100 text-amber-700' },
-  INACTIVE: { label: 'Inactive', color: 'bg-gray-100 text-gray-700' },
+  ACTIVE: { label: 'Active', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  INVITED_USER_PENDING_ACCEPTANCE: { label: 'Pending', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+  INACTIVE: { label: 'Inactive', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
 };
 
 export function ProjectDetailPage() {

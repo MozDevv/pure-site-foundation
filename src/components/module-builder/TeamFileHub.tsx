@@ -21,12 +21,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerTrigger,
+} from '@/components/ui/smart-drawer';
 import { useToast } from '@/hooks/use-toast';
 import {
   Search,
@@ -254,15 +254,15 @@ export function TeamFileHub({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved':
-        return 'bg-green-100 text-green-700 border-green-200';
+        return 'bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800';
       case 'pending':
-        return 'bg-yellow-100 text-yellow-700 border-yellow-200';
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800';
       case 'draft':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800';
       case 'archived':
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
       default:
-        return 'bg-gray-100 text-gray-700 border-gray-200';
+        return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700';
     }
   };
 
@@ -354,11 +354,11 @@ export function TeamFileHub({
 
   return (
     <div className="space-y-6">
-      <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Upload Team File</DialogTitle>
-          </DialogHeader>
+      <SmartDrawer open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+        <SmartDrawerContent>
+          <SmartDrawerHeader>
+            <SmartDrawerTitle>Upload Team File</SmartDrawerTitle>
+          </SmartDrawerHeader>
           <div className="space-y-4">
             <div className="space-y-1">
               <label
@@ -427,19 +427,19 @@ export function TeamFileHub({
               )}
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="max-w-6xl max-h-[80vh] p-0 overflow-hidden">
+        </SmartDrawerContent>
+      </SmartDrawer>
+      <SmartDrawer open={previewOpen} onOpenChange={setPreviewOpen}>
+        <SmartDrawerContent defaultWidth={900}>
           <div className="flex flex-col md:flex-row">
             {/* Preview Area */}
             <div className="flex-1 bg-background p-6 flex flex-col items-center justify-center">
               <div className="flex items-center justify-between w-full mb-4">
-                <DialogHeader>
-                  <DialogTitle className="truncate">
+                <SmartDrawerHeader>
+                  <SmartDrawerTitle className="truncate">
                     {previewFile?.name}
-                  </DialogTitle>
-                </DialogHeader>
+                  </SmartDrawerTitle>
+                </SmartDrawerHeader>
                 <div className="flex gap-2">
                   <Button
                     variant="ghost"
@@ -567,8 +567,8 @@ export function TeamFileHub({
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </SmartDrawerContent>
+      </SmartDrawer>
       {/* Smart Header Bar */}
       <div className="space-y-4">
         {/* Pinned Files */}

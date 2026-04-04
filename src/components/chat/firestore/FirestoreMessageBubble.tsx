@@ -84,8 +84,8 @@ export const FirestoreMessageBubble: React.FC<FirestoreMessageBubbleProps> = ({
           className={cn(
             'relative rounded-2xl px-2 py-2 max-w-full break-words shadow-sm transition-all duration-200 hover:shadow-md',
             isOwn
-              ? 'bg-blue-600 text-white shadow-blue-sm' // Solid color for better readability
-              : 'bg-gray-50 text-gray-900 border border-gray-200 shadow-sm',
+              ? 'bg-primary text-primary-foreground shadow-blue-sm' // Solid color for better readability
+              : 'bg-muted text-foreground border border-border shadow-sm',
             'transform hover:scale-[1.02] focus-within:scale-[1.02]'
           )}
         >
@@ -98,7 +98,7 @@ export const FirestoreMessageBubble: React.FC<FirestoreMessageBubbleProps> = ({
             <span
               className={cn(
                 'text-xs opacity-70 ml-2',
-                isOwn ? 'text-white/70' : 'text-green-700/70'
+                isOwn ? 'text-primary-foreground/70' : 'text-muted-foreground'
               )}
             >
               (edited)

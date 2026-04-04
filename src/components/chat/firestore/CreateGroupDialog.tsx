@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+} from '@/components/ui/smart-drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -57,11 +57,11 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Create Group Chat</DialogTitle>
-        </DialogHeader>
+    <SmartDrawer open={open} onOpenChange={onOpenChange}>
+      <SmartDrawerContent>
+        <SmartDrawerHeader>
+          <SmartDrawerTitle>Create Group Chat</SmartDrawerTitle>
+        </SmartDrawerHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Group Name */}
@@ -126,7 +126,7 @@ export const CreateGroupDialog: React.FC<CreateGroupDialogProps> = ({
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SmartDrawerContent>
+    </SmartDrawer>
   );
 };

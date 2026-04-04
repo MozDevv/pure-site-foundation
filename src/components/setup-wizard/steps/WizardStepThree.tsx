@@ -7,13 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerFooter,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerTrigger,
+} from '@/components/ui/smart-drawer';
 import {
   Github,
   Server,
@@ -251,17 +251,17 @@ export const WizardStepThree = forwardRef<
                 </p>
               </div>
             </div>
-            <Dialog open={showRepoDialog} onOpenChange={setShowRepoDialog}>
-              <DialogTrigger asChild>
+            <SmartDrawer open={showRepoDialog} onOpenChange={setShowRepoDialog}>
+              <SmartDrawerTrigger asChild>
                 <Button size="sm">
                   <Plus className="w-4 h-4 mr-1" />
                   Add Repository
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add GitHub Repository</DialogTitle>
-                </DialogHeader>
+              </SmartDrawerTrigger>
+              <SmartDrawerContent>
+                <SmartDrawerHeader>
+                  <SmartDrawerTitle>Add GitHub Repository</SmartDrawerTitle>
+                </SmartDrawerHeader>
                 <div className="space-y-4 py-4">
                   <div className="space-y-2">
                     <Label>Repository Name *</Label>
@@ -302,7 +302,7 @@ export const WizardStepThree = forwardRef<
                     />
                   </div>
                 </div>
-                <DialogFooter>
+                <SmartDrawerFooter>
                   <Button
                     variant="outline"
                     onClick={() => setShowRepoDialog(false)}
@@ -315,9 +315,9 @@ export const WizardStepThree = forwardRef<
                   >
                     Add Repository
                   </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </SmartDrawerFooter>
+              </SmartDrawerContent>
+            </SmartDrawer>
           </div>
         </CardHeader>
         <CardContent>

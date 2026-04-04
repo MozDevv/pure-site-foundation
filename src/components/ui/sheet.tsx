@@ -1,6 +1,6 @@
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { cva, type VariantProps } from "class-variance-authority";
-import { X } from "lucide-react";
+import { X, GripVertical } from "lucide-react";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -38,7 +38,7 @@ const sheetVariants = cva(
           "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         left: "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
         right:
-          "inset-y-0 right-0 h-full w-3/4  border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
+          "inset-y-0 right-0 h-full w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
       },
     },
     defaultVariants: {
@@ -49,21 +49,74 @@ const sheetVariants = cva(
 
 interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+    VariantProps<typeof sheetVariants> {
+  resizable?: boolean;
+}
 
 const SheetContent = React.forwardRef<React.ElementRef<typeof SheetPrimitive.Content>, SheetContentProps>(
-  ({ side = "right", className, children, ...props }, ref) => (
-    <SheetPortal>
-      <SheetOverlay />
-      <SheetPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
-        {children}
-        <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </SheetPrimitive.Close>
-      </SheetPrimitive.Content>
-    </SheetPortal>
-  ),
+  ({ side = "right", className, children, resizable = false, ...props }, ref) => {
+    const [width, setWidth] = React.useState<number | null>(null);
+    const isResizing = React.useRef(false);
+
+    const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
+      if (!resizable) return;
+      e.preventDefault();
+      isResizing.current = true;
+      const startX = e.clientX;
+      const startWidth = width || 384; // sm:max-w-sm = 384px
+
+      const handleMouseMove = (e: MouseEvent) => {
+        if (!isResizing.current) return;
+        const diff = side === "right" ? startX - e.clientX : e.clientX - startX;
+        const newWidth = Math.max(320, Math.min(startWidth + diff, window.innerWidth * 0.8));
+        setWidth(newWidth);
+      };
+
+      const handleMouseUp = () => {
+        isResizing.current = false;
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    }, [resizable, side, width]);
+
+    return (
+      <SheetPortal>
+        <SheetOverlay />
+        <SheetPrimitive.Content
+          ref={ref}
+          className={cn(sheetVariants({ side }), "overflow-y-auto", className)}
+          style={width && resizable ? { width: `${width}px`, maxWidth: "80vw" } : undefined}
+          {...props}
+        >
+          {resizable && (side === "right" || side === "left") && (
+            <div
+              className={cn(
+                "absolute top-0 h-full w-1.5 cursor-col-resize hover:bg-primary/20 transition-colors z-10",
+                side === "right" ? "left-0" : "right-0"
+              )}
+              onMouseDown={handleMouseDown}
+            >
+              <div className="absolute top-1/2 -translate-y-1/2 left-1/2 -translate-x-1/2">
+                <GripVertical className="h-4 w-4 text-muted-foreground/40" />
+              </div>
+            </div>
+          )}
+          {children}
+          <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity data-[state=open]:bg-secondary hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </SheetPrimitive.Close>
+        </SheetPrimitive.Content>
+      </SheetPortal>
+    );
+  },
 );
 SheetContent.displayName = SheetPrimitive.Content.displayName;
 

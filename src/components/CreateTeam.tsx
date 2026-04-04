@@ -17,14 +17,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerFooter,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerTrigger,
+} from '@/components/ui/smart-drawer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -525,7 +525,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
         return (
           <Badge
             variant="outline"
-            className="text-amber-600 border-amber-300 bg-amber-50"
+            className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950 dark:border-amber-800 dark:text-amber-400"
           >
             <Clock className="w-3 h-3 mr-1" />
             Pending
@@ -535,7 +535,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
         return (
           <Badge
             variant="outline"
-            className="text-emerald-600 border-emerald-300 bg-emerald-50"
+            className="text-emerald-600 border-emerald-300 bg-emerald-50 dark:bg-emerald-950 dark:border-emerald-800 dark:text-emerald-400"
           >
             <CheckCircle2 className="w-3 h-3 mr-1" />
             Active
@@ -545,7 +545,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
         return (
           <Badge
             variant="outline"
-            className="text-gray-600 border-gray-300 bg-gray-50"
+            className="text-muted-foreground border-border bg-muted"
           >
             <XCircle className="w-3 h-3 mr-1" />
             Inactive
@@ -562,7 +562,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
         return (
           <Badge
             variant="outline"
-            className="text-green-600 border-green-300 bg-green-50"
+            className="text-green-600 border-green-300 bg-green-50 dark:bg-green-950 dark:border-green-800 dark:text-green-400"
           >
             <Globe className="w-3 h-3 mr-1" />
             Public
@@ -572,7 +572,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
         return (
           <Badge
             variant="outline"
-            className="text-red-600 border-red-300 bg-red-50"
+            className="text-red-600 border-red-300 bg-red-50 dark:bg-red-950 dark:border-red-800 dark:text-red-400"
           >
             <Lock className="w-3 h-3 mr-1" />
             Private
@@ -582,7 +582,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
         return (
           <Badge
             variant="outline"
-            className="text-blue-600 border-blue-300 bg-blue-50"
+            className="text-blue-600 border-blue-300 bg-blue-50 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-400"
           >
             <UserCheck className="w-3 h-3 mr-1" />
             Invite Only
@@ -723,7 +723,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
                       <div
                         className={`flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
                           formData.visibility === 'INVITE_ONLY'
-                            ? 'border-blue-500 bg-blue-50/50'
+                            ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/50'
                             : ''
                         }`}
                       >
@@ -749,7 +749,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
                       <div
                         className={`flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
                           formData.visibility === 'PUBLIC'
-                            ? 'border-green-500 bg-green-50/50'
+                            ? 'border-green-500 bg-green-50/50 dark:bg-green-950/50'
                             : ''
                         }`}
                       >
@@ -771,7 +771,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
                       <div
                         className={`flex items-center space-x-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer ${
                           formData.visibility === 'PRIVATE'
-                            ? 'border-red-500 bg-red-50/50'
+                            ? 'border-red-500 bg-red-50/50 dark:bg-red-950/50'
                             : ''
                         }`}
                       >
@@ -806,23 +806,23 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
                     <Users className="w-5 h-5" />
                     Team Members
                   </CardTitle>
-                  <Dialog
+                  <SmartDrawer
                     open={showInviteDialog}
                     onOpenChange={setShowInviteDialog}
                   >
-                    <DialogTrigger asChild>
+                    <SmartDrawerTrigger asChild>
                       <Button>
                         <UserPlus className="w-4 h-4 mr-2" />
                         Invite Member
                       </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Invite Team Member</DialogTitle>
-                        <DialogDescription>
+                    </SmartDrawerTrigger>
+                    <SmartDrawerContent>
+                      <SmartDrawerHeader>
+                        <SmartDrawerTitle>Invite Team Member</SmartDrawerTitle>
+                        <SmartDrawerDescription>
                           Send an invitation to join your team
-                        </DialogDescription>
-                      </DialogHeader>
+                        </SmartDrawerDescription>
+                      </SmartDrawerHeader>
                       <div className="space-y-4 py-4">
                         <div className="space-y-2">
                           <Label htmlFor="invite-email">Email Address *</Label>
@@ -877,7 +877,7 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
                           </Select>
                         </div>
                       </div>
-                      <DialogFooter>
+                      <SmartDrawerFooter>
                         <Button
                           variant="outline"
                           onClick={() => setShowInviteDialog(false)}
@@ -897,9 +897,9 @@ export function CreateTeam({ teamId, onBack, onTeamCreated }: TeamSetupProps) {
                             'Send Invitation'
                           )}
                         </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                      </SmartDrawerFooter>
+                    </SmartDrawerContent>
+                  </SmartDrawer>
                 </div>
               </CardHeader>
               <CardContent>

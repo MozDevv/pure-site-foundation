@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import DOMPurify from 'dompurify';
 import {
   Save,
   Plus,
@@ -17,6 +18,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FileUpload } from './FileUpload';
+import VideoPlayer from '@/components/video-player/VideoPlayer';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,11 +30,20 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { CKEditor } from '@ckeditor/ckeditor5-react';
-import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
+const CKEditorWrapper = lazy(() => import('./CKEditorWrapper'));
+
+/** Returns true if the URL is a direct video file (not an embed URL). */
+const isDirectVideoUrl = (url: string): boolean => {
+  const videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.mkv', '.avi'];
+  try {
+    const pathname = new URL(url).pathname.toLowerCase();
+    return videoExtensions.some((ext) => pathname.endsWith(ext));
+  } catch {
+    return false;
+  }
+};
 
 interface ModuleEditorProps {
-  module: CourseModule;
   depth: number;
   breadcrumbs: CourseModule[];
   files: ModuleFile[];
@@ -196,24 +207,32 @@ export function ModuleEditor({
 
             {/* Video/Resource */}
             {formData.contentUrl && (
-              <div className="rounded-lg border bg-muted/30 overflow-hidden mb-6">
-                <div className="aspect-video">
-                  <iframe
+              <div className="rounded-lg border overflow-hidden mb-6">
+                {isDirectVideoUrl(formData.contentUrl) ? (
+                  <VideoPlayer
                     src={formData.contentUrl}
-                    className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                    title="Module Video"
+                    title={formData.title}
+                    onComplete={() => {}}
                   />
-                </div>
+                ) : (
+                  <div className="aspect-video">
+                    <iframe
+                      src={formData.contentUrl}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      title="Module Video"
+                    />
+                  </div>
+                )}
               </div>
             )}
 
             {/* Content */}
             <div
-              className="prose prose-lg max-w-none bg-white/80 rounded-xl p-6 border"
+              className="prose prose-lg dark:prose-invert max-w-none bg-card/80 rounded-xl p-6 border"
               dangerouslySetInnerHTML={{
-                __html: formData.contentMarkdown,
+                __html: DOMPurify.sanitize(formData.contentMarkdown),
               }}
             />
 
@@ -283,7 +302,7 @@ export function ModuleEditor({
             {getDepthLabel(depth)}
           </span>
           {hasChanges && (
-            <span className="text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded">
+            <span className="text-xs text-amber-600 bg-amber-50 dark:bg-amber-950 dark:text-amber-400 px-2 py-0.5 rounded">
               Unsaved changes
             </span>
           )}
@@ -425,16 +444,17 @@ export function ModuleEditor({
             </div>
 
             {activeTab === 'edit' ? (
-              <div className="min-h-[500px] bg-white rounded-lg border">
+              <div className="min-h-[500px] bg-card rounded-lg border">
                 <style>
                   {`
     .ck-editor__editable_inline {
       min-height: 500px;
       max-height: 500px;
-      border-radius: 0.75rem !important; /* rounded-xl */
+      border-radius: 0.75rem !important;
       box-shadow: 0 2px 8px 0 rgba(16,30,54,0.06);
       border: none !important;
-      background: #fff;
+      background: hsl(var(--card));
+      color: hsl(var(--foreground));
       padding: 1rem;
       transition: box-shadow 0.2s;
     }
@@ -443,56 +463,30 @@ export function ModuleEditor({
     }
     .ck.ck-editor__main > .ck-editor__editable.ck-focused {
       box-shadow: 0 4px 16px 0 rgba(16,30,54,0.10);
-      border: 1.5px solid #6366f1 !important; /* primary-500 */
+      border: 1.5px solid #6366f1 !important;
     }
     .ck.ck-toolbar {
       border-radius: 0.75rem 0.75rem 0 0 !important;
       border: none !important;
-      background: #f3f4f6;
+      background: hsl(var(--muted));
+    }
+    .ck.ck-toolbar .ck-button {
+      color: hsl(var(--foreground));
     }
   `}
                 </style>
-                <CKEditor
-                  editor={ClassicEditor as any}
-                  data={formData.contentMarkdown}
-                  onChange={(_, editor: any) => {
-                    const data = editor.getData();
-                    handleChange('contentMarkdown', data);
-                  }}
-                  config={{
-                    toolbar: [
-                      'heading',
-                      '|',
-                      'bold',
-                      'italic',
-                      'underline',
-                      'strikethrough',
-                      'code',
-                      '|',
-                      'link',
-                      'bulletedList',
-                      'numberedList',
-                      '|',
-                      'blockQuote',
-                      'horizontalLine',
-                      '|',
-                      'insertTable',
-                      'mediaEmbed',
-                      '|',
-                      'codeBlock',
-                      '|',
-                      'undo',
-                      'redo',
-                      'removeFormat',
-                    ],
-                  } as any}
-                />
+                <Suspense fallback={<div className="min-h-[300px] flex items-center justify-center text-muted-foreground">Loading editor…</div>}>
+                  <CKEditorWrapper
+                    data={formData.contentMarkdown}
+                    onChange={(data) => handleChange('contentMarkdown', data)}
+                  />
+                </Suspense>
               </div>
             ) : (
               <div
                 className="min-h-[300px] p-4 rounded-lg border bg-background prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{
-                  __html: formData.contentMarkdown,
+                  __html: DOMPurify.sanitize(formData.contentMarkdown),
                 }}
               />
             )}

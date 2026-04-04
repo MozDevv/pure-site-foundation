@@ -4,12 +4,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+} from '@/components/ui/smart-drawer';
 import {
   Select,
   SelectContent,
@@ -96,12 +96,16 @@ export function CourseCreationStepper({
   onReset,
 }: CourseCreationStepperProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleNext = () => {
-    if (validateStep(currentStep)) {
+    const stepErrors = getStepErrors(currentStep);
+    if (Object.keys(stepErrors).length === 0) {
       if (currentStep < steps.length) {
         setCurrentStep(currentStep + 1);
       }
+    } else {
+      setErrors(stepErrors);
     }
   };
 
@@ -112,36 +116,44 @@ export function CourseCreationStepper({
   };
 
   const handleSubmit = () => {
-    if (validateStep(currentStep)) {
+    const stepErrors = getStepErrors(currentStep);
+    if (Object.keys(stepErrors).length === 0) {
       onSubmit();
       setCurrentStep(1);
+      setErrors({});
+    } else {
+      setErrors(stepErrors);
     }
   };
 
   const handleClose = () => {
     onOpenChange(false);
     setCurrentStep(1);
+    setErrors({});
     onReset();
   };
 
-  const validateStep = (step: number): boolean => {
+  const getStepErrors = (step: number): Record<string, string> => {
+    const errs: Record<string, string> = {};
     switch (step) {
       case 1:
-        if (!formData.code || !formData.title || !formData.category) {
-          return false;
-        }
-        return true;
-      case 2:
-        return true; // Description is optional
+        if (!formData.code?.trim()) errs.code = 'Course code is required';
+        else if (formData.code.trim().length > 20) errs.code = 'Course code must be 20 characters or less';
+        if (!formData.title?.trim()) errs.title = 'Course title is required';
+        else if (formData.title.trim().length < 3) errs.title = 'Title must be at least 3 characters';
+        if (!formData.category) errs.category = 'Please select a category';
+        if (formData.priceCents < 0) errs.price = 'Price cannot be negative';
+        break;
       case 3:
-        return true; // Dates are optional
-      case 4:
-        return true; // People assignment is optional
-      case 5:
-        return true; // Review step
-      default:
-        return true;
+        if (formData.startDate && formData.endDate && formData.endDate < formData.startDate)
+          errs.endDate = 'End date must be after start date';
+        break;
     }
+    return errs;
+  };
+
+  const validateStep = (step: number): boolean => {
+    return Object.keys(getStepErrors(step)).length === 0;
   };
 
   const toggleStudent = (studentId: string) => {
@@ -174,11 +186,14 @@ export function CourseCreationStepper({
               <Input
                 id="code"
                 value={formData.code}
-                onChange={(e) =>
-                  setFormData({ ...formData, code: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, code: e.target.value });
+                  if (errors.code) setErrors((prev) => { const { code, ...rest } = prev; return rest; });
+                }}
                 placeholder="e.g., CS101"
+                className={errors.code ? 'border-destructive' : ''}
               />
+              {errors.code && <p className="text-xs text-destructive">{errors.code}</p>}
             </div>
 
             <div className="space-y-2">
@@ -188,11 +203,14 @@ export function CourseCreationStepper({
               <Input
                 id="title"
                 value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
+                onChange={(e) => {
+                  setFormData({ ...formData, title: e.target.value });
+                  if (errors.title) setErrors((prev) => { const { title, ...rest } = prev; return rest; });
+                }}
                 placeholder="e.g., Introduction to Web Development"
+                className={errors.title ? 'border-destructive' : ''}
               />
+              {errors.title && <p className="text-xs text-destructive">{errors.title}</p>}
             </div>
 
             <div className="space-y-2">
@@ -235,16 +253,18 @@ export function CourseCreationStepper({
               <Input
                 id="price"
                 type="number"
+                min="0"
                 value={formData.priceCents / 100}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    priceCents: Number(e.target.value) * 100,
-                  })
-                }
+                onChange={(e) => {
+                  const val = Math.round(Number(e.target.value) * 100);
+                  setFormData({ ...formData, priceCents: val >= 0 ? val : 0 });
+                  if (errors.price) setErrors((prev) => { const { price, ...rest } = prev; return rest; });
+                }}
                 placeholder="0.00"
                 step="0.01"
+                className={errors.price ? 'border-destructive' : ''}
               />
+              {errors.price && <p className="text-xs text-destructive">{errors.price}</p>}
             </div>
           </div>
         );
@@ -339,6 +359,7 @@ export function CourseCreationStepper({
                   />
                 </PopoverContent>
               </Popover>
+              {errors.endDate && <p className="text-xs text-destructive">{errors.endDate}</p>}
             </div>
           </div>
         );
@@ -539,14 +560,14 @@ export function CourseCreationStepper({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-5xl min-h-[90vh] overflow-hidden flex flex-col mx-3">
-        <DialogHeader>
-          <DialogTitle>Create New Course</DialogTitle>
-          <DialogDescription>
+    <SmartDrawer open={open} onOpenChange={handleClose}>
+      <SmartDrawerContent defaultWidth={900}>
+        <SmartDrawerHeader>
+          <SmartDrawerTitle>Create New Course</SmartDrawerTitle>
+          <SmartDrawerDescription>
             Follow the steps to create a comprehensive course
-          </DialogDescription>
-        </DialogHeader>
+          </SmartDrawerDescription>
+        </SmartDrawerHeader>
 
         {/* Stepper */}
         <div className="py-4 px-4">
@@ -634,7 +655,7 @@ export function CourseCreationStepper({
             )}
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SmartDrawerContent>
+    </SmartDrawer>
   );
 }

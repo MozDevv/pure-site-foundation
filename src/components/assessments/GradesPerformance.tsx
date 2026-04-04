@@ -64,9 +64,15 @@ interface UserData {
 }
 
 export default function GradesPerformance() {
+  const currentUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+  const userRole = (currentUser?.role || 'Student').toLowerCase();
+  const isStudent = userRole === 'student';
+
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<string>('course');
+  const [selectedStudentId, setSelectedStudentId] = useState<string>(
+    isStudent && currentUser?.id ? currentUser.id : ''
+  );
+  const [activeTab, setActiveTab] = useState<string>(isStudent ? 'student' : 'course');
   const { toast } = useToast();
 
   // Fetch courses for selection
@@ -75,17 +81,18 @@ export default function GradesPerformance() {
     queryFn: () => apiService.getCourses(),
   });
 
-  // Fetch users/students for selection
+  // Fetch users/students for selection — only for non-student roles
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ['allUsers'],
     queryFn: async () => {
       const response = await api.get(endpoints.getAllUsers);
       return response.data?.data as UserData[];
     },
+    enabled: !isStudent,
   });
 
-  // Filter to get only students (users with STUDENT role or all if no role filtering)
-  const students = users;
+  // Filter to get only students (users with Student role)
+  const students = users?.filter((u: UserData) => u.role?.toLowerCase() === 'student') || [];
 
   // Fetch course analytics only when a course is selected
   const { data: courseAnalytics, isLoading: analyticsLoading } = useQuery({
@@ -154,22 +161,26 @@ export default function GradesPerformance() {
             Track student progress and course analytics
           </p>
         </div>
-        <Button variant="outline" onClick={handleExport}>
-          <Download className="mr-2 h-4 w-4" />
-          Export Grades
-        </Button>
+        {!isStudent && (
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="mr-2 h-4 w-4" />
+            Export Grades
+          </Button>
+        )}
       </div>
 
       {/* Tabs for Course Analytics vs Student Performance */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="course" className="gap-2">
-            <BookOpen className="h-4 w-4" />
-            Course Analytics
-          </TabsTrigger>
+          {!isStudent && (
+            <TabsTrigger value="course" className="gap-2">
+              <BookOpen className="h-4 w-4" />
+              Course Analytics
+            </TabsTrigger>
+          )}
           <TabsTrigger value="student" className="gap-2">
             <User className="h-4 w-4" />
-            Student Performance
+            {isStudent ? 'My Performance' : 'Student Performance'}
           </TabsTrigger>
         </TabsList>
 
@@ -323,7 +334,7 @@ export default function GradesPerformance() {
                                 100
                               : 0
                           }
-                          className="w-32 h-2"
+                          className="w-20 sm:w-32 h-2"
                         />
                       </div>
                       <div className="flex items-center justify-between p-4 rounded-lg border border-border">
@@ -344,7 +355,7 @@ export default function GradesPerformance() {
                                 100
                               : 0
                           }
-                          className="w-32 h-2"
+                          className="w-20 sm:w-32 h-2"
                         />
                       </div>
                     </div>
@@ -358,7 +369,7 @@ export default function GradesPerformance() {
                     <CardDescription>Performance breakdown</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid gap-4 grid-cols-2">
+                    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                       <div className="p-4 rounded-lg border border-border bg-card">
                         <p className="text-sm text-muted-foreground">
                           Average Assignment Grade
@@ -407,7 +418,8 @@ export default function GradesPerformance() {
 
         {/* Student Performance Tab */}
         <TabsContent value="student" className="space-y-6 mt-6">
-          {/* Student Selection */}
+          {/* Student Selection — only shown to admins/tutors */}
+          {!isStudent && (
           <Card>
             <CardHeader>
               <CardTitle>Select a Student</CardTitle>
@@ -443,6 +455,7 @@ export default function GradesPerformance() {
               </Select>
             </CardContent>
           </Card>
+          )}
 
           {/* Student Performance Content */}
           {!selectedStudentId ? (
@@ -522,7 +535,7 @@ export default function GradesPerformance() {
                               100
                             : 0
                         }
-                        className="w-32 h-2"
+                        className="w-20 sm:w-32 h-2"
                       />
                     </div>
                     <div className="flex items-center justify-between p-4 rounded-lg border border-border">
@@ -543,7 +556,7 @@ export default function GradesPerformance() {
                               100
                             : 0
                         }
-                        className="w-32 h-2"
+                        className="w-20 sm:w-32 h-2"
                       />
                     </div>
                   </div>

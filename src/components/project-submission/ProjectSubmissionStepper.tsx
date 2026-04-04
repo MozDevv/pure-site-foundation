@@ -251,9 +251,9 @@ function SubmitStep() {
       </div>
 
       {project.status === 'SUBMITTED' ? (
-        <Alert className="bg-green-50 border-green-200">
+        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">Your project has been submitted successfully!</AlertDescription>
+          <AlertDescription className="text-green-800 dark:text-green-300">Your project has been submitted successfully!</AlertDescription>
         </Alert>
       ) : (
         <>

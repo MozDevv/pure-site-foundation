@@ -23,13 +23,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerFooter,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+} from '@/components/ui/smart-drawer';
 import { useMentorship } from '@/components/mentorship/MentorshipContext';
 import {
   Mentor,
@@ -87,6 +87,16 @@ const normalizeStatus = (status: string) => status?.toLowerCase();
 
 export function MatchingPage() {
   const location = useLocation();
+
+  // Role guard — admin/tutor only
+  useEffect(() => {
+    const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+    const role = (user?.role || 'Student').toLowerCase();
+    if (role === 'student') {
+      window.history.back();
+    }
+  }, []);
+
   const {
     mentors,
     requests,
@@ -512,14 +522,14 @@ export function MatchingPage() {
       </Card> */}
 
       {/* Match Dialog */}
-      <Dialog open={matchDialogOpen} onOpenChange={setMatchDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Mentorship Match</DialogTitle>
-            <DialogDescription>
+      <SmartDrawer open={matchDialogOpen} onOpenChange={setMatchDialogOpen}>
+        <SmartDrawerContent>
+          <SmartDrawerHeader>
+            <SmartDrawerTitle>Create Mentorship Match</SmartDrawerTitle>
+            <SmartDrawerDescription>
               Confirm the details for this mentor-mentee pairing
-            </DialogDescription>
-          </DialogHeader>
+            </SmartDrawerDescription>
+          </SmartDrawerHeader>
           <div className="space-y-4 py-4">
             {(() => {
               const dialogMentorUser = getMentorUser(selectedMentor);
@@ -616,14 +626,14 @@ export function MatchingPage() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <SmartDrawerFooter>
             <Button variant="outline" onClick={() => setMatchDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleCreateMatch}>Create Match</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SmartDrawerFooter>
+        </SmartDrawerContent>
+      </SmartDrawer>
     </div>
   );
 }

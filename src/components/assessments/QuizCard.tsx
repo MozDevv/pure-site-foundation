@@ -21,11 +21,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+} from '@/components/ui/smart-drawer';
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import { QuizTaker, QuizAnswer } from './QuizTaker';
@@ -239,18 +239,18 @@ export function QuizCard({
       </div>
 
       {/* Quiz Taker Dialog */}
-      <Dialog open={showQuizTaker} onOpenChange={setShowQuizTaker}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="sr-only">{quiz.title}</DialogTitle>
-          </DialogHeader>
+      <SmartDrawer open={showQuizTaker} onOpenChange={setShowQuizTaker}>
+        <SmartDrawerContent defaultWidth={900}>
+          <SmartDrawerHeader>
+            <SmartDrawerTitle className="sr-only">{quiz.title}</SmartDrawerTitle>
+          </SmartDrawerHeader>
           <QuizTaker
             quiz={quiz}
             onSubmit={handleSubmitQuiz}
             onTimeUp={handleTimeUp}
           />
-        </DialogContent>
-      </Dialog>
+        </SmartDrawerContent>
+      </SmartDrawer>
     </>
   );
 }

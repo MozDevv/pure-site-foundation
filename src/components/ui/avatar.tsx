@@ -49,12 +49,12 @@ const AvatarFallback = React.forwardRef<
     // Modern chat app color palette
     const colors = [
       { bg: 'bg-blue-500', text: 'text-white' }, // Blue
-      { bg: 'bg-purple-500', text: 'text-white' }, // Purple
+      { bg: 'bg-blue-500', text: 'text-white' }, // Blue
       { bg: 'bg-fuchsia-500', text: 'text-white' }, // Fuchsia
       { bg: 'bg-rose-500', text: 'text-white' }, // Rose
       { bg: 'bg-amber-500', text: 'text-gray-900' }, // Amber (darker text)
       { bg: 'bg-emerald-500', text: 'text-white' }, // Emerald
-      { bg: 'bg-indigo-500', text: 'text-white' }, // Indigo
+      { bg: 'bg-blue-500', text: 'text-white' }, // Blue
       { bg: 'bg-cyan-500', text: 'text-gray-900' }, // Cyan (darker text)
     ];
 

@@ -17,6 +17,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SubmissionsList() {
+  const currentUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+  const userRole = (currentUser?.role || 'Student').toLowerCase();
+  const isStudent = userRole === 'student';
+
   const [searchQuery, setSearchQuery] = useState("");
   const [assignmentFilter, setAssignmentFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -78,10 +82,12 @@ export default function SubmissionsList() {
             Review and grade student submissions
           </p>
         </div>
-        <Button variant="outline" onClick={handleExport}>
-          <Download className="mr-2 h-4 w-4" />
-          Export CSV
-        </Button>
+        {!isStudent && (
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
       </div>
 
       {/* Status Tabs */}
@@ -137,7 +143,7 @@ export default function SubmissionsList() {
           />
         </div>
         <Select value={assignmentFilter} onValueChange={setAssignmentFilter}>
-          <SelectTrigger className="w-64">
+          <SelectTrigger className="w-full sm:w-64">
             <Filter className="mr-2 h-4 w-4" />
             <SelectValue placeholder="Filter by assignment" />
           </SelectTrigger>

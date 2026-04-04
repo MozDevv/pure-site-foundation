@@ -12,7 +12,7 @@ const TabsList = React.forwardRef<
     ref={ref}
     className={cn(
       // much lighter surface so the selected tab stands out without being solid
-      'inline-flex h-12 items-center rounded-lg bg-white/5 p-1 text-muted-foreground shadow-sm',
+      'inline-flex h-12 items-center rounded-lg bg-muted/30 p-1 text-muted-foreground shadow-sm',
       className
     )}
     {...props}
@@ -29,7 +29,7 @@ const TabsTrigger = React.forwardRef<
     className={cn(
       // unselected = subtle gray on transparent; active = soft primary tint + subtle ring
       'inline-flex items-center justify-center whitespace-nowrap rounded px-4 py-[10px] text-sm font-medium transition-all',
-      'text-[16px] bg-gray-200 hover:bg-primary/10 hover:text-primary',
+      'text-[16px] bg-muted hover:bg-primary/10 hover:text-primary',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
       // make active less "solid" — soft tint + subtle ring and slight lift
       'data-[state=active]:border-b-4 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-sm ',

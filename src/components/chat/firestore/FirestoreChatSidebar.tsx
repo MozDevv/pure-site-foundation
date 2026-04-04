@@ -20,7 +20,7 @@ export function getInitials(name?: string): string {
   const second = parts[1]?.[0] || '';
   return (first + second).toUpperCase();
 }
-export const FirestoreChatSidebar: React.FC = () => {
+export const FirestoreChatSidebar: React.FC<{ className?: string; onSelectRoom?: () => void }> = ({ className, onSelectRoom }) => {
   const {
     rooms,
     users,
@@ -61,7 +61,10 @@ export const FirestoreChatSidebar: React.FC = () => {
 
   console.log('all Users:', users);
 
-  const otherUsers = users.filter((user) => user.id !== currentUser?.id);
+  // Filter out current user and only show ACTIVE users
+  const otherUsers = users.filter(
+    (user) => user.id !== currentUser?.id && user.status === 'ACTIVE'
+  );
 
   function getRoomName(room: ChatRoom): string {
     if (room.type === 'group') {
@@ -128,7 +131,7 @@ export const FirestoreChatSidebar: React.FC = () => {
 
   return (
     <>
-      <div className="w-80 border-r border-border bg-card/50 flex flex-col">
+      <div className={`w-full md:w-80 border-r border-border bg-card/50 flex flex-col ${className || ''}`}>
         {/* Header */}
         <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
@@ -187,6 +190,7 @@ export const FirestoreChatSidebar: React.FC = () => {
                       console.log('Switching to room:', room);
                       setActiveRoom2(room);
                       setActiveRoom(room);
+                      onSelectRoom?.();
                     }}
                     className={cn(
                       'w-full p-3 rounded-xl text-left transition-all duration-200 mb-1 group hover:shadow-sm border',

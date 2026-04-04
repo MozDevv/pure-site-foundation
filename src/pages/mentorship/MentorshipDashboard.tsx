@@ -32,6 +32,17 @@ export function MentorshipDashboard() {
     loading 
   } = useMentorship();
 
+  // Determine base path based on user role
+  const user = localStorage.getItem('user')
+    ? JSON.parse(localStorage.getItem('user') || '{}')
+    : null;
+  const userRole = (user?.role || 'Student');
+  const isAdmin = userRole === 'Admin' || userRole === 'ADMIN';
+  const isTutor = userRole === 'Tutor' || userRole === 'TUTOR';
+  const isMentor = userRole === 'Mentor' || userRole === 'MENTOR';
+  const isStudent = userRole === 'Student' || userRole === 'STUDENT';
+  const basePath = isStudent ? '/student/mentorship' : isAdmin ? '/admin/mentorship' : '/tutor/mentorship';
+
   useEffect(() => {
     fetchStats();
     fetchRequests({ status: 'pending' });
@@ -44,43 +55,43 @@ export function MentorshipDashboard() {
       title: 'Active Mentors', 
       value: stats?.activeMentors || 0, 
       icon: UserCheck, 
-      color: 'text-blue-600 bg-blue-100',
-      href: '/admin/mentorship/mentors'
+      color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+      href: `${basePath}/mentors`
     },
     { 
       title: 'Pending Requests', 
       value: stats?.pendingRequests || 0, 
       icon: ClipboardList, 
-      color: 'text-amber-600 bg-amber-100',
-      href: '/admin/mentorship/requests'
+      color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400',
+      href: `${basePath}/requests`
     },
     { 
       title: 'Active Matches', 
       value: stats?.activeMatches || 0, 
       icon: Users, 
-      color: 'text-green-600 bg-green-100',
-      href: '/admin/mentorship/matching'
+      color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400',
+      href: `${basePath}/matching`
     },
     { 
       title: 'Upcoming Sessions', 
       value: stats?.upcomingSessions || 0, 
       icon: Video, 
-      color: 'text-purple-600 bg-purple-100',
-      href: '/admin/mentorship/sessions'
+      color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+      href: `${basePath}/sessions`
     },
     { 
       title: 'Mentor Groups', 
       value: stats?.totalGroups || 0, 
       icon: UsersRound, 
-      color: 'text-indigo-600 bg-indigo-100',
-      href: '/admin/mentorship/groups'
+      color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400',
+      href: `${basePath}/groups`
     },
     { 
       title: 'Completed Sessions', 
       value: stats?.completedSessions || 0, 
       icon: TrendingUp, 
-      color: 'text-emerald-600 bg-emerald-100',
-      href: '/admin/mentorship/sessions'
+      color: 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400',
+      href: `${basePath}/sessions`
     },
   ];
 
@@ -90,22 +101,33 @@ export function MentorshipDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mentorship Hub</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Mentorship Hub</h1>
           <p className="text-muted-foreground">
             Manage mentor-mentee relationships and track mentorship progress
           </p>
         </div>
-        <Button onClick={() => navigate('/admin/mentorship/matching')}>
-          <Users className="mr-2 h-4 w-4" />
-          Create Match
-        </Button>
+        {!isStudent && (
+          <Button onClick={() => navigate(`${basePath}/matching`)}>
+            <Users className="mr-2 h-4 w-4" />
+            Create Match
+          </Button>
+        )}
       </div>
 
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {statCards.map((stat) => (
+        {statCards
+          .filter((stat) => {
+            // Students shouldn't see admin-oriented stats
+            if (isStudent) {
+              const hiddenForStudents = ['Pending Requests', 'Active Matches', 'Mentor Groups'];
+              return !hiddenForStudents.includes(stat.title);
+            }
+            return true;
+          })
+          .map((stat) => (
           <Card 
             key={stat.title} 
             className="cursor-pointer hover:shadow-md transition-shadow"
@@ -132,14 +154,15 @@ export function MentorshipDashboard() {
 
       {/* Content Grid */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Pending Requests */}
+        {/* Pending Requests - Admin/Tutor only */}
+        {!isStudent && (
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Pending Requests</CardTitle>
               <CardDescription>Students waiting for mentor assignment</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/mentorship/requests')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/requests`)}>
               View All <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </CardHeader>
@@ -158,7 +181,7 @@ export function MentorshipDashboard() {
                   <div 
                     key={request.id} 
                     className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer"
-                    onClick={() => navigate('/admin/mentorship/requests')}
+                    onClick={() => navigate(`${basePath}/requests`)}
                   >
                     <div className="flex items-center gap-3">
                       <Avatar>
@@ -189,6 +212,7 @@ export function MentorshipDashboard() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Upcoming Sessions */}
         <Card>
@@ -197,7 +221,7 @@ export function MentorshipDashboard() {
               <CardTitle>Upcoming Sessions</CardTitle>
               <CardDescription>Scheduled mentorship sessions</CardDescription>
             </div>
-            <Button variant="ghost" size="sm" onClick={() => navigate('/admin/mentorship/sessions')}>
+            <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/sessions`)}>
               View All <ArrowRight className="ml-1 h-4 w-4" />
             </Button>
           </CardHeader>
@@ -216,10 +240,10 @@ export function MentorshipDashboard() {
                   <div 
                     key={session.id} 
                     className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 cursor-pointer"
-                    onClick={() => navigate('/admin/mentorship/sessions')}
+                    onClick={() => navigate(`${basePath}/sessions`)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-purple-100 text-purple-600">
+                      <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400">
                         <Calendar className="h-4 w-4" />
                       </div>
                       <div>
@@ -245,14 +269,15 @@ export function MentorshipDashboard() {
         </Card>
       </div>
 
-      {/* Active Matches */}
+      {/* Active Matches - Admin/Tutor only */}
+      {!isStudent && (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle>Active Mentorships</CardTitle>
             <CardDescription>Currently active mentor-mentee pairs</CardDescription>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/admin/mentorship/matching')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate(`${basePath}/matching`)}>
             View All <ArrowRight className="ml-1 h-4 w-4" />
           </Button>
         </CardHeader>
@@ -271,7 +296,7 @@ export function MentorshipDashboard() {
                 <div 
                   key={match.id} 
                   className="p-4 rounded-lg border hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate('/admin/mentorship/matching')}
+                  onClick={() => navigate(`${basePath}/matching`)}
                 >
                   <div className="flex items-center gap-3 mb-3">
                     <Avatar className="h-10 w-10">
@@ -303,6 +328,7 @@ export function MentorshipDashboard() {
           )}
         </CardContent>
       </Card>
+      )}
     </div>
   );
 }

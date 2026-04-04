@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Search, 
   Filter, 
@@ -9,7 +10,9 @@ import {
   XCircle,
   MoreHorizontal,
   Linkedin,
-  Calendar
+  Calendar,
+  Send,
+  MessageSquare
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,20 +34,21 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+} from '@/components/ui/smart-drawer';
 import { useMentorship } from '@/components/mentorship/MentorshipContext';
 import { Mentor, MentorStatus } from '@/types/mentorship';
+import { apiService, endpoints } from '@/lib/api';
 
 const statusConfig: Record<MentorStatus, { label: string; icon: React.ElementType; color: string }> = {
-  active: { label: 'Active', icon: CheckCircle, color: 'text-green-600 bg-green-100' },
-  inactive: { label: 'Inactive', icon: XCircle, color: 'text-gray-600 bg-gray-100' },
-  pending_approval: { label: 'Pending', icon: Clock, color: 'text-amber-600 bg-amber-100' },
-  on_leave: { label: 'On Leave', icon: Clock, color: 'text-blue-600 bg-blue-100' },
+  active: { label: 'Active', icon: CheckCircle, color: 'text-green-600 bg-green-100 dark:bg-green-900/30 dark:text-green-400' },
+  inactive: { label: 'Inactive', icon: XCircle, color: 'text-gray-600 bg-gray-100 dark:bg-gray-800 dark:text-gray-300' },
+  pending_approval: { label: 'Pending', icon: Clock, color: 'text-amber-600 bg-amber-100 dark:bg-amber-900/30 dark:text-amber-400' },
+  on_leave: { label: 'On Leave', icon: Clock, color: 'text-blue-600 bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400' },
 };
 
 export function MentorsPage() {
@@ -52,16 +56,31 @@ export function MentorsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
+  
+  // Fetch current user to determine role
+  const { data: currentUser } = useQuery({
+    queryKey: ['currentUser'],
+    queryFn: () => apiService.get(endpoints.getCurrentUser).then(res => res.data),
+  });
+  
+  const isAdmin = currentUser?.role === 'Admin' || currentUser?.role === 'ADMIN';
 
   useEffect(() => {
-    fetchMentors();
-  }, [fetchMentors]);
+    // For students, only fetch active mentors
+    if(!isAdmin) {
+      fetchMentors({ status: 'active' });
+    } else {
+      fetchMentors();
+    }
+  }, [fetchMentors, isAdmin]);
 
   const filteredMentors = mentors.filter(mentor => {
     const matchesSearch = 
       mentor.user.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       mentor.user.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mentor.expertise.some(e => e.toLowerCase().includes(searchQuery.toLowerCase()));
+      mentor.expertise.some(e => e.toLowerCase().includes(searchQuery.toLowerCase
+
+()));
     const matchesStatus = statusFilter === 'all' || mentor.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -81,13 +100,15 @@ export function MentorsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Mentor Profiles</h1>
           <p className="text-muted-foreground">
-            Manage and approve mentor profiles
+            {isAdmin ? 'Manage and approve mentor profiles' : 'Browse available mentors for your learning journey'}
           </p>
         </div>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Add Mentor
-        </Button>
+        {isAdmin && (
+          <Button>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Add Mentor
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -101,19 +122,21 @@ export function MentorsPage() {
             className="pl-9"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="pending_approval">Pending Approval</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="on_leave">On Leave</SelectItem>
-          </SelectContent>
-        </Select>
+        {isAdmin && (
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]">
+              <Filter className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="pending_approval">Pending Approval</SelectItem>
+              <SelectItem value="inactive">Inactive</SelectItem>
+              <SelectItem value="on_leave">On Leave</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
       </div>
 
       {/* Mentors Grid */}
@@ -155,38 +178,42 @@ export function MentorsPage() {
                         <CardDescription>{mentor.user.email}</CardDescription>
                       </div>
                     </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        {mentor.status === 'pending_approval' && (
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleApprove(mentor.id); }}>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve
+                    {isAdmin && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {mentor.status === 'pending_approval' && (
+                            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleApprove(mentor.id); }}>
+                              <CheckCircle className="mr-2 h-4 w-4" />
+                              Approve
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(mentor.id, 'active'); }}>
+                            Set Active
                           </DropdownMenuItem>
-                        )}
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(mentor.id, 'active'); }}>
-                          Set Active
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(mentor.id, 'on_leave'); }}>
-                          Set On Leave
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(mentor.id, 'inactive'); }}>
-                          Set Inactive
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(mentor.id, 'on_leave'); }}>
+                            Set On Leave
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(mentor.id, 'inactive'); }}>
+                            Set Inactive
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Badge className={statusConfig[mentor.status].color}>
-                      <StatusIcon className="mr-1 h-3 w-3" />
-                      {statusConfig[mentor.status].label}
-                    </Badge>
+                    {isAdmin && (
+                      <Badge className={statusConfig[mentor.status].color}>
+                        <StatusIcon className="mr-1 h-3 w-3" />
+                        {statusConfig[mentor.status].label}
+                      </Badge>
+                    )}
                     {mentor.rating && (
                       <Badge variant="outline">
                         <Star className="mr-1 h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -213,6 +240,23 @@ export function MentorsPage() {
                     <span>{mentor.currentMenteeCount}/{mentor.maxMentees} mentees</span>
                     <span>{mentor.totalSessions} sessions</span>
                   </div>
+                  {!isAdmin && (
+                    <div className="pt-2">
+                      <Button 
+                        className="w-full" 
+                        size="sm"
+                        onClick={(e) => { 
+                          e.stopPropagation();
+                          const path = window.location.pathname;
+                          const rolePrefix = path.startsWith('/student') ? '/student' : path.startsWith('/tutor') ? '/tutor' : '/admin';
+                          window.location.href = `${rolePrefix}/mentorship/find`;
+                        }}
+                      >
+                        <Send className="mr-2 h-4 w-4" />
+                        Request Mentorship
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -221,11 +265,11 @@ export function MentorsPage() {
       )}
 
       {/* Mentor Detail Dialog */}
-      <Dialog open={!!selectedMentor} onOpenChange={() => setSelectedMentor(null)}>
-        <DialogContent className="max-w-2xl">
+      <SmartDrawer open={!!selectedMentor} onOpenChange={() => setSelectedMentor(null)}>
+        <SmartDrawerContent defaultWidth={672}>
           {selectedMentor && (
             <>
-              <DialogHeader>
+              <SmartDrawerHeader>
                 <div className="flex items-center gap-4">
                   <Avatar className="h-16 w-16">
                     <AvatarImage src={selectedMentor.user.avatar} />
@@ -234,18 +278,20 @@ export function MentorsPage() {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <DialogTitle className="text-2xl">
+                    <SmartDrawerTitle className="text-2xl">
                       {selectedMentor.user.firstName} {selectedMentor.user.lastName}
-                    </DialogTitle>
-                    <DialogDescription>{selectedMentor.user.email}</DialogDescription>
+                    </SmartDrawerTitle>
+                    <SmartDrawerDescription>{selectedMentor.user.email}</SmartDrawerDescription>
                   </div>
                 </div>
-              </DialogHeader>
+              </SmartDrawerHeader>
               <div className="space-y-4 mt-4">
                 <div className="flex items-center gap-2">
-                  <Badge className={statusConfig[selectedMentor.status].color}>
-                    {statusConfig[selectedMentor.status].label}
-                  </Badge>
+                  {isAdmin && (
+                    <Badge className={statusConfig[selectedMentor.status].color}>
+                      {statusConfig[selectedMentor.status].label}
+                    </Badge>
+                  )}
                   {selectedMentor.rating && (
                     <Badge variant="outline">
                       <Star className="mr-1 h-3 w-3 fill-yellow-400 text-yellow-400" />
@@ -285,6 +331,21 @@ export function MentorsPage() {
                 </div>
 
                 <div className="flex gap-2 pt-4 border-t">
+                  {!isAdmin && (
+                    <>
+                      <Button 
+                        className="flex-1"
+                        onClick={() => window.location.href = '/admin/mentorship/find'}
+                      >
+                        <Send className="mr-2 h-4 w-4" />
+                        Request Mentorship
+                      </Button>
+                      <Button variant="outline" size="sm">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Message
+                      </Button>
+                    </>
+                  )}
                   {selectedMentor.linkedinUrl && (
                     <Button variant="outline" size="sm" asChild>
                       <a href={selectedMentor.linkedinUrl} target="_blank" rel="noopener noreferrer">
@@ -305,8 +366,8 @@ export function MentorsPage() {
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SmartDrawerContent>
+      </SmartDrawer>
     </div>
   );
 }

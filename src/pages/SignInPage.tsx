@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,9 +81,10 @@ const SignInPage = () => {
           localStorage.setItem('rememberMe', 'true');
         }
         const user = {
+          id: response.data.id || '',
           roleId: response.data.roleId,
           role: response.data.role || 'Student',
-          name: response.data.name || '',
+          name: response.data.username || `${response.data.firstName || ''} ${response.data.lastName || ''}`.trim() || '',
           email: response.data.email || '',
           firstName: response.data.firstName || '',
           lastName: response.data.lastName || '',
@@ -97,6 +98,7 @@ const SignInPage = () => {
 
         // Navigate based on user role
         const role = response.data?.role?.toLowerCase() || 'student';
+        const basePath = role === 'super_admin' ? 'admin' : role;
 
         if (
           !response.data?.defaultPasswordChanged &&
@@ -105,7 +107,7 @@ const SignInPage = () => {
           handleSendResetLink(response.data.id);
           return;
         }
-        navigate(`/${role}`);
+        navigate(`/${basePath}`);
       }
     } catch (error: any) {
       toast({
@@ -163,6 +165,72 @@ const SignInPage = () => {
   const [showEmailReset, setShowEmailReset] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
   const [resetEmailError, setResetEmailError] = useState<string | null>(null);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+
+  // Initialize Google Sign-In
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (window.google && googleBtnRef.current) {
+        window.google.accounts.id.initialize({
+          client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID || '',
+          callback: handleGoogleCredentialResponse,
+        });
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          theme: 'outline',
+          size: 'large',
+          width: '100%',
+          text: 'signin_with',
+          shape: 'rectangular',
+        });
+      }
+    };
+    document.head.appendChild(script);
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, [showEmailReset]);
+
+  const handleGoogleCredentialResponse = async (response: any) => {
+    setIsGoogleLoading(true);
+    try {
+      const res = await axios.post(`${API_BASE_URL}${endpoints.googleLogin}`, {
+        idToken: response.credential,
+      });
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        const user = {
+          id: res.data.id || '',
+          roleId: res.data.roleId,
+          role: res.data.role || 'Student',
+          name: res.data.username || `${res.data.firstName || ''} ${res.data.lastName || ''}`.trim() || '',
+          email: res.data.email || '',
+          firstName: res.data.firstName || '',
+          lastName: res.data.lastName || '',
+        };
+        localStorage.setItem('user', JSON.stringify(user));
+        toast({
+          title: 'Welcome!',
+          description: 'Signed in with Google successfully.',
+        });
+        const role = res.data?.role?.toLowerCase() || 'student';
+        const basePath = role === 'super_admin' ? 'admin' : role;
+        navigate(`/${basePath}`);
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Google sign in failed',
+        description: error.response?.data?.message || 'Could not sign in with Google. Please try again.',
+      });
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
 
   // ...existing code...
 
@@ -187,21 +255,27 @@ const SignInPage = () => {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Half - Image Carousel */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+      {/* Left Half - Image */}
+      <div className="hidden lg:flex lg:w-[54%] relative overflow-hidden flex-shrink-0">
         {/* Image - cover the whole column */}
         <img
           src="/leader-discussing-with-shareholders-about-increasing-profit-strategy.jpg"
           alt="Students learning"
           className="absolute inset-0 w-full h-full object-cover object-center"
-          loading="lazy"
+          loading="eager"
+          fetchPriority="high"
         />
-        {/* Gradient overlay: very subtle at top -> stronger at bottom */}
-        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-primary/10 via-primary/30 to-primary/100 mix-blend-multiply" />{' '}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-primary/10 via-primary/30 to-primary/80 dark:from-black/20 dark:via-primary/20 dark:to-black/80" />
+        {/* Diagonal wedge — background colour bleeds in from the right to create zigzag edge */}
+        <div
+          className="absolute inset-y-0 right-0 w-24 bg-background"
+          style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
+        />
         {/* Overlay Text */}
         <div className="absolute bottom-12 left-12 text-white z-10 max-w-md">
-          <h2 className="text-4xl font-bold mb-4">Welcome to TechAI LMS</h2>
-          <p className="text-lg opacity-90">
+          <h2 className="text-h2-sb mb-4">Welcome to TechAI LMS</h2>
+          <p className="text-body opacity-90">
             Empowering the next generation of tech leaders through quality
             education and mentorship.
           </p>
@@ -209,11 +283,11 @@ const SignInPage = () => {
       </div>
       {/* Right Half - Login Form */}
       {!showEmailReset ? (
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
-          <div className="w-full max-w-md space-y-8 bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-gray-100">
+        <div className="w-full lg:flex-1 flex items-center justify-center p-8 bg-background">
+          <div className="w-full max-w-md space-y-8 bg-card rounded-2xl p-8 shadow-lg border border-border">
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-foreground">Sign In</h1>
-              <p className="text-muted-foreground mt-2">
+              <h1 className="text-h2-sb text-foreground">Sign In</h1>
+              <p className="text-small text-muted-foreground mt-2">
                 Enter your credentials to access your account
               </p>
             </div>
@@ -298,6 +372,28 @@ const SignInPage = () => {
               </Button>
             </form>
 
+            {/* Divider */}
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
+              </div>
+            </div>
+
+            {/* Google Sign-In Button */}
+            <div className="flex justify-center">
+              {isGoogleLoading ? (
+                <Button variant="outline" className="w-full" disabled>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Signing in with Google...
+                </Button>
+              ) : (
+                <div ref={googleBtnRef} className="w-full flex justify-center" />
+              )}
+            </div>
+
             <div className="text-center text-sm">
               <span className="text-muted-foreground">
                 Don't have an account?{' '}
@@ -312,13 +408,13 @@ const SignInPage = () => {
           </div>
         </div>
       ) : (
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-background">
-          <div className="w-full max-w-md space-y-8 bg-white dark:bg-card rounded-2xl p-8 shadow-lg border border-gray-100">
+        <div className="w-full lg:flex-1 flex items-center justify-center p-8 bg-background">
+          <div className="w-full max-w-md space-y-8 bg-card rounded-2xl p-8 shadow-lg border border-border">
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-foreground">
+              <h1 className="text-h2-sb text-foreground">
                 Reset Password
               </h1>
-              <p className="text-muted-foreground mt-2">
+              <p className="text-small text-muted-foreground mt-2">
                 Enter your email to reset your password
               </p>
             </div>

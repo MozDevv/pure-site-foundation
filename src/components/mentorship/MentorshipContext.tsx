@@ -2,7 +2,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   ReactNode,
   useCallback,
 } from 'react';
@@ -555,10 +554,8 @@ export function MentorshipProvider({ children }: { children: ReactNode }) {
     [toast]
   );
 
-  // Initial data load
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  // Stats are fetched on-demand by individual pages, not on context mount
+  // This avoids unnecessary API calls on every route change
 
   return (
     <MentorshipContext.Provider

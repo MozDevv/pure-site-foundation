@@ -10,6 +10,13 @@ import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AssessmentsOverview() {
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+  const userRole = (user?.role || 'Student').toLowerCase();
+  const isStudent = userRole === 'student';
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin';
+  const canCreate = userRole === 'tutor' || userRole === 'mentor' || isAdmin;
+  const basePath = isStudent ? '/student' : isAdmin ? '/admin' : '/tutor';
+
   const { data: assignments, isLoading: assignmentsLoading } = useQuery({
     queryKey: ["assignments"],
     queryFn: () => apiService.getAssignments(),
@@ -42,18 +49,22 @@ export default function AssessmentsOverview() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" asChild>
-            <Link to="/admin/assessments/quizzes/create">
-              <CheckSquare className="mr-2 h-4 w-4" />
-              New Quiz
-            </Link>
-          </Button>
-          <Button asChild>
-            <Link to="/admin/assessments/assignments/create">
-              <FileText className="mr-2 h-4 w-4" />
-              New Assignment
-            </Link>
-          </Button>
+          {canCreate && (
+            <>
+              <Button variant="outline" asChild>
+                <Link to={`${basePath}/assessments/quizzes/create`}>
+                  <CheckSquare className="mr-2 h-4 w-4" />
+                  New Quiz
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link to={`${basePath}/assessments/assignments/create`}>
+                  <FileText className="mr-2 h-4 w-4" />
+                  New Assignment
+                </Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -92,7 +103,7 @@ export default function AssessmentsOverview() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-foreground">Recent Assignments</h2>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/assessments/assignments">View all</Link>
+              <Link to={`${basePath}/assessments/assignments`}>View all</Link>
             </Button>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -112,9 +123,11 @@ export default function AssessmentsOverview() {
         {/* Pending Submissions */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-foreground">Needs Review</h2>
+            <h2 className="text-xl font-semibold text-foreground">
+              {isStudent ? 'My Submissions' : 'Needs Review'}
+            </h2>
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/admin/assessments/submissions">View all</Link>
+              <Link to={`${basePath}/assessments/submissions`}>View all</Link>
             </Button>
           </div>
           <div className="space-y-3">
@@ -144,7 +157,7 @@ export default function AssessmentsOverview() {
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold text-foreground">Recent Quizzes</h2>
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/admin/assessments/quizzes">View all</Link>
+            <Link to={`${basePath}/assessments/quizzes`}>View all</Link>
           </Button>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

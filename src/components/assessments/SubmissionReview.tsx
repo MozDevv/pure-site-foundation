@@ -36,11 +36,11 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Slider } from '@/components/ui/slider';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+} from '@/components/ui/smart-drawer';
 import { useToast } from '@/hooks/use-toast';
 import { SubmittedFile } from '@/types/lms';
 import { cn } from '@/lib/utils';
@@ -51,6 +51,10 @@ export default function SubmissionReview() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const currentUser = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+  const userRole = (currentUser?.role || 'admin').toLowerCase();
+  const submissionsBasePath = (userRole === 'admin' || userRole === 'super_admin') ? '/admin' : '/tutor';
 
   const [grade, setGrade] = useState<number>(0);
   const [feedback, setFeedback] = useState('');
@@ -88,12 +92,12 @@ export default function SubmissionReview() {
         title: 'Submission graded',
         description: 'The grade and feedback have been saved.',
       });
-      navigate('/admin/assessments/submissions');
+      navigate(`${submissionsBasePath}/assessments/submissions`);
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: 'Error',
-        description: 'Failed to save grade. Please try again.',
+        description: error?.response?.data?.message || 'Failed to save grade. Please try again.',
         variant: 'destructive',
       });
     },
@@ -174,7 +178,7 @@ export default function SubmissionReview() {
       <div className="flex flex-col items-center justify-center py-12">
         <p className="text-muted-foreground">Submission not found</p>
         <Button variant="link" asChild className="mt-2">
-          <Link to="/admin/assessments/submissions">Back to submissions</Link>
+          <Link to={`${submissionsBasePath}/assessments/submissions`}>Back to submissions</Link>
         </Button>
       </div>
     );
@@ -187,7 +191,7 @@ export default function SubmissionReview() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" asChild>
-          <Link to="/admin/assessments/submissions">
+          <Link to={`${submissionsBasePath}/assessments/submissions`}>
             <ArrowLeft className="h-5 w-5" />
           </Link>
         </Button>
@@ -689,25 +693,22 @@ export default function SubmissionReview() {
       </div>
 
       {/* File Preview Dialog */}
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent
-          className={cn(
-            'p-0 overflow-hidden',
-            expanded ? 'max-w-[95vw] max-h-[95vh]' : 'max-w-4xl max-h-[80vh]'
-          )}
+      <SmartDrawer open={previewOpen} onOpenChange={setPreviewOpen}>
+        <SmartDrawerContent
+          defaultWidth={900}
         >
           <div className="flex flex-col h-full">
             {/* Dialog Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <DialogHeader className="flex-1">
-                <DialogTitle className="truncate pr-4">
+              <SmartDrawerHeader className="flex-1">
+                <SmartDrawerTitle className="truncate pr-4">
                   {previewFile?.name}
-                </DialogTitle>
+                </SmartDrawerTitle>
                 <p className="text-xs text-muted-foreground mt-1">
                   {previewFile && formatFileSize(previewFile.size)} •{' '}
                   {previewFile?.contentType}
                 </p>
-              </DialogHeader>
+              </SmartDrawerHeader>
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -823,8 +824,8 @@ export default function SubmissionReview() {
               </div>
             )}
           </div>
-        </DialogContent>
-      </Dialog>
+        </SmartDrawerContent>
+      </SmartDrawer>
     </div>
   );
 }

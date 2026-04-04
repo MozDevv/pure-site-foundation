@@ -13,12 +13,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerTrigger,
+} from '@/components/ui/smart-drawer';
 import {
   UserPlus,
   Trash2,
@@ -371,10 +371,10 @@ export const WizardStepFour = React.forwardRef(
             ← Choose different team
           </Button>
 
-          <Card className="border-2 border-emerald-500 bg-emerald-50/50">
+          <Card className="border-2 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/50">
             <CardContent className="p-6">
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
+                <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                   <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                 </div>
                 <div className="flex-1">
@@ -389,8 +389,8 @@ export const WizardStepFour = React.forwardRef(
             </CardContent>
           </Card>
 
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800">
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg dark:bg-blue-950 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-300">
               <strong>Note:</strong> All existing team members will be notified
               about this hackathon submission. You can still invite additional
               members below.
@@ -406,20 +406,20 @@ export const WizardStepFour = React.forwardRef(
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <Dialog
+              <SmartDrawer
                 open={showInviteDialog}
                 onOpenChange={setShowInviteDialog}
               >
-                <DialogTrigger asChild>
+                <SmartDrawerTrigger asChild>
                   <Button variant="outline">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Invite New Member
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Invite Team Member</DialogTitle>
-                  </DialogHeader>
+                </SmartDrawerTrigger>
+                <SmartDrawerContent>
+                  <SmartDrawerHeader>
+                    <SmartDrawerTitle>Invite Team Member</SmartDrawerTitle>
+                  </SmartDrawerHeader>
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="invite-email">Email Address *</Label>
@@ -450,8 +450,8 @@ export const WizardStepFour = React.forwardRef(
                       Send Invitation
                     </Button>
                   </div>
-                </DialogContent>
-              </Dialog>
+                </SmartDrawerContent>
+              </SmartDrawer>
 
               {data.invitees.length > 0 && (
                 <div className="mt-4 space-y-2">
@@ -529,10 +529,10 @@ export const WizardStepFour = React.forwardRef(
         {/* Team Confirmed */}
         {data.teamName && (
           <>
-            <Card className="border-2 border-emerald-500 bg-emerald-50/50">
+            <Card className="border-2 border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/50">
               <CardContent className="p-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
                     <CheckCircle2 className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div>
@@ -553,20 +553,20 @@ export const WizardStepFour = React.forwardRef(
 
             {/* Invite Actions */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <Dialog
+              <SmartDrawer
                 open={showInviteDialog}
                 onOpenChange={setShowInviteDialog}
               >
-                <DialogTrigger asChild>
+                <SmartDrawerTrigger asChild>
                   <Button className="flex-1">
                     <UserPlus className="w-4 h-4 mr-2" />
                     Invite Member
                   </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Invite Team Member</DialogTitle>
-                  </DialogHeader>
+                </SmartDrawerTrigger>
+                <SmartDrawerContent>
+                  <SmartDrawerHeader>
+                    <SmartDrawerTitle>Invite Team Member</SmartDrawerTitle>
+                  </SmartDrawerHeader>
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="invite-email">Email Address *</Label>
@@ -625,25 +625,25 @@ export const WizardStepFour = React.forwardRef(
                       Send Invitation
                     </Button>
                   </div>
-                </DialogContent>
-              </Dialog>
+                </SmartDrawerContent>
+              </SmartDrawer>
 
-              <Dialog open={showRolesDialog} onOpenChange={setShowRolesDialog}>
-                <DialogTrigger asChild>
+              <SmartDrawer open={showRolesDialog} onOpenChange={setShowRolesDialog}>
+                <SmartDrawerTrigger asChild>
                   <Button variant="outline" className="flex-1">
                     <Key className="w-4 h-4 mr-2" />
                     Configure Roles
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="w-[98vw] max-w-[1600px] h-[90vh] p-6 flex flex-col">
-                  <DialogHeader>
-                    <DialogTitle>Configure Roles & Permissions</DialogTitle>
-                  </DialogHeader>
+                </SmartDrawerTrigger>
+                <SmartDrawerContent defaultWidth={900}>
+                  <SmartDrawerHeader>
+                    <SmartDrawerTitle>Configure Roles & Permissions</SmartDrawerTitle>
+                  </SmartDrawerHeader>
                   <div className="flex-1 min-h-0 overflow-y-auto">
                     <TeamRoles data={data} onUpdate={onUpdate} />
                   </div>
-                </DialogContent>
-              </Dialog>
+                </SmartDrawerContent>
+              </SmartDrawer>
             </div>
 
             {/* Invited Members List */}

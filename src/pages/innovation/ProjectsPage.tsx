@@ -1,4 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+
+const toArray = (v: unknown): string[] =>
+  Array.isArray(v) ? (v as string[]) : typeof v === 'string' && v.trim() ? v.split(',').map((s) => s.trim()) : [];
+
 import {
   Search,
   Plus,
@@ -25,6 +29,7 @@ import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
 import { apiService, endpoints } from '@/lib/api';
+import { useQuery } from '@tanstack/react-query';
 
 // API Project interface matching backend response
 interface ApiProject {
@@ -49,20 +54,18 @@ interface ApiProject {
 }
 
 const statusConfig: Record<string, { label: string; color: string; icon: any }> = {
-  DRAFT: { label: 'Draft', color: 'bg-gray-100 text-gray-700', icon: FileText },
-  PENDING_REVIEW: { label: 'Pending Review', color: 'bg-amber-100 text-amber-700', icon: Clock },
-  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-100 text-blue-700', icon: AlertCircle },
-  APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle2 },
-  REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: XCircle },
-  CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-100 text-orange-700', icon: AlertCircle },
-  IN_PROGRESS: { label: 'In Progress', color: 'bg-blue-100 text-blue-700', icon: Clock },
-  COMPLETED: { label: 'Completed', color: 'bg-purple-100 text-purple-700', icon: CheckCircle2 },
+  DRAFT: { label: 'Draft', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300', icon: FileText },
+  PENDING_REVIEW: { label: 'Pending Review', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock },
+  UNDER_REVIEW: { label: 'Under Review', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: AlertCircle },
+  APPROVED: { label: 'Approved', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle2 },
+  REJECTED: { label: 'Rejected', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
+  CHANGES_REQUESTED: { label: 'Changes Requested', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: AlertCircle },
+  IN_PROGRESS: { label: 'In Progress', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: Clock },
+  COMPLETED: { label: 'Completed', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', icon: CheckCircle2 },
 };
 
 export function ProjectsPage() {
   const { currentUser } = useInnovation();
-  const [projects, setProjects] = useState<ApiProject[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filter, setFilter] = useState<'all' | 'drafts'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -71,26 +74,21 @@ export function ProjectsPage() {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const response = await apiService.get(endpoints.getUserProjects);
-        setProjects(response.data || []);
-      } catch (error) {
-        console.error('Failed to fetch projects:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load projects',
-          variant: 'destructive',
-        });
-        setProjects([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadData();
-  }, []);
+  // Role-aware base path
+  const user = localStorage.getItem('user')
+    ? JSON.parse(localStorage.getItem('user') || '{}')
+    : null;
+  const userRole = user?.role || 'Student';
+  const basePath = userRole === 'Student' ? '/student' : userRole === 'Tutor' ? '/tutor' : '/admin';
+
+  const { data: projects = [], isLoading: loading } = useQuery({
+    queryKey: ['innovation-projects'],
+    queryFn: async () => {
+      const response = await apiService.get(endpoints.getUserProjects);
+      return response.data || [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   const filteredProjects = projects.filter((project) => {
     const matchesSearch =
@@ -126,7 +124,7 @@ export function ProjectsPage() {
               </p>
             </div>
             <Button
-              onClick={() => navigate('/innovation/submit-project')}
+              onClick={() => navigate(`${basePath}/innovation/submit-project`)}
               className="bg-blue-600 hover:bg-blue-700"
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -220,7 +218,7 @@ export function ProjectsPage() {
                 ? "You don't have any draft projects"
                 : 'Try adjusting your search or filters'}
             </p>
-            <Button onClick={() => navigate('/innovation/submit-project')}>
+            <Button onClick={() => navigate(`${basePath}/innovation/submit-project`)}>
               <Plus className="h-4 w-4 mr-2" />
               Submit an Idea
             </Button>
@@ -229,12 +227,12 @@ export function ProjectsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {paginatedProjects.map((project) => {
               const status = statusConfig[project.status] || statusConfig.DRAFT;
-              const techStack = project.techStack || [];
+              const techStack = toArray(project.techStack);
               return (
                 <Card
                   key={project.id}
                   className="hover:shadow-md transition-shadow group cursor-pointer"
-                  onClick={() => navigate(`/admin/innovation/projects/${project.id}`)}
+                  onClick={() => navigate(`${basePath}/innovation/projects/${project.id}`)}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-start gap-3 mb-3">
@@ -298,12 +296,12 @@ export function ProjectsPage() {
           <div className="space-y-3">
             {paginatedProjects.map((project) => {
               const status = statusConfig[project.status] || statusConfig.DRAFT;
-              const techStack = project.techStack || [];
+              const techStack = toArray(project.techStack);
               return (
                 <Card
                   key={project.id}
                   className="hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/admin/innovation/projects/${project.id}`)}
+                  onClick={() => navigate(`${basePath}/innovation/projects/${project.id}`)}
                 >
                   <CardContent className="p-4 flex items-center gap-4">
                     {project.avatar ? (
@@ -374,7 +372,7 @@ export function ProjectsPage() {
         {/* Floating Create Button (Mobile) */}
         <Button
           className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-blue-600 hover:bg-blue-700 lg:hidden"
-          onClick={() => navigate('/innovation/submit-project')}
+          onClick={() => navigate(`${basePath}/innovation/submit-project`)}
         >
           <Plus className="h-6 w-6" />
         </Button>

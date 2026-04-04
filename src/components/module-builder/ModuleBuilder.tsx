@@ -29,7 +29,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { BookOpen, Loader2, ArrowLeft } from 'lucide-react';
+import { BookOpen, Loader2, ArrowLeft, Layers } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Accordion,
@@ -57,6 +57,14 @@ interface ModuleBuilderProps {
 export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+  // Role-based access
+  const user = localStorage.getItem('user')
+    ? JSON.parse(localStorage.getItem('user') || '{}')
+    : null;
+  const userRole = (user?.role || 'Student').toLowerCase();
+  const isStudent = userRole === 'student';
+  const basePath = userRole === 'student' ? '/student' : userRole === 'tutor' ? '/tutor' : '/admin';
 
   // State
   const [modules, setModules] = useState<CourseModule[]>(mockModules);
@@ -347,7 +355,13 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
     <div className="">
       {!selectedCourse ? (
         <div className=" mt-3 ml-4">
-          <h2 className="text-2xl font-bold mb-4">Select a Course</h2>
+          <div className="flex items-center gap-3 mb-6">
+            <Layers className="h-8 w-8 text-primary" />
+            <div>
+              <h2 className="text-2xl font-bold">Learning Hub</h2>
+              <p className="text-sm text-muted-foreground">Build and organize course modules, lessons, and learning paths</p>
+            </div>
+          </div>
           {coursesLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -409,9 +423,9 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
           )}
         </div>
       ) : (
-        <div className="flex flex-col h-screen bg-background">
+        <div className="flex flex-col h-dvh bg-background">
           {/* Header */}
-          <header className="h-14 border-b flex items-center justify-between px-4 bg-card shrink-0">
+          <header className="h-auto min-h-[3.5rem] border-b flex flex-wrap items-center justify-between px-4 py-2 bg-card shrink-0 gap-2">
             <div className="flex items-center gap-3">
               <div className="h-4 w-px bg-border" />
               <div className="flex items-center gap-2">
@@ -421,6 +435,8 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
                 </h1>
               </div>
               <div className="flex items-center gap-4">
+                {!isStudent && (
+                <>
                 <span className="text-sm text-muted-foreground">Mode:</span>
                 <FormControlLabel
                   control={
@@ -442,6 +458,8 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
                     },
                   }}
                 />
+                </>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -449,7 +467,7 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
                 {countModules(modules)} modules
               </span>
               {useMockData && (
-                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded">
+                <span className="text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-1 rounded">
                   Demo Mode
                 </span>
               )}
@@ -457,17 +475,17 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
           </header>
 
           {/* Main Content */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
             {/* Sidebar - Module Tree */}
-            <aside className="w-80 shrink-0 overflow-hidden">
+            <aside className="hidden md:block w-80 shrink-0 overflow-hidden">
               <ModuleTree
                 modules={modules}
                 selectedModuleId={selectedModuleId}
                 onSelectModule={handleSelectModule}
-                onAddChild={handleAddChild}
-                onRename={handleRenameClick}
-                onDelete={handleDeleteModule}
-                onReorder={handleReorder}
+                onAddChild={isStudent ? undefined : handleAddChild}
+                onRename={isStudent ? undefined : handleRenameClick}
+                onDelete={isStudent ? undefined : handleDeleteModule}
+                onReorder={isStudent ? undefined : handleReorder}
               />
             </aside>
 
@@ -475,7 +493,7 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
             <main className="flex-1 overflow-hidden bg-muted/20">
               {selectedModule ? (
                 <ModuleEditor
-                  viewMode={viewMode}
+                  viewMode={isStudent ? 'view' : viewMode}
                   module={selectedModule}
                   depth={selectedDepth}
                   breadcrumbs={breadcrumbs}
@@ -498,13 +516,15 @@ export function ModuleBuilder({ courseId }: ModuleBuilderProps) {
                     Choose a module from the sidebar to edit its content, or
                     create a new one to get started.
                   </p>
-                  <Button
-                    variant="outline"
-                    className="mt-6"
-                    onClick={() => handleAddChild(null)}
-                  >
-                    Create First Module
-                  </Button>
+                  {!isStudent && (
+                    <Button
+                      variant="outline"
+                      className="mt-6"
+                      onClick={() => handleAddChild(null)}
+                    >
+                      Create First Module
+                    </Button>
+                  )}
                 </div>
               )}
             </main>

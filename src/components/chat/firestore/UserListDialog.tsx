@@ -1,15 +1,17 @@
-import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Search, Circle } from 'lucide-react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerDescription,
+} from '@/components/ui/smart-drawer';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { ChatUser } from '@/contexts/FirestoreChatContext';
+import { Badge } from '@/components/ui/badge';
+import { ChatUser } from '@/components/chat/FirestoreChatContext';
 import { cn } from '@/lib/utils';
 
 interface UserListDialogProps {
@@ -27,38 +29,37 @@ export const UserListDialog: React.FC<UserListDialogProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
-  console.log('users in UserListDialog:', users);
+  // Sort: online users first, then by name
+  const sortedAndFilteredUsers = useMemo(() => {
+    if (!users || !Array.isArray(users)) return [];
+    return users
+      .filter((user) =>
+        user?.username?.toLowerCase()?.includes(searchQuery?.toLowerCase())
+      )
+      .sort((a, b) => {
+        const aOnline = a?.isOnline ? 1 : 0;
+        const bOnline = b?.isOnline ? 1 : 0;
+        if (bOnline !== aOnline) return bOnline - aOnline;
+        return (a?.username || '').localeCompare(b?.username || '');
+      });
+  }, [users, searchQuery]);
 
-  const filteredUsers =
-    users &&
-    users?.filter((user) =>
-      user?.username?.toLowerCase()?.includes(searchQuery?.toLowerCase())
-    );
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'online':
-        return 'bg-success';
-      case 'away':
-        return 'bg-warning';
-      case 'offline':
-        return 'bg-muted-foreground';
-      default:
-        return 'bg-muted-foreground';
-    }
-  };
-
-  const handleClose = () => {
-    setSearchQuery('');
-    onOpenChange(false);
-  };
+  const onlineCount = useMemo(
+    () => (users || []).filter((u) => u?.isOnline).length,
+    [users]
+  );
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Start New Chat</DialogTitle>
-        </DialogHeader>
+    <SmartDrawer open={open} onOpenChange={onOpenChange}>
+      <SmartDrawerContent>
+        <SmartDrawerHeader>
+          <SmartDrawerTitle>Start New Chat</SmartDrawerTitle>
+          <SmartDrawerDescription>
+            {onlineCount > 0
+              ? `${onlineCount} user${onlineCount > 1 ? 's' : ''} online`
+              : 'No users currently online'}
+          </SmartDrawerDescription>
+        </SmartDrawerHeader>
 
         <div className="space-y-4">
           {/* Search */}
@@ -74,14 +75,14 @@ export const UserListDialog: React.FC<UserListDialogProps> = ({
           </div>
 
           {/* User List */}
-          <ScrollArea className="h-64">
+          <ScrollArea className="h-72">
             <div className="space-y-1">
-              {filteredUsers.length === 0 ? (
+              {sortedAndFilteredUsers.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <p className="text-sm">No users found</p>
                 </div>
               ) : (
-                filteredUsers?.map((user) => (
+                sortedAndFilteredUsers.map((user) => (
                   <button
                     key={user?.id}
                     onClick={() => onSelectUser(user)}
@@ -90,14 +91,21 @@ export const UserListDialog: React.FC<UserListDialogProps> = ({
                     <div className="relative">
                       <Avatar className="w-10 h-10">
                         <AvatarImage src={user?.profilePicture} />
-                        <AvatarFallback className="text-sm">
-                          {user?.username?.charAt(0)?.toUpperCase()}
+                        <AvatarFallback className="text-sm font-medium">
+                          {user?.username
+                            ?.split(' ')
+                            .map((w: string) => w[0])
+                            .join('')
+                            .toUpperCase()
+                            .slice(0, 2) || '?'}
                         </AvatarFallback>
                       </Avatar>
                       <div
                         className={cn(
                           'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background',
-                          getStatusColor(user?.status)
+                          user?.isOnline
+                            ? 'bg-emerald-500'
+                            : 'bg-muted-foreground'
                         )}
                       />
                     </div>
@@ -106,13 +114,8 @@ export const UserListDialog: React.FC<UserListDialogProps> = ({
                       <p className="text-sm font-medium text-foreground truncate">
                         {user?.username}
                       </p>
-                      <p className="text-xs text-muted-foreground capitalize">
-                        {user?.status}
-                        {user?.status === 'offline' &&
-                          user?.lastSeen &&
-                          ` • Last seen ${new Date(
-                            user?.lastSeen
-                          ).toLocaleDateString()}`}
+                      <p className="text-xs text-muted-foreground truncate">
+                        {user?.email}
                       </p>
                     </div>
                   </button>
@@ -121,7 +124,7 @@ export const UserListDialog: React.FC<UserListDialogProps> = ({
             </div>
           </ScrollArea>
         </div>
-      </DialogContent>
-    </Dialog>
+      </SmartDrawerContent>
+    </SmartDrawer>
   );
 };

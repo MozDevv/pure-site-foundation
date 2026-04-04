@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Plus, Trash2, GripVertical } from "lucide-react";
@@ -25,6 +25,16 @@ export default function CreateAssignment() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  // Role guard — only Tutor, Mentor, Admin, Super_Admin can create assignments
+  useEffect(() => {
+    const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+    const role = (user?.role || 'Student').toLowerCase();
+    if (!['tutor', 'mentor', 'admin', 'super_admin'].includes(role)) {
+      toast({ title: 'Access Denied', description: 'You do not have permission to create assignments.', variant: 'destructive' });
+      navigate(-1);
+    }
+  }, [navigate, toast]);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -58,12 +68,15 @@ export default function CreateAssignment() {
         title: "Assignment created",
         description: "Your assignment has been created successfully.",
       });
-      navigate("/admin/assessments/assignments");
+      const u = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!) : null;
+      const r = (u?.role || 'Student').toLowerCase();
+      const isAdmin = r === 'admin' || r === 'super_admin';
+      navigate(isAdmin ? '/admin/assessments/assignments' : '/tutor/assessments/assignments');
     },
-    onError: () => {
+    onError: (error: any) => {
       toast({
         title: "Error",
-        description: "Failed to create assignment. Please try again.",
+        description: error?.response?.data?.message || "Failed to create assignment. Please try again.",
         variant: "destructive",
       });
     },
@@ -115,10 +128,8 @@ export default function CreateAssignment() {
     <div className="space-y-6 animate-fade-in max-w-4xl">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" asChild>
-          <Link to="/admin/assessments/assignments">
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-5 w-5" />
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Create Assignment</h1>

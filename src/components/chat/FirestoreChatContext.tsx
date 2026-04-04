@@ -85,6 +85,8 @@ export const useFirestoreChat = () => {
   const [activeRoom, setActiveRoom] = useState<ChatRoom | null>(null);
   const [isTyping, setIsTyping] = useState<Record<string, string[]>>({});
   const [users, setUsers] = useState<User[]>([]);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [pendingMessages, setPendingMessages] = useState<Record<string, Set<string>>>({});
   const typingTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
 
   // const { showToastNotification, playNotificationSound } =
@@ -142,18 +144,50 @@ export const useFirestoreChat = () => {
 
     return unsubscribe;
   }, [currentUser?.id, activeRoom?.id, users]);
+  // Prefetch users with caching
   useEffect(() => {
     const fetchUsers = async () => {
+      setIsLoadingUsers(true);
       try {
-        const response = await fetch(`${API_BASE_URL}/users/all`, {
+        // Check cache first (5 minute expiry)
+        const cached = localStorage.getItem('chat_users_cache');
+        const cacheTime = localStorage.getItem('chat_users_cache_time');
+        
+        if (cached && cacheTime) {
+          const age = Date.now() - parseInt(cacheTime);
+          if (age < 5 * 60 * 1000) { // 5 minutes
+            setUsers(JSON.parse(cached));
+            setIsLoadingUsers(false);
+            console.log('✅ Users loaded from cache');
+            return;
+          }
+        }
+
+        // Fetch from API
+        const response = await fetch(`${API_BASE_URL}/users/all?pageSize=1000`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
         const data = await response.json();
-        setUsers(data.data || []);
+        const usersList = data.data || [];
+        
+        setUsers(usersList);
+        
+        // Cache for next time
+        localStorage.setItem('chat_users_cache', JSON.stringify(usersList));
+        localStorage.setItem('chat_users_cache_time', Date.now().toString());
+        console.log('✅ Users fetched and cached:', usersList.length);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('❌ Error fetching users:', error);
+        // Use stale cache if available
+        const cached = localStorage.getItem('chat_users_cache');
+        if (cached) {
+          setUsers(JSON.parse(cached));
+          console.log('⚠️ Using stale cache due to error');
+        }
+      } finally {
+        setIsLoadingUsers(false);
       }
     };
     fetchUsers();
@@ -169,34 +203,39 @@ export const useFirestoreChat = () => {
 
         if (!userId) return;
 
-        // Get Firebase token from your backend
-        const firebaseToken = await fetch(
-          `${API_BASE_URL}/users/firebase/token`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        ).then((res) => res.text());
+        // Get Firebase token — use prefetched cache if available
+        let firebaseToken = sessionStorage.getItem('firebase_token');
+        const fbTokenTime = sessionStorage.getItem('firebase_token_time');
+        const fbStale = !firebaseToken || !fbTokenTime || (Date.now() - parseInt(fbTokenTime)) > 50 * 60 * 1000;
 
-        await signInWithCustomToken(getAuth(app), firebaseToken);
+        if (fbStale) {
+          firebaseToken = await fetch(
+            `${API_BASE_URL}/users/firebase/token`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          ).then((res) => res.text());
+          sessionStorage.setItem('firebase_token', firebaseToken);
+          sessionStorage.setItem('firebase_token_time', Date.now().toString());
+        }
 
-        const user1 = users && users.find((u) => u.id === userId);
+        await signInWithCustomToken(getAuth(app), firebaseToken!);
+
+        const user1 = users?.find((u) => u.id === userId);
+        const displayName =
+          decoded.username ||
+          (user1 ? `${user1.firstName} ${user1.lastName}` : 'Unnamed');
         setCurrentUser({
           id: userId,
-          name:
-            decoded.username ||
-            user1.firstName + ' ' + user1.lastName ||
-            'Unnamed',
-          username:
-            decoded.username ||
-            user1.firstName + ' ' + user1.lastName ||
-            'Unnamed',
+          name: displayName,
+          username: displayName,
           email: decoded.email || '',
           isOnline: user1?.isOnline ?? false,
           status: user1?.isOnline ? 'online' : 'offline',
           isCurrent: true,
-          avatar: user1?.profilePicture || '', // Provide avatar from decoded or fallback
+          avatar: user1?.profilePicture || '',
           profilePicture: user1?.profilePicture || '',
-          lastSeen: user1?.isOnline ? new Date() : new Date(),
+          lastSeen: new Date(),
         });
       } catch (error) {
         console.error('Authentication error:', error);
@@ -303,13 +342,36 @@ export const useFirestoreChat = () => {
         return;
       }
 
+      const messageRef = doc(collection(db, 'rooms', roomId, 'messages'));
+      const tempId = messageRef.id;
+
       try {
-        const messageRef = doc(collection(db, 'rooms', roomId, 'messages'));
+        // Track pending message
+        setPendingMessages(prev => ({
+          ...prev,
+          [roomId]: new Set([...(prev[roomId] || []), tempId])
+        }));
+
+        // Optimistic UI update
+        const optimisticMessage: Message = {
+          id: tempId,
+          text,
+          senderId: currentUser.id,
+          timestamp: new Date(),
+          readBy: [currentUser.id],
+        };
+
+        setMessages(prev => ({
+          ...prev,
+          [roomId]: [...(prev[roomId] || []), optimisticMessage]
+        }));
+
+        // Send to Firebase
         const roomRef = doc(db, 'rooms', roomId);
         const batch = writeBatch(db);
 
         const newMessage = {
-          id: messageRef.id,
+          id: tempId,
           text,
           senderId: currentUser.id,
           timestamp: serverTimestamp(),
@@ -326,10 +388,35 @@ export const useFirestoreChat = () => {
         });
 
         await batch.commit();
-        console.log('Message sent successfully✅:', newMessage);
+        console.log('✅ Message sent successfully:', tempId);
+        
+        // Remove from pending
+        setPendingMessages(prev => {
+          const newPending = { ...prev };
+          newPending[roomId]?.delete(tempId);
+          return newPending;
+        });
       } catch (error) {
-        console.error('Error sending message:', error);
-        // Handle error appropriately
+        console.error('❌ Error sending message:', error);
+        
+        // Remove failed message from UI
+        setMessages(prev => ({
+          ...prev,
+          [roomId]: (prev[roomId] || []).filter(m => m.id !== tempId)
+        }));
+        
+        // Remove from pending
+        setPendingMessages(prev => {
+          const newPending = { ...prev };
+          newPending[roomId]?.delete(tempId);
+          return newPending;
+        });
+        
+        toast({
+          title: 'Failed to send message',
+          description: 'Please check your connection and try again',
+          variant: 'destructive',
+        });
       }
     },
     [currentUser]

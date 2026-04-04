@@ -20,16 +20,8 @@ import { ModuleEditor } from './ModuleEditor';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { BookOpen, Loader2, ArrowLeft } from 'lucide-react';
+import { BookOpen, Loader2, ArrowLeft, FileText } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
   Accordion,
@@ -348,7 +340,13 @@ export function ResourceLibrary({ courseId }: ModuleBuilderProps) {
     <div className="">
       {!selectedCourse ? (
         <div className=" mt-3 ml-4">
-          <h2 className="text-2xl font-bold mb-4">Select a Course</h2>
+          <div className="flex items-center gap-3 mb-6">
+            <FileText className="h-8 w-8 text-primary" />
+            <div>
+              <h2 className="text-2xl font-bold">Resource Library</h2>
+              <p className="text-sm text-muted-foreground">Browse and manage course documents, files, and learning materials</p>
+            </div>
+          </div>
           {coursesLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-primary" />

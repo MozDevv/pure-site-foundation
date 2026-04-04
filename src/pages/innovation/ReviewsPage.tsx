@@ -30,6 +30,13 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import {
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerDescription,
+} from '@/components/ui/smart-drawer';
+import {
   Table,
   TableBody,
   TableCell,
@@ -80,40 +87,44 @@ const statusConfig: Record<
   { color: string; icon: React.ReactNode; label: string }
 > = {
   DRAFT: {
-    color: 'bg-gray-100 text-gray-700',
+    color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
     icon: <FileText className="h-3 w-3" />,
     label: 'Draft',
   },
   SUBMITTED: {
-    color: 'bg-blue-100 text-blue-700',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     icon: <Clock className="h-3 w-3" />,
     label: 'Submitted',
   },
   UNDER_REVIEW: {
-    color: 'bg-amber-100 text-amber-700',
+    color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
     icon: <AlertCircle className="h-3 w-3" />,
     label: 'Under Review',
   },
   APPROVED: {
-    color: 'bg-emerald-100 text-emerald-700',
+    color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
     icon: <CheckCircle2 className="h-3 w-3" />,
     label: 'Approved',
   },
   REJECTED: {
-    color: 'bg-red-100 text-red-700',
+    color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
     icon: <XCircle className="h-3 w-3" />,
     label: 'Rejected',
   },
 };
 
 const actionConfig: Record<string, { color: string; label: string }> = {
-  SUBMITTED: { color: 'bg-blue-100 text-blue-700', label: 'Submitted' },
-  APPROVED: { color: 'bg-emerald-100 text-emerald-700', label: 'Approved' },
-  REJECTED: { color: 'bg-red-100 text-red-700', label: 'Rejected' },
-  UNDER_REVIEW: { color: 'bg-amber-100 text-amber-700', label: 'Under Review' },
+  SUBMITTED: { color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', label: 'Submitted' },
+  APPROVED: { color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', label: 'Approved' },
+  REJECTED: { color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', label: 'Rejected' },
+  UNDER_REVIEW: { color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', label: 'Under Review' },
 };
 
 export function ReviewsPage() {
+  const user = localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user') || '{}') : null;
+  const userRole = (user?.role || 'Student').toLowerCase();
+  const isStudent = userRole === 'student';
+
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -355,19 +366,19 @@ export function ReviewsPage() {
       </div>
 
       {/* Project Details Dialog */}
-      <Dialog
+      <SmartDrawer
         open={!!selectedApproval && !actionDialogOpen}
         onOpenChange={() => setSelectedApproval(null)}
       >
-        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl">
+        <SmartDrawerContent defaultWidth={768}>
+          <SmartDrawerHeader>
+            <SmartDrawerTitle className="text-xl">
               Project Review Details
-            </DialogTitle>
-            <DialogDescription>
+            </SmartDrawerTitle>
+            <SmartDrawerDescription>
               Review the project information and take action
-            </DialogDescription>
-          </DialogHeader>
+            </SmartDrawerDescription>
+          </SmartDrawerHeader>
 
           {selectedApproval && (
             <div className="space-y-6">
@@ -503,37 +514,49 @@ export function ReviewsPage() {
                 </CardContent>
               </Card>
 
-              {/* Action Buttons */}
-              <>
-                <Separator />
-                <div className="flex justify-end gap-3">
+              {/* Action Buttons — only for admin/tutor */}
+              {!isStudent && canTakeAction(selectedApproval.projectInfo.status) && (
+                <>
+                  <Separator />
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setSelectedApproval(null)}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleOpenActionDialog('reject')}
+                      className="gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Reject Project
+                    </Button>
+                    <Button
+                      className="bg-emerald-600 hover:bg-emerald-700 gap-2"
+                      onClick={() => handleOpenActionDialog('approve')}
+                    >
+                      <Check className="h-4 w-4" />
+                      Approve Project
+                    </Button>
+                  </div>
+                </>
+              )}
+              {(isStudent || !canTakeAction(selectedApproval.projectInfo.status)) && (
+                <div className="flex justify-end">
                   <Button
                     variant="outline"
                     onClick={() => setSelectedApproval(null)}
                   >
                     Close
                   </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleOpenActionDialog('reject')}
-                    className="gap-2"
-                  >
-                    <X className="h-4 w-4" />
-                    Reject Project
-                  </Button>
-                  <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 gap-2"
-                    onClick={() => handleOpenActionDialog('approve')}
-                  >
-                    <Check className="h-4 w-4" />
-                    Approve Project
-                  </Button>
                 </div>
-              </>
+              )}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
+        </SmartDrawerContent>
+      </SmartDrawer>
 
       {/* Action Confirmation Dialog */}
       <Dialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>

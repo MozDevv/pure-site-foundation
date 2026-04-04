@@ -1,5 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+
+const toArray = (v: unknown): string[] =>
+  Array.isArray(v) ? (v as string[]) : typeof v === 'string' && v.trim() ? v.split(',').map((s) => s.trim()) : [];
+
 import {
   Users,
   FolderOpen,
@@ -31,38 +36,73 @@ import {
   Activity,
   Project,
 } from '@/lib/innovation-hub-data';
+import { apiService, endpoints } from '@/lib/api';
 
 export function InnovationDashboard() {
   const { currentUser } = useInnovation();
-  const [stats, setStats] = useState<{
-    totalTeams: number;
-    activeProjects: number;
-    pendingReviews: number;
-    upcomingEvents: number;
-  } | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [featuredProjects, setFeaturedProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      const [statsData, activitiesData, projectsData] = await Promise.all([
-        getStats(),
-        getActivities(),
-        getProjects(),
-      ]);
-      setStats(statsData);
-      setActivities(activitiesData);
-      setFeaturedProjects(
-        projectsData
-          .filter((p) => p.is_public && p.status === 'approved')
-          .slice(0, 4)
-      );
-      setLoading(false);
+  // Get actual user info and role-aware base path
+  const user = localStorage.getItem('user')
+    ? JSON.parse(localStorage.getItem('user') || '{}')
+    : null;
+  const userRole = (user?.role || 'Student');
+  const basePath = userRole === 'Student' ? '/student' : userRole === 'Tutor' ? '/tutor' : '/admin';
+  const displayName = user?.firstName || currentUser?.name?.split(' ')[0] || 'Innovator';
+
+  const { data: teamsData } = useQuery({
+    queryKey: ['innovation-teams'],
+    queryFn: () => apiService.get(endpoints.getUserTeams).then(r => r.data || []).catch(() => []),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: projectsData } = useQuery({
+    queryKey: ['innovation-projects'],
+    queryFn: () => apiService.get(endpoints.getUserProjects).then(r => r.data || []).catch(() => []),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: eventsData } = useQuery({
+    queryKey: ['innovation-events'],
+    queryFn: () => apiService.get(endpoints.getUserEvents).then(r => r.data || []).catch(() => []),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: activitiesData, isLoading: loading } = useQuery({
+    queryKey: ['innovation-activities'],
+    queryFn: () => getActivities(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const teams: any[] = teamsData || [];
+  const projects: any[] = projectsData || [];
+  const events: any[] = eventsData || [];
+  const activities: Activity[] = activitiesData || [];
+
+  const stats = useMemo(() => {
+    const now = new Date();
+    const upcomingEvents = events.filter((e: any) => new Date(e.startTime) > now).length;
+    const pendingProjects = projects.filter((p: any) => p.status === 'PENDING_REVIEW').length;
+    return {
+      totalTeams: teams.length,
+      activeProjects: projects.filter((p: any) => p.status === 'APPROVED' || p.status === 'IN_PROGRESS').length,
+      pendingReviews: pendingProjects,
+      upcomingEvents,
     };
-    loadData();
-  }, []);
+  }, [teams, projects, events]);
+
+  const featuredProjects = useMemo(() => {
+    return projects
+      .filter((p: any) => p.status === 'APPROVED')
+      .slice(0, 4)
+      .map((p: any) => ({
+        id: p.id,
+        title: p.title || p.name || '',
+        description: p.description || '',
+        tech_stack: toArray(p.techStack || p.technologies),
+        status: (p.status || '').toLowerCase(),
+        is_public: true,
+      }));
+  }, [projects]);
 
   const statsConfig = [
     {
@@ -87,7 +127,7 @@ export function InnovationDashboard() {
       label: 'Upcoming Events',
       value: stats?.upcomingEvents || 0,
       icon: Calendar,
-      color: 'bg-purple-500',
+      color: 'bg-blue-500',
     },
   ];
 
@@ -95,20 +135,20 @@ export function InnovationDashboard() {
     {
       label: 'Create Team',
       icon: Users,
-      href: '/innovation/teams',
+      href: `${basePath}/innovation/teams`,
       color: 'text-blue-600',
     },
     {
       label: 'Submit Idea',
       icon: Lightbulb,
-      href: '/innovation/projects',
+      href: `${basePath}/innovation/projects`,
       color: 'text-emerald-600',
     },
     {
       label: 'Browse Gallery',
       icon: Image,
-      href: '/innovation/projects',
-      color: 'text-purple-600',
+      href: `${basePath}/innovation/projects`,
+      color: 'text-blue-600',
     },
   ];
 
@@ -140,15 +180,15 @@ export function InnovationDashboard() {
   const getActivityColor = (type: Activity['type']) => {
     switch (type) {
       case 'team':
-        return 'bg-blue-100 text-blue-600';
+        return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
       case 'project':
-        return 'bg-emerald-100 text-emerald-600';
+        return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400';
       case 'event':
-        return 'bg-purple-100 text-purple-600';
+        return 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400';
       case 'review':
-        return 'bg-amber-100 text-amber-600';
+        return 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300';
     }
   };
 
@@ -167,7 +207,7 @@ export function InnovationDashboard() {
             </span>
 
             <h1 className="text-3xl font-bold leading-tight text-white">
-              Welcome back, {currentUser.name.split(' ')[0]}
+              Welcome back, {displayName}
             </h1>
 
             <p className="text-blue-100 max-w-2xl">
@@ -325,7 +365,7 @@ export function InnovationDashboard() {
                 Discover innovative ideas from the community
               </p>
             </div>
-            <Link to="/innovation/projects">
+            <Link to={`${basePath}/innovation/projects`}>
               <Button variant="ghost" size="sm" className="text-blue-600">
                 View All <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
@@ -349,8 +389,8 @@ export function InnovationDashboard() {
                     </Card>
                   ))
                 : featuredProjects.map((project) => (
+                    <Link key={project.id} to={`${basePath}/innovation/projects/${project.id}`}>
                     <Card
-                      key={project.id}
                       className="w-[320px] shrink-0 hover:shadow-lg transition-shadow group cursor-pointer overflow-hidden"
                     >
                       <div className="h-40 bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center relative overflow-hidden">
@@ -382,6 +422,7 @@ export function InnovationDashboard() {
                         </div>
                       </CardContent>
                     </Card>
+                    </Link>
                   ))}
             </div>
             <ScrollBar orientation="horizontal" />

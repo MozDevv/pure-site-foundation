@@ -1,411 +1,499 @@
-// Update this page (the content is just a fallback if you fail to update the page)
-
-import {
+﻿import {
   Brain,
   Code,
   Users,
   GraduationCap,
   Rocket,
   HandHeart,
+  BookOpen,
+  ArrowRight,
+  CheckCircle2,
+  Clock,
+  ClipboardList,
+  Star,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Header } from '@/components/layout/header';
-import heroImage from '@/assets/hero-bg.jpg';
 import CountUp from 'react-countup';
-import { PlayCircle, BookOpen } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { FloatingAIChat } from '@/components/chat/FloatingAIChat';
+import { Footer } from '@/components/layout/Footer';
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 24 },
+  show: (i = 0) => ({ opacity: 1, y: 0, transition: { duration: 0.55, delay: i * 0.12, ease: 'easeOut' } }),
+};
+
+const STATS = [
+  { value: 100, suffix: '+', label: 'Students',    icon: Users,        accent: '#7c3aed', accentBg: 'rgba(124,58,237,.12)' },
+  { value: 10,  suffix: '+', label: 'Instructors', icon: GraduationCap, accent: '#0891b2', accentBg: 'rgba(8,145,178,.12)' },
+  { value: 10,  suffix: '+', label: 'Mentors',     icon: HandHeart,    accent: '#059669', accentBg: 'rgba(5,150,105,.12)' },
+  { value: 5,   suffix: '+', label: 'Programs',    icon: BookOpen,     accent: '#d97706', accentBg: 'rgba(217,119,6,.12)' },
+];
+
+const HIGHLIGHTS = [
+  { icon: GraduationCap, iconBg: '#ede9fe', iconColor: '#7c3aed', accentBorder: '#7c3aed', title: 'Comprehensive Training', body: 'Data science, AI, and emerging technology curriculum built with industry experts \u2014 not textbooks.' },
+  { icon: Users, iconBg: '#e0f2fe', iconColor: '#0891b2', accentBorder: '#0891b2', title: 'Expert Mentorship', body: 'Guided real-world projects with mentors from leading companies who have walked the path.' },
+  { icon: Rocket, iconBg: '#d1fae5', iconColor: '#059669', accentBorder: '#059669', title: 'Innovation Showcase', body: 'Participants ship products to Pwani and Nairobi Innovation Weeks \u2014 real audiences, real feedback.', tag: 'Flagship', tagColor: '#059669', tagBg: '#d1fae5' },
+  { icon: HandHeart, iconBg: '#fef3c7', iconColor: '#d97706', accentBorder: '#d97706', title: 'Strategic Partnerships', body: 'Direct connections to investors, employers, and the broader East African tech ecosystem.' },
+  { icon: Code, iconBg: '#fee2e2', iconColor: '#dc2626', accentBorder: '#dc2626', title: 'Career Pathway', body: 'A clear route from your first line of code to investor exposure and entrepreneurial ventures.' },
+  { icon: Brain, iconBg: '#ede9fe', iconColor: '#7c3aed', accentBorder: '#4f46e5', title: 'Real-World Impact', body: 'Every project solves a genuine community or industry challenge. You graduate with a portfolio, not just a certificate.' },
+];
+
+const PROGRAMS = [
+  { levelLabel: 'Beginner', levelColor: '#059669', levelBg: '#d1fae5', title: 'Data Fundamentals', desc: 'Master SQL, data visualization, and Python basics. Build your first end-to-end data pipeline.', topics: ['SQL & Analytics', 'Excel & Google Sheets', 'Data Visualization', 'Storytelling with Data'], barColor: '#7c3aed', duration: '8 weeks', req: 'No experience needed' },
+  { levelLabel: 'Intermediate', levelColor: '#7c3aed', levelBg: '#ede9fe', title: 'Python for AI', desc: 'Deep dive into machine learning with scikit-learn and real datasets from Kenyan industry.', topics: ['Python Basics', 'Pandas & NumPy', 'APIs & Automation', 'Intro to ML Libraries'], barColor: '#0891b2', duration: '10 weeks', req: 'Python basics' },
+  { levelLabel: 'Advanced', levelColor: '#d97706', levelBg: '#fef3c7', title: 'Machine Learning', desc: 'Production ML systems, MLOps, and model deployment. Ship models that actually run in the real world.', topics: ['Supervised Learning', 'Model Evaluation', 'NLP Basics', 'Capstone Project'], barColor: '#d97706', duration: '12 weeks', req: 'ML fundamentals' },
+];
+
+const TESTIMONIALS = [
+  { text: 'I went from zero programming knowledge to landing a data analyst role at Safaricom in 6 months. The mentorship here is unlike anything else in Nairobi.', name: 'Amara Osei', role: 'Data Analyst, Safaricom', initials: 'AO', avatarBg: 'linear-gradient(135deg,#6d28d9,#4f46e5)' },
+  { text: 'The Innovation Showcase changed everything. I pitched my agri-tech solution and got connected to three investors on the same day.', name: 'Michael Kamau', role: 'ML Engineer, Startup Founder', initials: 'MK', avatarBg: 'linear-gradient(135deg,#0891b2,#0e7490)' },
+  { text: "TechAI gave me a real portfolio, not just certificates. When I interviewed at Andela, my projects spoke for themselves.", name: 'Joyce Wanjiru', role: 'Software Engineer, Andela', initials: 'JW', avatarBg: 'linear-gradient(135deg,#059669,#047857)' },
+];
+
 const Index = () => {
-  const stats = [
-    {
-      value: 5000,
-      suffix: '+',
-      label: 'Students',
-      icon: Users,
-      color: 'bg-blue-500',
-    },
-    {
-      value: 30,
-      suffix: '+',
-      label: 'Instructors',
-      icon: GraduationCap,
-      color: 'bg-yellow-500',
-    },
-    {
-      value: 200,
-      suffix: '+',
-      label: 'Learning Videos',
-      icon: PlayCircle,
-      color: 'bg-green-500',
-    },
-    {
-      value: 100,
-      suffix: '+',
-      label: 'Study Materials',
-      icon: BookOpen,
-      color: 'bg-teal-500',
-    },
-  ];
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#F3F5F9] dark:bg-background">
       <Header />
 
-      {/* Hero Section */}
-      <section className="  py- bg-gradient-to-r from-primary/10 via-primary/5 to-transparent">
-        <div className="container  flex flex-col-reverse md:flex-row items-center gap-12 min-h-[70vh]">
-          {/* Left: Text */}
-          <div className="mt-28 sm:mt-0 flex-1 text-center md:text-left ">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-primary">
-              TechAI Program
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-muted-foreground max-w-3xl mx-auto md:mx-0 leading-relaxed">
-              Empowering youth with comprehensive training, mentoring, and
-              real-world exposure in data and tech careers
-            </p>
-            <div className="flex flex-col mt-20 sm:mt-0 sm:flex-row gap-4 justify-center md:justify-start items-center md:items-start">
-              <Button variant="hero" size="xl" asChild>
-                <a href="/apply">Join Our Program</a>
-              </Button>
-              <Button
-                variant="outline"
-                size="xl"
-                className="border-primary text-primary hover:bg-primary/10"
-              >
-                Learn More
-              </Button>
+      {/* ── Hero ── */}
+      <section className="relative overflow-hidden pt-20 bg-[#F3F5F9] dark:bg-background">
+        {/* light-mode gradient wash */}
+        <div className="absolute inset-0 dark:hidden pointer-events-none" style={{ background: 'linear-gradient(160deg,#ede9fe 0%,#F3F5F9 55%)' }} />
+        {/* dark-mode ambient purple glow */}
+        <div className="absolute inset-0 hidden dark:block pointer-events-none" style={{ background: 'radial-gradient(ellipse at 70% 0%,hsl(261 100% 91% / 0.07) 0%,transparent 60%)' }} />
+        <div aria-hidden className="pointer-events-none absolute -top-32 right-0 w-[520px] h-[520px] rounded-full" style={{ background: 'radial-gradient(circle,rgba(139,92,246,.12) 0%,transparent 70%)' }} />
+
+        <div className="container relative flex flex-col-reverse md:flex-row items-center gap-12 md:gap-16 pb-16 md:pb-24 pt-8">
+
+          {/* Left — copy */}
+          <motion.div
+            className="flex-1 text-center md:text-left"
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut' }}
+          >
+            <div
+              className="inline-flex items-center gap-2 mb-5 text-xs font-bold tracking-widest uppercase rounded-full px-4 py-1.5"
+              style={{ background: '#ede9fe', color: '#7c3aed', border: '1px solid rgba(124,58,237,.25)' }}
+            >
+              <span className="w-2 h-2 rounded-full animate-pulse" style={{ background: '#8b5cf6' }} />
+              Kenya's #1 Youth Tech Program
             </div>
-          </div>
-          {/* Right: Image */}
-          {/* Right: Image with blob background */}
-          <div className="relative flex-2 hidden  md:flex justify-center items-center">
-            {/* Blob Background */}
-            <motion.div
-              initial={{ opacity: 0, x: 100 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 1, delay: 0.2, ease: 'easeOut' }}
-              viewport={{ once: true }}
-              className="absolute -top-12 -right-24 w-[650px] h-[650px] z-0"
+
+            <h1
+              className="font-black leading-[1.02] mb-6 text-[#0f172a] dark:text-foreground"
+              style={{ fontSize: 'clamp(2.75rem,6vw,4.75rem)', letterSpacing: '-0.02em', fontFamily: '"Bebas Neue",sans-serif' }}
             >
-              <svg
-                viewBox="0 0 200 200"
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-full h-full"
+              Launch Your<br />
+              <span style={{ background: 'linear-gradient(135deg,#7c3aed,#8b5cf6,#a78bfa)', backgroundSize: '200% auto', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                Tech Career
+              </span><br />
+              From Zero.
+            </h1>
+
+            <p
+              className="mb-8 max-w-lg mx-auto md:mx-0 leading-relaxed text-[#475569] dark:text-muted-foreground"
+              style={{ fontSize: '1.0625rem' }}
+            >
+              Hands-on training, senior mentorship, and real project experience — everything you need to break into data and AI careers.
+            </p>
+
+            <div className="flex flex-wrap gap-3 justify-center md:justify-start">
+              <a
+                href="/apply"
+                className="inline-flex items-center gap-2 font-bold rounded-full px-7 py-3.5 text-white transition-all duration-200 hover:-translate-y-0.5"
+                style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow: '0 8px 24px rgba(124,58,237,.35)', fontSize: '0.9375rem' }}
               >
-                <path
-                  fill="#006990"
-                  d="M58.4,-66.3C73.1,-55.5,82.9,-36.7,84.6,-17.4C86.3,1.9,80,21.8,68.5,34.9C57.1,48,40.6,54.3,24.2,60.1C7.8,65.9,-8.6,71.3,-24.1,68.2C-39.5,65,-54.1,53.4,-64.5,38.3C-75,23.2,-81.3,4.7,-76.9,-11.4C-72.4,-27.4,-57.3,-41.1,-42,-52C-26.7,-62.9,-13.4,-70.9,3.6,-75.1C20.7,-79.2,41.3,-79.5,58.4,-66.3Z"
-                  transform="translate(100 100) "
-                />
-              </svg>
-            </motion.div>
+                Apply Now <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href="/signin"
+                className="inline-flex items-center gap-2 font-medium rounded-full px-7 py-3.5 transition-all duration-200 bg-white dark:bg-card text-[#334155] dark:text-foreground border border-[#e2e8f0] dark:border-border hover:border-[#8b5cf6] dark:hover:border-primary hover:text-[#7c3aed] dark:hover:text-primary"
+                style={{ fontSize: '0.9375rem' }}
+              >
+                Sign In
+              </a>
+            </div>
 
-            {/* The image */}
-            <motion.img
-              src="/landing.png"
-              alt="TechAI  Hero"
-              className="w-full max-w-xl object-cover relative z-10"
-              loading="lazy"
-              initial={{ opacity: 0, scale: 0.9, y: 60 }}
-              whileInView={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 1, delay: 0.6, ease: 'easeOut' }}
-              viewport={{ once: true }}
-            />
-
-            {/* Floating Card - moved more to the left and with a primary gradient background */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1, ease: 'easeOut' }}
-              viewport={{ once: true }}
-              className="absolute top-[-50px] left-[-50px] bg-gradient-to-br from-primary/60 to-primary/40 shadow-xl rounded-2xl p-4 flex items-center gap-3 z-20"
-            >
-              {/* Avatars */}
+            <div className="mt-8 flex items-center gap-3 justify-center md:justify-start">
               <div className="flex -space-x-2">
-                <img
-                  src="https://img.freepik.com/free-photo/casual-young-african-man-smiling-isolated-white_93675-128895.jpg?t=st=1757538615~exp=1757542215~hmac=3177d9d358f024ade52fd79e1ff4c8e96a0f6b1b345a34b6817467c416871294&w=1480"
-                  alt="Student"
-                  className="w-8 h-8 rounded-full border-2 border-white"
-                />
-                <img
-                  src="https://img.freepik.com/free-photo/casual-young-african-man-smiling-isolated-white_93675-128895.jpg?t=st=1757538615~exp=1757542215~hmac=3177d9d358f024ade52fd79e1ff4c8e96a0f6b1b345a34b6817467c416871294&w=1480"
-                  alt="Student"
-                  className="w-8 h-8 rounded-full border-2 border-white"
-                />
-                <img
-                  src="https://img.freepik.com/free-photo/casual-young-african-man-smiling-isolated-white_93675-128895.jpg?t=st=1757538615~exp=1757542215~hmac=3177d9d358f024ade52fd79e1ff4c8e96a0f6b1b345a34b6817467c416871294&w=1480"
-                  alt="Student"
-                  className="w-8 h-8 rounded-full border-2 border-white"
-                />
+                {[['K','#6d28d9'],['A','#0891b2'],['M','#059669'],['J','#d97706']].map(([l,c]) => (
+                  <div key={l} className="w-8 h-8 rounded-full border-2 border-white dark:border-card flex items-center justify-center text-white text-[10px] font-bold" style={{ background: c }}>{l}</div>
+                ))}
               </div>
+              <p className="text-sm text-[#64748b] dark:text-muted-foreground">
+                <span className="font-bold text-[#0f172a] dark:text-foreground">100+</span> students already enrolled
+              </p>
+            </div>
+          </motion.div>
 
-              {/* Text + Stars */}
-              <div>
-                <p className="text-sm font-semibold text-white drop-shadow">
-                  5,000+ Students
-                </p>
-                <div className="flex items-center text-yellow-400">
-                  {/* 5 stars */}
-                  {[...Array(5)].map((_, idx) => (
-                    <svg
-                      key={idx}
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="currentColor"
-                      className="w-4 h-4"
-                      viewBox="0 0 20 20"
-                    >
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118L10 13.347l-2.889 2.134c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L3.48 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
+          {/* Right — circular image */}
+          <motion.div
+            className="flex-1 hidden md:flex justify-center"
+            initial={{ opacity: 0, x: 40 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: 'easeOut' }}
+          >
+            <div className="relative">
+              {/* Social proof pill */}
+              <div
+                className="absolute -top-5 -right-6 z-10 flex items-center gap-3 rounded-xl px-4 py-2.5 bg-white dark:bg-card border border-[#e2e8f0] dark:border-border"
+                style={{ boxShadow: '0 8px 24px rgba(15,23,42,.10)' }}
+              >
+                <div className="flex -space-x-2">
+                  {[['K','#6d28d9'],['A','#0891b2'],['M','#059669']].map(([l,c]) => (
+                    <div key={l} className="w-7 h-7 rounded-full border-2 border-white dark:border-card flex items-center justify-center text-white text-[10px] font-bold" style={{ background: c }}>{l}</div>
                   ))}
                 </div>
+                <div>
+                  <p className="text-xs font-bold text-[#0f172a] dark:text-foreground whitespace-nowrap">100+ Students</p>
+                  <p className="text-[11px]" style={{ color: '#f59e0b' }}>★★★★★</p>
+                </div>
               </div>
-            </motion.div>
-          </div>
+
+              {/* Teal circle with students image */}
+              <div
+                className="relative w-72 h-72 md:w-[340px] md:h-[340px] rounded-full overflow-hidden"
+                style={{ background: 'linear-gradient(135deg,#0d9488,#0891b2)', boxShadow: '0 24px 64px rgba(8,145,178,.30)' }}
+              >
+                <img
+                  src="/landing.png"
+                  alt="TechAI students collaborating"
+                  className="absolute bottom-0 w-full object-cover object-top"
+                  style={{ height: '92%' }}
+                  loading="eager"
+                />
+              </div>
+
+              {/* Score pill */}
+              <div
+                className="absolute bottom-6 -left-6 rounded-xl px-4 py-2.5"
+                style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)', boxShadow: '0 8px 24px rgba(124,58,237,.4)' }}
+              >
+                <p className="text-2xl font-black leading-none text-white">82%</p>
+                <p className="text-[10px] font-semibold mt-0.5" style={{ color: 'rgba(255,255,255,.7)' }}>Avg. Score</p>
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
-      <section className="py-10 bg-white">
-        <div className="container text-center">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: i * 0.2 }}
-                viewport={{ once: true }}
-                className="flex flex-row items-center gap-4  p-6"
-              >
-                {/* Icon circle */}
-                <div className=""></div>
-                <div
-                  className={`w-16 hidden  h-16 md:flex items-center justify-center rounded-full ${stat.color}`}
-                >
-                  <stat.icon className="w-8 h-8 text-white" />
-                </div>
 
-                {/* Number and Label */}
-                <div className="flex flex-col items-start">
-                  <h3 className="text-3xl font-bold mb-1 text-primary">
-                    <CountUp
-                      end={stat.value}
-                      duration={2.5}
-                      suffix={stat.suffix}
-                    />
-                  </h3>
-                  <p className="text-lg text-muted-foreground">{stat.label}</p>
+      {/* ── Stats bar ── */}
+      <section className="bg-white dark:bg-card border-y border-[#e2e8f0] dark:border-border">
+        <div className="container">
+          <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-[#e2e8f0] dark:divide-border">
+            {STATS.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                custom={i}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                className="flex items-center gap-4 py-7 px-5 md:px-8"
+              >
+                <div className="shrink-0 w-12 h-12 flex items-center justify-center rounded-xl" style={{ background: stat.accentBg }}>
+                  <stat.icon className="w-5 h-5" style={{ color: stat.accent }} />
+                </div>
+                <div>
+                  <p className="font-black leading-none text-[#0f172a] dark:text-foreground" style={{ fontSize: '2rem' }}>
+                    <CountUp end={stat.value} duration={2.5} suffix={stat.suffix} separator="," />
+                  </p>
+                  <p className="text-[11px] font-bold tracking-widest uppercase mt-0.5 text-[#64748b] dark:text-muted-foreground">{stat.label}</p>
                 </div>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
-      {/* About Section */}
-      <section className="py-20 bg-muted">
-        <div className="container flex flex-col md:flex-row items-center gap-12">
-          {/* Left: Text */}
-          <div className="flex-1">
-            <h2 className="text-4xl font-bold mb-6 text-primary">
-              Our Mission
+
+      {/* ── Mission ── */}
+      <section className="py-20 md:py-28 bg-[#F3F5F9] dark:bg-background">
+        <div className="container flex flex-col md:flex-row items-center gap-12 md:gap-20">
+          <motion.div
+            className="flex-1"
+            initial={{ opacity: 0, x: -24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-5 h-0.5" style={{ background: '#7c3aed' }} />
+              <span className="text-[11px] font-bold tracking-[2px] uppercase" style={{ color: '#7c3aed' }}>Our Mission</span>
+            </div>
+            <h2
+              className="font-black mb-6 leading-tight text-[#0f172a] dark:text-foreground"
+              style={{ fontSize: 'clamp(1.75rem,3vw,2.5rem)', letterSpacing: '-0.01em' }}
+            >
+              Bridging the Gap Between<br />
+              <span style={{ color: '#7c3aed' }}>Education and Opportunity</span>
             </h2>
-            <div className="text-lg text-muted-foreground space-y-6 max-w-xl">
-              <p>
-                The TechAI Program is designed to bridge the opportunity gap in
-                technology and data careers. We believe every young person
-                deserves access to quality training, expert mentorship, and
-                real-world experience that opens doors to successful tech
-                careers.
-              </p>
-              <p>
-                Our comprehensive approach combines hands-on learning with
-                industry connections, ensuring participants don't just learn
-                skills—they build careers.
-              </p>
+            <div className="space-y-4 leading-relaxed text-[#475569] dark:text-muted-foreground" style={{ fontSize: '0.9375rem' }}>
+              <p>The TechAI Program was built with one goal: get young Kenyans into high-growth technology careers. Not through theory alone, but through real mentorship, real projects, and real community.</p>
+              <p>We combine structured curriculum with industry connections — so when you graduate, you have a portfolio, a network, and a clear next step.</p>
             </div>
-          </div>
-          {/* Right: Illustration/Image */}
-          <div className="flex-1 flex justify-center">
-            <img
-              src="study-group-african-people.jpg"
-              alt="TechAI Mission"
-              className="rounded-xl shadow-lg w-full max-w-md object-cover"
-              loading="lazy"
-            />
-          </div>
+            <div className="mt-6 space-y-2.5">
+              {['Industry-aligned curriculum','Senior mentor access','Showcase at Innovation Weeks','Direct employer introductions','Investor network access'].map(item => (
+                <div key={item} className="flex items-center gap-3 text-sm text-[#334155] dark:text-foreground/80">
+                  <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: '#d1fae5', border: '1px solid rgba(5,150,105,.2)' }}>
+                    <CheckCircle2 className="h-3 w-3" style={{ color: '#059669' }} />
+                  </div>
+                  {item}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+
+          <motion.div
+            className="flex-1 flex justify-center"
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.1, ease: 'easeOut' }}
+            viewport={{ once: true }}
+          >
+            <div className="relative w-full max-w-md">
+              <div className="rounded-2xl overflow-hidden" style={{ boxShadow: '0 20px 60px rgba(15,23,42,.12)' }}>
+                <img
+                  src="/landing34.png"
+                  alt="TechAI instructor teaching"
+                  className="w-full object-cover"
+                  style={{ maxHeight: '380px' }}
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{ background: 'linear-gradient(135deg,rgba(109,40,217,.15),transparent 60%)' }} />
+              </div>
+              <div className="absolute bottom-4 left-4 right-4 flex gap-2">
+                {[['94%','Job placement'],['6 mo','To first job'],['4.9\u2605','Rating']].map(([v,l]) => (
+                  <div key={l} className="flex-1 rounded-lg px-2 py-2.5 text-center" style={{ background: 'rgba(255,255,255,.92)', backdropFilter: 'blur(8px)' }}>
+                    <p className="font-black text-base leading-none text-[#0f172a]">{v}</p>
+                    <p className="text-[10px] font-semibold mt-0.5 tracking-wide text-[#64748b]">{l}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Program Highlights */}
-      <section className="py-20 bg-background">
+      {/* ── Programs ── */}
+      <section className="py-20 md:py-24 bg-white dark:bg-card">
         <div className="container">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4 text-primary">
-              Program Highlights
+          <motion.div
+            className="mb-14 text-center"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="w-5 h-0.5" style={{ background: '#7c3aed' }} />
+              <span className="text-[11px] font-bold tracking-[2px] uppercase" style={{ color: '#7c3aed' }}>Programs</span>
+              <div className="w-5 h-0.5" style={{ background: '#7c3aed' }} />
+            </div>
+            <h2 className="font-black leading-tight text-[#0f172a] dark:text-foreground" style={{ fontSize: 'clamp(1.75rem,3vw,2.5rem)', letterSpacing: '-0.01em' }}>
+              Choose Your <span style={{ color: '#7c3aed' }}>Path</span>
             </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="shadow-elegant hover:shadow-primary transition-smooth">
-              <CardContent className="p-8 text-center">
-                <div className="rounded-full bg-primary p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-                  <GraduationCap className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">
-                  Comprehensive TechAI Training
-                </h3>
-                <p className="text-muted-foreground">
-                  Complete program covering data science, AI, and emerging
-                  technologies with comprehensive training, mentoring, and
-                  innovation development opportunities.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-elegant hover:shadow-secondary transition-smooth">
-              <CardContent className="p-8 text-center">
-                <div className="rounded-full bg-secondary p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-                  <Users className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">Expert Mentorship</h3>
-                <p className="text-muted-foreground">
-                  Real-life project implementation guided by expert mentors from
-                  industry-leading companies, providing hands-on experience and
-                  professional guidance.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-elegant hover:shadow-accent transition-smooth">
-              <CardContent className="p-8 text-center">
-                <div className="rounded-full bg-accent p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-                  <Rocket className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">Innovation Showcase</h3>
-                <p className="text-muted-foreground">
-                  Ready-to-showcase products developed by current participants,
-                  demonstrating real-world application of learned skills and
-                  technologies.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-elegant hover:shadow-primary transition-smooth">
-              <CardContent className="p-8 text-center">
-                <div className="rounded-full bg-primary p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-                  <HandHeart className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">
-                  Strategic Partnerships
-                </h3>
-                <p className="text-muted-foreground">
-                  Strategic partnerships providing opportunities at Pwani and
-                  Nairobi Innovation Weeks, connecting participants with
-                  industry leaders and potential employers.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-elegant hover:shadow-secondary transition-smooth">
-              <CardContent className="p-8 text-center">
-                <div className="rounded-full bg-secondary p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-                  <Code className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">Career Pathway</h3>
-                <p className="text-muted-foreground">
-                  Clear pathway from training to investor exposure, ensuring
-                  participants have direct routes to career opportunities and
-                  entrepreneurial ventures.
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-elegant hover:shadow-accent transition-smooth">
-              <CardContent className="p-8 text-center">
-                <div className="rounded-full bg-accent p-4 w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-                  <Brain className="h-8 w-8 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-4">Real-World Impact</h3>
-                <p className="text-muted-foreground">
-                  Focus on solving real community and industry challenges,
-                  giving participants meaningful experience while making a
-                  positive impact.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-
-      {/* CTA Section */}
-      <section className="py-20 bg-secondary text-white">
-        <div className="container text-center">
-          <h2 className="text-4xl font-bold mb-6">
-            Ready to Transform Your Future?
-          </h2>
-          <p className="text-xl mb-8 text-white/90 max-w-2xl mx-auto">
-            Join the next generation of tech leaders and innovators.
-            Applications are now open for our comprehensive TechAI Program.
-          </p>
-          <div className="flex  flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="accent" size="lg" asChild>
-              <a href="/apply">Apply to Program</a>
-            </Button>
-            <Button variant="success" size="lg" className="" asChild>
-              <a href="/signin">Sign In</a>
-            </Button>
-            {/* <Button variant="default" size="xl" className="" asChild>
-              <a href="/tutor">Tutor Portal</a>
-            </Button>
-            <Button variant="default" size="xl" className="" asChild>
-              <a href="/admin">Admin Portal</a>
-            </Button> */}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-card border-t border-border py-12">
-        <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="rounded-lg bg-primary p-2">
-                  <Brain className="h-6 w-6 text-white" />
-                </div>
-                <span className="text-xl font-bold text-primary">TechAI</span>
-              </div>
-              <p className="text-muted-foreground">
-                Empowering youth with comprehensive tech and data career
-                opportunities through training, mentoring, and innovation.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="font-bold mb-4 text-accent">Programs</h3>
-              <div className="space-y-2 text-muted-foreground">
-                <p>TechAI Course</p>
-                <p>Mentorship Program</p>
-                <p>Innovation Showcase</p>
-              </div>
-            </div>
-
-            <div>
-              <h3 className="font-bold mb-4 text-accent">Contact</h3>
-              <div className="space-y-2 text-muted-foreground">
-                <p>Email: info@techaipath.com</p>
-                <p>Phone: +254 799 367 087</p>
-                <p>Address: Nairobi, Kenya</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="text-center mt-8 pt-8 border-t border-border">
-            <p className="text-muted-foreground">
-              © 2025 TechAI Program. All rights reserved.
+            <p className="text-base mt-3 max-w-xl mx-auto text-[#64748b] dark:text-muted-foreground">
+              Three structured tracks from beginner to advanced. Every track ends with a real project you own.
             </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {PROGRAMS.map((prog, i) => (
+              <motion.div
+                key={prog.title}
+                custom={i}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                className="rounded-xl overflow-hidden transition-all duration-200 hover:-translate-y-1.5 hover:shadow-xl bg-white dark:bg-background border border-[#e2e8f0] dark:border-border"
+              >
+                <div className="p-6 pb-4 border-b border-[#e2e8f0] dark:border-border">
+                  <div
+                    className="inline-block text-[10px] font-bold tracking-[1.5px] uppercase rounded-full px-3 py-1 mb-3"
+                    style={{ background: prog.levelBg, color: prog.levelColor }}
+                  >
+                    {prog.levelLabel}
+                  </div>
+                  <h3 className="font-black text-xl text-[#0f172a] dark:text-foreground">{prog.title}</h3>
+                </div>
+                <div className="p-6 pt-4">
+                  <p className="text-sm leading-relaxed mb-4 text-[#64748b] dark:text-muted-foreground">{prog.desc}</p>
+                  <ul className="space-y-1.5 mb-5">
+                    {prog.topics.map(t => (
+                      <li key={t} className="flex items-center gap-2 text-sm text-[#334155] dark:text-foreground/80">
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: '#059669' }} />
+                        {t}
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="flex items-center gap-1.5 text-[11px] font-semibold rounded-md px-2.5 py-1 bg-[#F3F5F9] dark:bg-muted text-[#64748b] dark:text-muted-foreground">
+                      <Clock className="h-3 w-3" /> {prog.duration}
+                    </span>
+                    <span className="flex items-center gap-1.5 text-[11px] font-semibold rounded-md px-2.5 py-1 bg-[#F3F5F9] dark:bg-muted text-[#64748b] dark:text-muted-foreground">
+                      <ClipboardList className="h-3 w-3" /> {prog.req}
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         </div>
-      </footer>
+      </section>
+
+      {/* ── Program Highlights ── */}
+      <section className="py-20 md:py-24 bg-[#F3F5F9] dark:bg-background">
+        <div className="container">
+          <motion.div
+            className="mb-14"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-5 h-0.5" style={{ background: '#7c3aed' }} />
+              <span className="text-[11px] font-bold tracking-[2px] uppercase" style={{ color: '#7c3aed' }}>What You Get</span>
+            </div>
+            <h2 className="font-black leading-tight text-[#0f172a] dark:text-foreground" style={{ fontSize: 'clamp(1.75rem,3vw,2.5rem)', letterSpacing: '-0.01em' }}>
+              Built for People Who Want<br />to Actually Ship Things
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {HIGHLIGHTS.map((h, i) => (
+              <motion.div
+                key={h.title}
+                custom={i}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                className="relative overflow-hidden rounded-xl bg-white dark:bg-card p-6 transition-all duration-200 hover:-translate-y-1 hover:shadow-lg border border-[#e2e8f0] dark:border-border"
+                style={{ borderLeft: `3px solid ${h.accentBorder}` }}
+              >
+                {h.tag && (
+                  <span
+                    className="absolute top-4 right-4 text-[9px] font-bold tracking-wider uppercase px-2 py-1 rounded"
+                    style={{ background: h.tagBg, color: h.tagColor }}
+                  >
+                    {h.tag}
+                  </span>
+                )}
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 dark:opacity-90" style={{ background: h.iconBg }}>
+                  <h.icon className="w-5 h-5" style={{ color: h.iconColor }} />
+                </div>
+                <h3 className="font-bold mb-2 text-[#0f172a] dark:text-foreground" style={{ fontSize: '1rem' }}>{h.title}</h3>
+                <p className="leading-relaxed text-[#64748b] dark:text-muted-foreground" style={{ fontSize: '0.875rem' }}>{h.body}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Testimonials ── */}
+      <section className="py-20 md:py-24 bg-white dark:bg-card">
+        <div className="container">
+          <motion.div
+            className="mb-14 text-center"
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="w-5 h-0.5" style={{ background: '#7c3aed' }} />
+              <span className="text-[11px] font-bold tracking-[2px] uppercase" style={{ color: '#7c3aed' }}>Student Stories</span>
+              <div className="w-5 h-0.5" style={{ background: '#7c3aed' }} />
+            </div>
+            <h2 className="font-black leading-tight text-[#0f172a] dark:text-foreground" style={{ fontSize: 'clamp(1.75rem,3vw,2.5rem)', letterSpacing: '-0.01em' }}>
+              Real People, <span style={{ color: '#7c3aed' }}>Real Outcomes</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {TESTIMONIALS.map((t, i) => (
+              <motion.div
+                key={t.name}
+                custom={i}
+                variants={fadeUp}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true }}
+                className="relative rounded-xl bg-[#F3F5F9] dark:bg-background p-7 flex flex-col transition-all duration-200 hover:-translate-y-1 hover:shadow-md border border-[#e2e8f0] dark:border-border"
+              >
+                <div className="absolute top-3 right-5 select-none pointer-events-none" style={{ fontFamily: 'Georgia,serif', fontSize: '5rem', lineHeight: 1, color: 'rgba(109,40,217,.08)', fontWeight: 900 }}>"</div>
+                <div className="flex gap-0.5 mb-4">
+                  {[...Array(5)].map((_, si) => (
+                    <Star key={si} className="w-3.5 h-3.5 fill-current" style={{ color: '#f59e0b' }} />
+                  ))}
+                </div>
+                <p className="text-sm leading-relaxed flex-1 mb-6 text-[#334155] dark:text-foreground/80">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shrink-0" style={{ background: t.avatarBg }}>
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-[#0f172a] dark:text-foreground">{t.name}</p>
+                    <p className="text-xs mt-0.5 text-[#64748b] dark:text-muted-foreground">{t.role}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="px-4 md:px-0 py-12 md:py-16 bg-[#F3F5F9] dark:bg-background">
+        <div
+          className="container rounded-2xl px-8 py-16 md:py-20 text-center relative overflow-hidden"
+          style={{ background: 'linear-gradient(135deg,#6d28d9 0%,#4f46e5 50%,#8b5cf6 100%)' }}
+        >
+          <div aria-hidden className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full" style={{ background: 'rgba(255,255,255,.06)' }} />
+          <div aria-hidden className="pointer-events-none absolute -bottom-20 -left-12 w-56 h-56 rounded-full" style={{ background: 'rgba(255,255,255,.04)' }} />
+          <motion.div
+            className="relative"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            viewport={{ once: true }}
+          >
+            <p className="text-[11px] font-bold tracking-[2px] uppercase mb-4" style={{ color: 'rgba(255,255,255,.7)' }}>Applications Open</p>
+            <h2
+              className="font-black mb-4 text-white"
+              style={{ fontSize: 'clamp(2.25rem,5vw,4rem)', letterSpacing: '-0.02em', fontFamily: '"Bebas Neue",sans-serif' }}
+            >
+              Ready to Start?
+            </h2>
+            <p className="mb-10 max-w-xl mx-auto" style={{ fontSize: '1rem', color: 'rgba(255,255,255,.78)' }}>
+              Take the first step toward a career that actually excites you. Applications are open now.
+            </p>
+            <div className="flex flex-wrap gap-4 justify-center">
+              <a
+                href="/apply"
+                className="inline-flex items-center gap-2 font-bold rounded-xl px-8 py-4 transition-all duration-200 hover:-translate-y-0.5"
+                style={{ background: '#fff', color: '#6d28d9', fontSize: '0.9375rem', boxShadow: '0 8px 24px rgba(0,0,0,.2)' }}
+              >
+                Apply to Program <ArrowRight className="h-4 w-4" />
+              </a>
+              <a
+                href="/signin"
+                className="inline-flex items-center gap-2 font-semibold rounded-xl px-8 py-4 transition-all duration-200 hover:bg-white/20"
+                style={{ background: 'rgba(255,255,255,.12)', color: '#fff', border: '1.5px solid rgba(255,255,255,.3)', fontSize: '0.9375rem' }}
+              >
+                Sign In
+              </a>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <Footer />
+      <FloatingAIChat />
     </div>
   );
 };

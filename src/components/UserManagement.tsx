@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ViewToggle } from '@/components/ui/view-toggle';
 import { useQuery } from '@tanstack/react-query';
 import { apiService, endpoints } from '@/lib/api';
+import { motion } from 'framer-motion';
+import { SkeletonPage } from '@/components/ui/animations';
 import {
   Table,
   TableBody,
@@ -10,19 +13,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerDescription,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerTrigger,
+} from '@/components/ui/smart-drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -54,8 +58,10 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  UserCog,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { PhoneInput } from '@/components/ui/phone-input';
 
 // Types based on API response
 interface Authority {
@@ -124,6 +130,19 @@ interface UsersResponse {
 }
 
 function UserManagement() {
+  // Check user role - only Admin and Tutor can access
+  const user = localStorage.getItem('user')
+    ? JSON.parse(localStorage.getItem('user') || '{}')
+    : null;
+  const userRole = user?.role || '';
+  
+  // Redirect if not allowed
+  React.useEffect(() => {
+    if (userRole && !['Admin', 'ADMIN', 'Tutor', 'TUTOR'].includes(userRole)) {
+      window.location.href = '/student';
+    }
+  }, [userRole]);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -135,20 +154,35 @@ function UserManagement() {
   const [actionType, setActionType] = useState<
     'lock' | 'unlock' | 'approve' | 'suspend'
   >('lock');
+  const [suspendReason, setSuspendReason] = useState('');
+  const [suspendCustomMessage, setSuspendCustomMessage] = useState('');
+  const [suspendUseCustom, setSuspendUseCustom] = useState(false);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [changeRoleDialogOpen, setChangeRoleDialogOpen] = useState(false);
+  const [newRoleName, setNewRoleName] = useState('');
 
   // Fetch users data
   const {
     data: usersData,
     isLoading,
+    error,
     refetch,
   } = useQuery<UsersResponse>({
     queryKey: ['users', currentPage],
     queryFn: async () => {
-      const response = await apiService.getWithParams(endpoints.getAllUsers, {
-        page: currentPage,
-        pageSize: 10,
-      });
-      return response.data;
+      try {
+        console.log('Fetching users with params:', { pageNumber: currentPage, pageSize: 10 });
+        const response = await apiService.getWithParams(endpoints.getAllUsers, {
+          pageNumber: currentPage,
+          pageSize: 10,
+        });
+        console.log('Users API response:', response.data);
+        return response.data;
+      } catch (err: any) {
+        console.error('Error fetching users:', err);
+        console.error('Error response:', err.response?.data);
+        throw err;
+      }
     },
   });
 
@@ -187,17 +221,26 @@ function UserManagement() {
       0,
     locked: usersData?.data?.filter((u) => !u.accountNonLocked).length || 0,
     pending:
-      usersData?.data?.filter((u) => u.status === 'REGISTERED_NOT_CONFIRMED')
+      usersData?.data?.filter((u) => u.status === 'REGISTERED_NOT_CONFIRMED' || u.status === 'PENDING_APPROVAL')
         .length || 0,
     tutors: usersData?.data?.filter((u) => u.role === 'TUTOR').length || 0,
   };
 
   const getStatusBadge = (user: User) => {
-    if (!user.accountNonLocked) {
+    if (!user.accountNonLocked || user.status === 'LOCKED') {
       return <Badge variant="destructive">Locked</Badge>;
     }
+    if (user.status === 'SUSPENDED') {
+      return <Badge variant="destructive">Suspended</Badge>;
+    }
     if (user.status === 'REGISTERED_NOT_CONFIRMED') {
-      return <Badge className="bg-[#FFD54F] text-black">Pending</Badge>;
+      return <Badge className="bg-warning text-warning-foreground">Pending</Badge>;
+    }
+    if (user.status === 'PENDING_APPROVAL') {
+      return <Badge className="bg-orange-500 text-white">Pending Approval</Badge>;
+    }
+    if (user.status === 'EMAIL_NOT_CONFIRMED') {
+      return <Badge className="bg-yellow-500 text-white">Email Not Confirmed</Badge>;
     }
     if (user.enabled) {
       return <Badge className="bg-green-500 text-white">Active</Badge>;
@@ -207,12 +250,12 @@ function UserManagement() {
 
   const getRoleBadge = (role: string) => {
     const colors: Record<string, string> = {
-      ADMIN: 'bg-[#6A1B9A] text-white',
-      TUTOR: 'bg-[#1E3A8A] text-white',
-      Student: 'bg-[#FFD54F] text-black',
+      ADMIN: 'bg-primary text-primary-foreground',
+      TUTOR: 'bg-primary text-primary-foreground',
+      Student: 'bg-warning text-warning-foreground',
     };
     return (
-      <Badge className={colors[role] || 'bg-gray-500 text-white'}>{role}</Badge>
+      <Badge className={colors[role] || 'bg-muted text-muted-foreground'}>{role}</Badge>
     );
   };
 
@@ -222,7 +265,28 @@ function UserManagement() {
   ) => {
     setSelectedUser(user);
     setActionType(action);
+    setSuspendReason('');
+    setSuspendCustomMessage('');
+    setSuspendUseCustom(false);
     setActionDialogOpen(true);
+  };
+
+  const handleChangeRole = (user: User) => {
+    setSelectedUser(user);
+    setNewRoleName(user.role || '');
+    setChangeRoleDialogOpen(true);
+  };
+
+  const confirmChangeRole = async () => {
+    if (!selectedUser || !newRoleName) return;
+    try {
+      await apiService.patch(endpoints.changeUserRole(selectedUser.id), { role: newRoleName });
+      toast.success(`Role updated to ${newRoleName}`);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to update role');
+    }
+    setChangeRoleDialogOpen(false);
   };
 
   const approveStudentApplication = async (userId: string) => {
@@ -233,20 +297,84 @@ function UserManagement() {
       if (res.status === 200) {
         toast.success('Student application approved successfully');
       }
-    } catch (error) {
-      toast.error('Failed to approve student application');
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to approve student application');
     }
   };
+
+  // ── Auto-approve students when the system setting is enabled ──
+  const { data: systemSettings } = useQuery({
+    queryKey: ['systemSettings'],
+    queryFn: async () => {
+      const res = await apiService.get(endpoints.getSystemSettings);
+      return res.data as Array<{ settingKey: string; settingValue: string }>;
+    },
+    staleTime: 60_000,
+  });
+
+  const autoApproveTriggered = useRef(false);
+  useEffect(() => {
+    if (autoApproveTriggered.current) return;
+    const autoApproveEnabled = systemSettings?.find(s => s.settingKey === 'auto_approve_students')?.settingValue === 'true';
+    if (!autoApproveEnabled) return;
+    const pending = usersData?.data?.filter(u => u.status === 'REGISTERED_NOT_CONFIRMED') || [];
+    if (pending.length === 0) return;
+
+    autoApproveTriggered.current = true;
+    const runAutoApprove = async () => {
+      let approved = 0;
+      for (const u of pending) {
+        try {
+          await apiService.post(endpoints.approveStudentApplication(u.id));
+          approved++;
+        } catch {
+          // silently continue for individual failures
+        }
+      }
+      if (approved > 0) {
+        toast.success(`Auto-approved ${approved} pending student${approved > 1 ? 's' : ''}`);
+        refetch();
+        autoApproveTriggered.current = false; // reset so next page load re-checks
+      }
+    };
+    runAutoApprove();
+  }, [systemSettings, usersData, refetch]);
+
   const confirmAction = async () => {
     if (!selectedUser) return;
 
     try {
-      if (actionType === 'approve') {
-        await approveStudentApplication(selectedUser.id);
+      switch (actionType) {
+        case 'approve':
+          if (selectedUser.role === 'Student') {
+            await approveStudentApplication(selectedUser.id);
+          } else {
+            await apiService.post(endpoints.approveUser(selectedUser.id));
+            toast.success(`${selectedUser.role} approved successfully`);
+          }
+          break;
+        case 'lock':
+          await apiService.patch(endpoints.lockUser(selectedUser.id));
+          toast.success('User account locked');
+          break;
+        case 'unlock':
+          await apiService.patch(endpoints.unlockUser(selectedUser.id));
+          toast.success('User account unlocked');
+          break;
+        case 'suspend':
+          await apiService.patch(endpoints.suspendUser(selectedUser.id), {
+            reason: suspendReason || undefined,
+            customMessage: suspendUseCustom ? suspendCustomMessage : undefined,
+            sendEmail: 'true',
+          });
+          toast.success('User account suspended — notification email sent');
+          break;
       }
-    } catch (error) {
-      toast.error(`Failed to ${actionType} user`);
+      refetch();
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || `Failed to ${actionType} user`);
     }
+    setActionDialogOpen(false);
   };
 
   const handleViewUser = (user: User) => {
@@ -255,21 +383,17 @@ function UserManagement() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-lg">Loading users...</div>
-      </div>
-    );
+    return <SkeletonPage />;
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div className="space-y-6" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-            <Users className="h-4 w-4 text-[#1E3A8A]" />
+            <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -301,7 +425,7 @@ function UserManagement() {
             <CardTitle className="text-sm font-medium">
               Pending Approval
             </CardTitle>
-            <XCircle className="h-4 w-4 text-[#FFD54F]" />
+            <XCircle className="h-4 w-4 text-warning" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.pending}</div>
@@ -311,13 +435,29 @@ function UserManagement() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">Tutors</CardTitle>
-            <Users className="h-4 w-4 text-[#6A1B9A]" />
+            <Users className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.tutors}</div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending students banner — shown when auto-approve is OFF and there are pending students */}
+      {stats.pending > 0 && systemSettings?.find(s => s.settingKey === 'auto_approve_students')?.settingValue !== 'true' && (
+        <div className="flex items-center justify-between rounded-lg border border-warning bg-warning/10 px-4 py-3 text-sm text-foreground">
+          <span>
+            <span className="font-semibold">{stats.pending} student{stats.pending > 1 ? 's' : ''} pending approval.</span>
+            {' '}Review and approve them below, or enable Auto-Approval in Settings → System.
+          </span>
+          <button
+            className="ml-4 text-xs underline text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setStatusFilter('REGISTERED_NOT_CONFIRMED')}
+          >
+            Show pending
+          </button>
+        </div>
+      )}
 
       {/* Filters and Actions */}
       <Card>
@@ -329,30 +469,30 @@ function UserManagement() {
                 <Mail className="h-4 w-4" />
                 Send Bulk Email
               </Button>
-              <Dialog
+              <SmartDrawer
                 open={createDialogOpen}
                 onOpenChange={setCreateDialogOpen}
               >
-                <DialogTrigger asChild>
-                  <Button className="gap-2 bg-[#1E3A8A] hover:bg-[#1A3173] text-white">
+                <SmartDrawerTrigger asChild>
+                  <Button className="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground">
                     <UserPlus className="h-4 w-4" />
                     Create User
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Create New User</DialogTitle>
-                    <DialogDescription>
+                </SmartDrawerTrigger>
+                <SmartDrawerContent defaultWidth={672}>
+                  <SmartDrawerHeader>
+                    <SmartDrawerTitle>Create New User</SmartDrawerTitle>
+                    <SmartDrawerDescription>
                       Add a new user to the system
-                    </DialogDescription>
-                  </DialogHeader>
+                    </SmartDrawerDescription>
+                  </SmartDrawerHeader>
                   <CreateUserForm
                     rolesData={rolesData}
                     onClose={() => setCreateDialogOpen(false)}
                     onSuccess={refetch}
                   />
-                </DialogContent>
-              </Dialog>
+                </SmartDrawerContent>
+              </SmartDrawer>
             </div>
           </div>
         </CardHeader>
@@ -369,7 +509,7 @@ function UserManagement() {
               />
             </div>
             <Select value={roleFilter} onValueChange={setRoleFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Filter by Role" />
               </SelectTrigger>
@@ -382,7 +522,7 @@ function UserManagement() {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-full sm:w-[180px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Filter by Status" />
               </SelectTrigger>
@@ -392,22 +532,93 @@ function UserManagement() {
                 <SelectItem value="REGISTERED_NOT_CONFIRMED">
                   Pending
                 </SelectItem>
+                <SelectItem value="PENDING_APPROVAL">Pending Approval</SelectItem>
+                <SelectItem value="SUSPENDED">Suspended</SelectItem>
                 <SelectItem value="LOCKED">Locked</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Users Table */}
-          <div className="border rounded-lg">
+          {/* View Toggle */}
+          <div className="flex justify-end">
+            <ViewToggle viewMode={viewMode} onViewChange={setViewMode} />
+          </div>
+
+          {/* Users Grid View */}
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredUsers.map((user) => (
+                <Card key={user.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={user.profilePicture} alt={user.username} />
+                        <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{user.username}</div>
+                        <div className="text-sm text-muted-foreground truncate">{user.firstName} {user.lastName}</div>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Email</span>
+                        <span className="truncate ml-2 max-w-[180px]">{user.email}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Role</span>
+                        {getRoleBadge(user.role)}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Status</span>
+                        {getStatusBadge(user)}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-muted-foreground">Joined</span>
+                        <span>{new Date(user.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-4 pt-3 border-t">
+                      <Button variant="outline" size="sm" onClick={() => handleViewUser(user)} className="gap-1">
+                        <Eye className="h-3 w-3" /> View
+                      </Button>
+                      {user.accountNonLocked ? (
+                        <Button variant="outline" size="sm" onClick={() => handleAction(user, 'lock')} className="gap-1">
+                          <Lock className="h-3 w-3" /> Lock
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" onClick={() => handleAction(user, 'unlock')} className="gap-1">
+                          <Unlock className="h-3 w-3" /> Unlock
+                        </Button>
+                      )}
+                      {(user.role === 'Tutor' || user.role === 'TUTOR' || user.role === 'Mentor' || user.isMentor) &&
+                        (user.status === 'PENDING_APPROVAL' || user.status === 'REGISTERED_NOT_CONFIRMED') && (
+                          <Button size="sm" onClick={() => handleAction(user, 'approve')} className="gap-1 bg-green-500 hover:bg-green-600 text-white">
+                            <CheckCircle className="h-3 w-3" /> Approve
+                          </Button>
+                        )}
+                      {userRole === 'Admin' && (
+                        <Button variant="outline" size="sm" onClick={() => handleChangeRole(user)} className="gap-1">
+                          <UserCog className="h-3 w-3" /> Role
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+          // Users Table
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
+                  <TableHead className="hidden md:table-cell">Email</TableHead>
+                  <TableHead className="hidden lg:table-cell">Phone</TableHead>
                   <TableHead>Role</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
+                  <TableHead className="hidden md:table-cell">Created</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -434,15 +645,15 @@ function UserManagement() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.phoneNumber || 'N/A'}</TableCell>
+                    <TableCell className="hidden md:table-cell">{user.email}</TableCell>
+                    <TableCell className="hidden lg:table-cell">{user.phoneNumber || 'N/A'}</TableCell>
                     <TableCell>{getRoleBadge(user.role)}</TableCell>
                     <TableCell>{getStatusBadge(user)}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">
                       {new Date(user.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1 sm:gap-2 flex-wrap">
                         <Button
                           variant="outline"
                           size="sm"
@@ -496,6 +707,38 @@ function UserManagement() {
                             ) : null}
                           </>
                         )}
+                        {(user.role === 'Tutor' || user.role === 'TUTOR' || user.role === 'Mentor' || user.isMentor) &&
+                          (user.status === 'PENDING_APPROVAL' || user.status === 'REGISTERED_NOT_CONFIRMED') && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleAction(user, 'approve')}
+                              className="gap-1 bg-green-500 hover:bg-green-600 text-white"
+                            >
+                              <CheckCircle className="h-3 w-3" />
+                              Approve
+                            </Button>
+                          )}
+                        {user.status === 'SUSPENDED' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleAction(user, 'approve')}
+                            className="gap-1 bg-green-500 hover:bg-green-600 text-white"
+                          >
+                            <CheckCircle className="h-3 w-3" />
+                            Reactivate
+                          </Button>
+                        )}
+                        {userRole === 'Admin' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleChangeRole(user)}
+                            className="gap-1"
+                          >
+                            <UserCog className="h-3 w-3" />
+                            Role
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -503,9 +746,10 @@ function UserManagement() {
               </TableBody>
             </Table>
           </div>
+          )}
 
           {/* Pagination */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
             <div className="text-sm text-muted-foreground">
               Showing {filteredUsers.length} of {usersData?.totalCount || 0}{' '}
               users
@@ -540,36 +784,122 @@ function UserManagement() {
       </Card>
 
       {/* View User Dialog */}
-      <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-5xl min-h-[75vh] overflow-y-auto">
+      <SmartDrawer open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+        <SmartDrawerContent defaultWidth={900}>
           {selectedUser && (
             <ViewUserDialog user={selectedUser} onAction={handleAction} />
           )}
-        </DialogContent>
-      </Dialog>
+        </SmartDrawerContent>
+      </SmartDrawer>
 
       {/* Action Confirmation Dialog */}
       <AlertDialog open={actionDialogOpen} onOpenChange={setActionDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className={actionType === 'suspend' ? 'max-w-lg' : ''}>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirm Action</AlertDialogTitle>
+            <AlertDialogTitle>
+              {actionType === 'suspend' ? 'Suspend Account' : 'Confirm Action'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to {actionType} user "
-              {selectedUser?.username}"? This action can be reversed later.
+              {actionType === 'suspend' ? (
+                <>Suspending <strong>{selectedUser?.firstName} {selectedUser?.lastName}</strong> ({selectedUser?.email}). A notification email will be sent.</>
+              ) : (
+                <>Are you sure you want to {actionType} user "{selectedUser?.username}"? This action can be reversed later.</>
+              )}
             </AlertDialogDescription>
           </AlertDialogHeader>
+
+          {actionType === 'suspend' && (
+            <div className="space-y-4 py-2">
+              <div>
+                <Label htmlFor="suspend-reason">Reason for suspension (optional)</Label>
+                <Input
+                  id="suspend-reason"
+                  placeholder="e.g. Violation of community guidelines"
+                  value={suspendReason}
+                  onChange={e => setSuspendReason(e.target.value)}
+                  className="mt-1"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="custom-email-toggle"
+                  checked={suspendUseCustom}
+                  onChange={e => setSuspendUseCustom(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <Label htmlFor="custom-email-toggle" className="text-sm cursor-pointer">
+                  Draft a custom email instead of default template
+                </Label>
+              </div>
+              {suspendUseCustom && (
+                <div>
+                  <Label htmlFor="custom-email">Custom email message (HTML supported)</Label>
+                  <Textarea
+                    id="custom-email"
+                    placeholder={`Dear ${selectedUser?.firstName},\n\nYour account has been suspended because...\n\nPlease contact support if you have questions.`}
+                    value={suspendCustomMessage}
+                    onChange={e => setSuspendCustomMessage(e.target.value)}
+                    className="mt-1 min-h-[120px]"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    This will replace the default suspension email. Use &lt;b&gt; for bold, &lt;br&gt; for line breaks.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmAction}
-              className="bg-[#1E3A8A] hover:bg-[#1A3173]"
+              className={actionType === 'suspend' ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary/90'}
             >
-              Confirm
+              {actionType === 'suspend' ? 'Suspend & Notify' : 'Confirm'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+
+      {/* Change Role Dialog */}
+      <AlertDialog open={changeRoleDialogOpen} onOpenChange={setChangeRoleDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change User Role</AlertDialogTitle>
+            <AlertDialogDescription>
+              Assign a new role to <strong>{selectedUser?.firstName} {selectedUser?.lastName}</strong> ({selectedUser?.email}).
+              Current role: <strong>{selectedUser?.role}</strong>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2">
+            <Label htmlFor="new-role">New Role</Label>
+            <Select value={newRoleName} onValueChange={setNewRoleName}>
+              <SelectTrigger id="new-role" className="mt-1">
+                <SelectValue placeholder="Select a role" />
+              </SelectTrigger>
+              <SelectContent>
+                {rolesData?.data?.map((role: any) => (
+                  <SelectItem key={role.id} value={role.name}>
+                    {role.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmChangeRole}
+              className="bg-primary hover:bg-primary/90"
+              disabled={!newRoleName || newRoleName === selectedUser?.role}
+            >
+              Assign Role
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </motion.div>
   );
 }
 
@@ -586,8 +916,8 @@ function ViewUserDialog({
 }) {
   return (
     <div className="space-y-4">
-      <DialogHeader>
-        <DialogTitle className="flex items-center gap-3">
+      <SmartDrawerHeader>
+        <SmartDrawerTitle className="flex items-center gap-3">
           <Avatar className="h-12 w-12">
             <AvatarImage src={user.profilePicture} alt={user.username} />
             <AvatarFallback>
@@ -601,8 +931,8 @@ function ViewUserDialog({
               {user.firstName} {user.lastName}
             </div>
           </div>
-        </DialogTitle>
-      </DialogHeader>
+        </SmartDrawerTitle>
+      </SmartDrawerHeader>
 
       <Tabs defaultValue="basic" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
@@ -618,7 +948,7 @@ function ViewUserDialog({
         </TabsList>
 
         <TabsContent value="basic" className="space-y-4">
-          <div className="grid grid-cols-2 gap-4 text-base">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-base">
             <div>
               <Label className="text-muted-foreground">Email</Label>
               <div className="font-medium">{user.email}</div>
@@ -667,7 +997,7 @@ function ViewUserDialog({
 
         <TabsContent value="profile" className="space-y-4">
           {user.role === 'Student' && user.userProfile ? (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <Label className="text-muted-foreground">Education Level</Label>
                 <div className="font-medium">
@@ -734,14 +1064,30 @@ function ViewUserDialog({
               </div>
             </div>
           ) : user.role === 'TUTOR' ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <Users className="h-12 w-12 mx-auto mb-4" />
-              <p>Classes Assigned (Coming Soon)</p>
+            <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">Status</Label>
+                  <div className="font-medium"><Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'}>{user.status}</Badge></div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Member Since</Label>
+                  <div className="font-medium">{new Date(user.createdAt).toLocaleDateString()}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Email</Label>
+                  <div className="font-medium">{user.email}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Phone</Label>
+                  <div className="font-medium">{user.phoneNumber || 'N/A'}</div>
+                </div>
+              </div>
             </div>
           ) : user.isMentor ? (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="col-span-2">
-                <Badge className="bg-[#6A1B9A] text-white mb-4">Mentor</Badge>
+                <Badge className="bg-primary text-primary-foreground mb-4">Mentor</Badge>
               </div>
               <div className="col-span-2">
                 <Label className="text-muted-foreground">Expertise Areas</Label>
@@ -796,30 +1142,48 @@ function ViewUserDialog({
         </TabsContent>
 
         <TabsContent value="activity" className="space-y-4">
-          {user.role === 'Student' ? (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Progress Summary</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center py-8 text-muted-foreground">
-                  <p>Progress tracking (Coming Soon)</p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Payment History</CardTitle>
-                </CardHeader>
-                <CardContent className="text-center py-8 text-muted-foreground">
-                  <p>Payment records (Coming Soon)</p>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>Activity logs (Coming Soon)</p>
-            </div>
-          )}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Account Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Account Status</span>
+                    <div className="font-medium mt-1"><Badge variant={user.status === 'ACTIVE' ? 'default' : 'secondary'}>{user.status}</Badge></div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Account Locked</span>
+                    <div className="font-medium mt-1">{user.accountNonLocked ? 'No' : 'Yes'}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Created</span>
+                    <div className="font-medium mt-1">{new Date(user.createdAt).toLocaleDateString()}</div>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Role</span>
+                    <div className="font-medium mt-1"><Badge variant="outline">{user.role}</Badge></div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => onAction(user, user.accountNonLocked ? 'lock' : 'unlock')}>
+                  {user.accountNonLocked ? <><Lock className="h-3 w-3 mr-1" /> Lock Account</> : <><Unlock className="h-3 w-3 mr-1" /> Unlock Account</>}
+                </Button>
+                {user.status !== 'ACTIVE' && user.status !== 'SUSPENDED' && (
+                  <Button size="sm" onClick={() => onAction(user, 'approve')} className="bg-green-500 hover:bg-green-600 text-white">
+                    <CheckCircle className="h-3 w-3 mr-1" /> Approve
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -861,6 +1225,16 @@ function ViewUserDialog({
               Approve Student
             </Button>
           )}
+        {(user.role === 'Tutor' || user.role === 'TUTOR' || user.role === 'Mentor' || user.isMentor) &&
+          (user.status === 'PENDING_APPROVAL' || user.status === 'REGISTERED_NOT_CONFIRMED') && (
+            <Button
+              onClick={() => onAction(user, 'approve')}
+              className="gap-2 bg-green-500 hover:bg-green-600 text-white"
+            >
+              <CheckCircle className="h-4 w-4" />
+              Approve {user.role}
+            </Button>
+          )}
       </div>
     </div>
   );
@@ -897,10 +1271,34 @@ function CreateUserForm({
     mentorBio: '',
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    //take the roleId based on the role selected
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
+  const validateForm = (): Record<string, string> => {
+    const errs: Record<string, string> = {};
+    if (!formData.username?.trim()) errs.username = 'Username is required';
+    else if (formData.username.trim().length < 3) errs.username = 'Username must be at least 3 characters';
+    if (!formData.email?.trim()) errs.email = 'Email is required';
+    else if (!/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/.test(formData.email.trim())) errs.email = 'Please enter a valid email address';
+    if (!formData.firstName?.trim()) errs.firstName = 'First name is required';
+    if (!formData.lastName?.trim()) errs.lastName = 'Last name is required';
+    if (formData.phoneNumber && !/^\+?[\d\s\-()]{7,20}$/.test(formData.phoneNumber.trim())) errs.phoneNumber = 'Please enter a valid phone number';
+    if (!formData.role) errs.role = 'Please select a role';
+    if (formData.isMentor) {
+      if (formData.expertise.length === 0) errs.expertise = 'Please select at least one area of expertise';
+      if (!formData.mentorBio?.trim()) errs.mentorBio = 'Mentor bio is required';
+    }
+    return errs;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errs = validateForm();
+    if (Object.keys(errs).length > 0) {
+      setFormErrors(errs);
+      toast.error('Please fix the highlighted errors');
+      return;
+    }
+    setFormErrors({});
     try {
       const response = await apiService.post(endpoints.register, {
         ...formData,
@@ -918,17 +1316,20 @@ function CreateUserForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="username">Username *</Label>
           <Input
             id="username"
             value={formData.username}
-            onChange={(e) =>
-              setFormData({ ...formData, username: e.target.value })
-            }
+            onChange={(e) => {
+              setFormData({ ...formData, username: e.target.value });
+              if (formErrors.username) setFormErrors((prev) => { const { username, ...rest } = prev; return rest; });
+            }}
             required
+            className={formErrors.username ? 'border-destructive' : ''}
           />
+          {formErrors.username && <p className="text-xs text-destructive mt-1">{formErrors.username}</p>}
         </div>
         <div>
           <Label htmlFor="email">Email *</Label>
@@ -936,33 +1337,42 @@ function CreateUserForm({
             id="email"
             type="email"
             value={formData.email}
-            onChange={(e) =>
-              setFormData({ ...formData, email: e.target.value })
-            }
+            onChange={(e) => {
+              setFormData({ ...formData, email: e.target.value });
+              if (formErrors.email) setFormErrors((prev) => { const { email, ...rest } = prev; return rest; });
+            }}
             required
+            className={formErrors.email ? 'border-destructive' : ''}
           />
+          {formErrors.email && <p className="text-xs text-destructive mt-1">{formErrors.email}</p>}
         </div>
         <div>
           <Label htmlFor="firstName">First Name *</Label>
           <Input
             id="firstName"
             value={formData.firstName}
-            onChange={(e) =>
-              setFormData({ ...formData, firstName: e.target.value })
-            }
+            onChange={(e) => {
+              setFormData({ ...formData, firstName: e.target.value });
+              if (formErrors.firstName) setFormErrors((prev) => { const { firstName, ...rest } = prev; return rest; });
+            }}
             required
+            className={formErrors.firstName ? 'border-destructive' : ''}
           />
+          {formErrors.firstName && <p className="text-xs text-destructive mt-1">{formErrors.firstName}</p>}
         </div>
         <div>
           <Label htmlFor="lastName">Last Name *</Label>
           <Input
             id="lastName"
             value={formData.lastName}
-            onChange={(e) =>
-              setFormData({ ...formData, lastName: e.target.value })
-            }
+            onChange={(e) => {
+              setFormData({ ...formData, lastName: e.target.value });
+              if (formErrors.lastName) setFormErrors((prev) => { const { lastName, ...rest } = prev; return rest; });
+            }}
             required
+            className={formErrors.lastName ? 'border-destructive' : ''}
           />
+          {formErrors.lastName && <p className="text-xs text-destructive mt-1">{formErrors.lastName}</p>}
         </div>
         {/* <div>
           <Label htmlFor="password">Password *</Label>
@@ -978,13 +1388,16 @@ function CreateUserForm({
         </div> */}
         <div>
           <Label htmlFor="phoneNumber">Phone Number</Label>
-          <Input
-            id="phoneNumber"
+          <PhoneInput
             value={formData.phoneNumber}
-            onChange={(e) =>
-              setFormData({ ...formData, phoneNumber: e.target.value })
-            }
+            onChange={(val) => {
+              setFormData({ ...formData, phoneNumber: val });
+              if (formErrors.phoneNumber) setFormErrors((prev) => { const { phoneNumber, ...rest } = prev; return rest; });
+            }}
+            defaultCountry="KE"
+            error={!!formErrors.phoneNumber}
           />
+          {formErrors.phoneNumber && <p className="text-xs text-destructive mt-1">{formErrors.phoneNumber}</p>}
         </div>
         <div>
           <Label htmlFor="age">Age</Label>
@@ -1098,7 +1511,7 @@ function CreateUserForm({
               onChange={(e) =>
                 setFormData({ ...formData, isMentor: e.target.checked })
               }
-              className="h-4 w-4 rounded border-gray-300"
+              className="h-4 w-4 rounded border-border"
             />
             <Label htmlFor="isMentor" className="cursor-pointer">
               Register as Mentor
@@ -1319,7 +1732,7 @@ function CreateUserForm({
         </Button>
         <Button
           type="submit"
-          className="bg-[#1E3A8A] hover:bg-[#1A3173] text-white"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
         >
           Create User
         </Button>

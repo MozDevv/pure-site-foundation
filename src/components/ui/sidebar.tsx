@@ -22,7 +22,7 @@ const SIDEBAR_COOKIE_NAME = 'sidebar:state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = '16rem';
 const SIDEBAR_WIDTH_MOBILE = '18rem';
-const SIDEBAR_WIDTH_ICON = '3rem';
+const SIDEBAR_WIDTH_ICON = '3.5rem';
 const SIDEBAR_KEYBOARD_SHORTCUT = 'b';
 
 type SidebarContext = {
@@ -180,7 +180,7 @@ const Sidebar = React.forwardRef<
       return (
         <div
           className={cn(
-            'flex h-full w-[--sidebar-width] flex-col bg-[#1E3A8A] text-white',
+            'flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground',
             className
           )}
           ref={ref}
@@ -197,7 +197,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[--sidebar-width] bg-[#1E3A8A] p-0 text-white [&>button]:hidden"
+            className="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
             style={
               {
                 '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
@@ -247,7 +247,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-[#1E3A8A] group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
           >
             {children}
           </div>
@@ -412,18 +412,18 @@ const SidebarContent = React.forwardRef<
       <div className="flex items-center gap-2 px-4 pt-1 ">
         <img
           src="/light-bulb-sign-with-gears-effective-learning-idea-concept.png"
-          alt="TechAi logo"
+          alt="TechAI logo"
           className="w-16 h-16 object-contain opacity-95"
           loading="lazy"
         />
-        <span className="text-white text-2xl font-extrabold tracking-wide">
-          Tech<span className="text-blue-400">Ai</span>
-          <span className="text-white">.</span>
+        <span className="text-sidebar-foreground text-2xl font-extrabold tracking-wide">
+          Tech<span className="text-sidebar-primary">Ai</span>
+          <span className="text-sidebar-foreground">.</span>
         </span>
       </div>
       <Divider
         sx={{
-          borderColor: 'gray', // Tailwind blue-600
+          borderColor: 'hsl(var(--sidebar-border))',
           borderBottomWidth: 0.2,
           opacity: 0.9,
           my: 1.5,
@@ -461,7 +461,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        'flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-semibold text-white/90 outline-none ring-sidebar-ring transition-[margin,opa] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+        'flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-semibold text-sidebar-foreground/90 outline-none ring-sidebar-ring transition-[margin,opa] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
         'group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0',
         className
       )}
@@ -534,15 +534,15 @@ const SidebarMenuItem = React.forwardRef<
 SidebarMenuItem.displayName = 'SidebarMenuItem';
 
 const sidebarMenuButtonVariants = cva(
-  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-lg px-4 py-3 transition-all duration-300 ease-in-out text-left font-medium outline-none ring-sidebar-ring focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50',
+  'peer/menu-button flex w-full items-center gap-3 overflow-hidden rounded-lg px-4 py-3 transition-all duration-300 ease-in-out text-left font-medium outline-none ring-sidebar-ring focus-visible:ring-2 disabled:pointer-events-none disabled:opacity-50 group-data-[collapsible=icon]:!px-0 group-data-[collapsible=icon]:justify-center [&>svg]:shrink-0',
   {
     variants: {
       variant: {
         // Modern ERP sidebar styling with white text on dark blue
         default:
-          'text-white hover:bg-[#1A3173] data-[active=true]:bg-[#1A3173] data-[active=true]:rounded-lg data-[active=true]:shadow-lg',
+          'text-sidebar-foreground hover:bg-sidebar-accent data-[active=true]:bg-sidebar-accent data-[active=true]:rounded-lg data-[active=true]:shadow-lg',
         outline:
-          'bg-white border border-sidebar-border text-sidebar-foreground hover:bg-primary/10 hover:text-primary hover:shadow-sm',
+          'bg-card border border-sidebar-border text-sidebar-foreground hover:bg-primary/10 hover:text-primary hover:shadow-sm',
       },
       size: {
         default: 'h-12 text-sm',

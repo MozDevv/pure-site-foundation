@@ -7,27 +7,32 @@ interface InnovationContextType {
   toggleUserRole: () => void;
 }
 
-const defaultStudent: User = {
-  id: 1,
-  name: "Alex Chen",
-  email: "alex@student.com",
-  role: "Student"
-};
-
-const defaultAdmin: User = {
-  id: 99,
-  name: "Dr. Maria Garcia",
-  email: "maria@admin.com",
-  role: "Admin"
-};
+function getUserFromStorage(): User {
+  try {
+    const raw = localStorage.getItem('user');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        id: parsed.id || 1,
+        name: parsed.name || `${parsed.firstName || ''} ${parsed.lastName || ''}`.trim() || 'User',
+        email: parsed.email || '',
+        role: parsed.role || 'Student',
+      };
+    }
+  } catch {}
+  return { id: 1, name: 'User', email: '', role: 'Student' };
+}
 
 const InnovationContext = createContext<InnovationContextType | undefined>(undefined);
 
 export function InnovationProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User>(defaultStudent);
+  const [currentUser, setCurrentUser] = useState<User>(getUserFromStorage);
 
   const toggleUserRole = () => {
-    setCurrentUser(prev => prev.role === "Student" ? defaultAdmin : defaultStudent);
+    setCurrentUser(prev => prev.role === 'Student'
+      ? { ...prev, role: 'Admin' as const }
+      : { ...prev, role: 'Student' as const }
+    );
   };
 
   return (

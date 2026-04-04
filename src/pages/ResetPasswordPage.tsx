@@ -146,7 +146,32 @@ const ResetPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+    <div className="min-h-screen flex">
+      {/* Left panel — image with diagonal edge */}
+      <div className="hidden lg:block relative w-[54%] flex-shrink-0 overflow-hidden">
+        <img
+          src="/study-group-african-people.jpg"
+          alt="Students collaborating"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+          loading="eager"
+          fetchPriority="high"
+        />
+        <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-primary/10 via-primary/30 to-primary/80 dark:from-black/20 dark:via-primary/20 dark:to-black/80" />
+        {/* Diagonal wedge */}
+        <div
+          className="absolute inset-y-0 right-0 w-24 bg-background"
+          style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
+        />
+        <div className="absolute bottom-12 left-12 text-white z-10 max-w-md">
+          <h2 className="text-2xl font-bold mb-4">Secure Your Account</h2>
+          <p className="opacity-90">
+            Create a strong new password to keep your TechAI account safe.
+          </p>
+        </div>
+      </div>
+
+      {/* Right panel — form */}
+      <div className="w-full lg:flex-1 flex items-center justify-center p-8 bg-background">
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
           <div className="flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mx-auto mb-4">
@@ -337,6 +362,7 @@ const ResetPasswordPage = () => {
           </form>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 };

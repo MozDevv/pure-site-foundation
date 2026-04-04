@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog';
+  SmartDrawer,
+  SmartDrawerContent,
+  SmartDrawerHeader,
+  SmartDrawerTitle,
+  SmartDrawerFooter,
+} from '@/components/ui/smart-drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -55,11 +55,11 @@ export default function GenerateBoardDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Generate Board from Requirements</DialogTitle>
-        </DialogHeader>
+    <SmartDrawer open={open} onOpenChange={onOpenChange}>
+      <SmartDrawerContent defaultWidth={672}>
+        <SmartDrawerHeader>
+          <SmartDrawerTitle>Generate Board from Requirements</SmartDrawerTitle>
+        </SmartDrawerHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-2">
@@ -108,13 +108,13 @@ export default function GenerateBoardDialog({
           </div>
         </div>
 
-        <DialogFooter>
+        <SmartDrawerFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={handleSave}>Generate Board</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SmartDrawerFooter>
+      </SmartDrawerContent>
+    </SmartDrawer>
   );
 }
