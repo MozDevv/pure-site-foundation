@@ -1946,7 +1946,7 @@ export default function CodePlaygroundPage() {
                   className={`h-full p-4 font-mono text-sm overflow-auto whitespace-pre-wrap leading-relaxed ${outputTextColor()}`}
                   style={{ background: '#0d1117', fontFamily: '"Fira Code","Cascadia Code","JetBrains Mono",Consolas,monospace', fontSize: 13 }}
                 >
-                  {currentSubmission
+                  {(currentSubmission || pistonResult)
                     ? buildOutputDisplay()
                     : <span className="text-[#484f58]">Click <strong className="text-[#8b949e]">Run</strong> or press <kbd className="px-1.5 py-0.5 rounded bg-[#21262d] text-[#8b949e] text-xs">Ctrl+Enter</kbd> to execute</span>
                   }
