@@ -7,6 +7,8 @@ type CallAcceptedCallback = (roomId: string) => void;
 const RECONNECT_DELAY_MS = 2000;
 const MAX_RETRIES = 10;
 function getWsBaseUrl(apiBaseUrl: string): string {
+  const wsBase = import.meta.env.VITE_WS_BASE_URL as string | undefined;
+  if (wsBase) return wsBase.replace(/^wss?:\/\//, '');
   // Remove protocol and path, keep only domain:port
   if (apiBaseUrl.startsWith('http')) {
     const match = apiBaseUrl.match(/^https?:\/\/([^/]+)/i);
@@ -31,12 +33,10 @@ export function useCallSignaling() {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
 
     const wsDomain = getWsBaseUrl(API_BASE_URL);
-    // Always derive protocol from the page protocol to avoid mixed-content blocks
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
-    const wsUrl = `${wsProtocol}://${wsDomain.replace(
-      /:([0-9]+)\/api$/,
-      ':8080'
-    )}/ws/${userId}?token=${token}`;
+    const wsProtocol = wsDomain.startsWith('wss://') ? 'wss'
+      : wsDomain.startsWith('ws://') ? 'ws'
+      : (window.location.protocol === 'https:' ? 'wss' : 'ws');
+    const wsUrl = `${wsProtocol}://${wsDomain}/ws/${userId}?token=${token}`;
 
     console.log('[CallSignaling] Attempting to connect to:', wsUrl);
 

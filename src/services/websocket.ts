@@ -21,8 +21,9 @@ let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 const handlers = new Set<NotificationHandler>();
 
 function getWsUrl(): string {
-  // In production: https://techaipath.com/api -> wss://techaipath.com/ws/notifications
-  // In dev proxy: /api -> the Vite proxy handles /ws/* -> https://techaipath.com/ws/*
+  const wsBase = import.meta.env.VITE_WS_BASE_URL as string | undefined;
+  if (wsBase) return `${wsBase}/ws/notifications/websocket`;
+  // fallback: derive from API_BASE_URL
   const base = API_BASE_URL.startsWith('http')
     ? API_BASE_URL.replace(/\/api$/, '')
     : window.location.origin;

@@ -975,6 +975,9 @@ export default function CodePlaygroundPage() {
 
   // ── Interactive terminal WebSocket ────────────────────────────────────────
   const getTerminalWsUrl = useCallback(() => {
+    const wsBase = import.meta.env.VITE_WS_BASE_URL as string | undefined;
+    if (wsBase) return `${wsBase}/ws/terminal`;
+    // fallback: derive from API_BASE_URL
     const base = API_BASE_URL.startsWith('http')
       ? API_BASE_URL.replace(/\/api$/, '')
       : window.location.origin;
