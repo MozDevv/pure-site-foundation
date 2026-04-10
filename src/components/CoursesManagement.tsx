@@ -67,6 +67,8 @@ import {
   BookOpen,
   Filter,
   DollarSign,
+  Lock,
+  Unlock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -94,6 +96,14 @@ import {
 } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 // Types
+interface UserSummary {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+}
+
 interface Course {
   id: string;
   code: string;
@@ -104,11 +114,11 @@ interface Course {
   priceCents: number;
   startDate: string;
   endDate: string;
-  settings: string;
   createdBy: string;
   createdAt: string;
-  enrolledStudentIds: string[];
-  tutorIds: string[];
+  isOpen: boolean;
+  enrolledStudents: UserSummary[];  // API returns full UserSummary objects
+  tutors: UserSummary[];            // API returns full UserSummary objects
 }
 
 interface User {
@@ -191,7 +201,7 @@ export default function CoursesManagement() {
   const { data: usersData } = useQuery({
     queryKey: ['users'],
     queryFn: () =>
-      apiService.get(endpoints.getAllUsers).then((res) => res.data),
+      apiService.getWithParams(endpoints.getAllUsers, { pageNumber: 1, pageSize: 1000 }).then((res) => res.data),
   });
 
   // Create course mutation
@@ -213,7 +223,7 @@ export default function CoursesManagement() {
   // Update course mutation
   const updateCourseMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) =>
-      apiService.post(endpoints.updateCourse, { id, ...data }),
+      apiService.put(endpoints.updateCourse(id), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       toast({ title: 'Course updated successfully', variant: 'default' });
@@ -221,7 +231,21 @@ export default function CoursesManagement() {
       resetForm();
     },
     onError: (error: any) => {
-      toast({ title: error?.response?.data?.message || 'Failed to update course', variant: 'destructive' });
+      const msg = error?.response?.data?.message || 'Failed to update course';
+      toast({ title: typeof msg === 'string' ? msg : 'Failed to update course', variant: 'destructive' });
+    },
+  });
+
+  // Toggle course open/closed mutation
+  const toggleOpenMutation = useMutation({
+    mutationFn: (courseId: string) =>
+      apiService.patch(endpoints.toggleCourseOpen(courseId), {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+      toast({ title: 'Course status updated', variant: 'default' });
+    },
+    onError: (error: any) => {
+      toast({ title: error?.response?.data?.message || 'Failed to update course status', variant: 'destructive' });
     },
   });
 
@@ -251,7 +275,7 @@ export default function CoursesManagement() {
   const filteredCourses = courses.filter((course) => {
     // Role-based visibility: students only see their enrolled courses
     if (isStudent && currentUser?.id) {
-      const enrolled = course.enrolledStudentIds?.includes(currentUser.id);
+      const enrolled = course.enrolledStudents?.some((s) => s.id === currentUser.id);
       if (!enrolled) return false;
     }
     const matchesSearch =
@@ -296,29 +320,14 @@ export default function CoursesManagement() {
     createCourseMutation.mutate(courseData);
   };
 
-  const handleUpdateCourse = async () => {
+  const handleUpdateCourse = () => {
     if (!selectedCourse) return;
-
     const courseData = {
       ...formData,
       startDate: formData.startDate?.toISOString(),
       endDate: formData.endDate?.toISOString(),
     };
-
-    try {
-      const res = await apiService.post(endpoints.updateCourse, {
-        id: selectedCourse.id,
-        ...courseData,
-      });
-      if (res.status === 200) {
-        toast({ title: 'Course updated successfully', variant: 'default' });
-      }
-    } catch (error) {
-      console.log('Error updating course:', error);
-      toast({ title: 'Failed to update course', variant: 'destructive' });
-    }
-
-    // updateCourseMutation.mutate({ id: selectedCourse.id, data: courseData });
+    updateCourseMutation.mutate({ id: selectedCourse.id, data: courseData });
   };
 
   const handleEditClick = (course: Course) => {
@@ -332,8 +341,8 @@ export default function CoursesManagement() {
       priceCents: course.priceCents,
       startDate: course.startDate ? new Date(course.startDate) : undefined,
       endDate: course.endDate ? new Date(course.endDate) : undefined,
-      enrolledStudentIds: course.enrolledStudentIds || [],
-      tutorIds: course.tutorIds || [],
+      enrolledStudentIds: course.enrolledStudents?.map((s) => s.id) || [],
+      tutorIds: course.tutors?.map((t) => t.id) || [],
     });
     setIsEditDialogOpen(true);
   };
@@ -432,15 +441,12 @@ export default function CoursesManagement() {
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Active Courses
+                  Open Courses
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {
-                    courses.filter((c) => new Date(c.startDate) <= new Date())
-                      .length
-                  }
+                  {courses.filter((c) => c.isOpen !== false).length}
                 </div>
               </CardContent>
             </Card>
@@ -467,6 +473,29 @@ export default function CoursesManagement() {
           </div>
 
           {/* Search and Filter */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search courses..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-full sm:w-44">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Courses Table */}
           <Card>
@@ -496,7 +525,12 @@ export default function CoursesManagement() {
                       <CardHeader className="pb-3">
                         <div className="flex items-center justify-between">
                           <Badge variant="outline" className="font-mono text-xs">{course.code}</Badge>
-                          <Badge variant="secondary">{course.category}</Badge>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant={course.isOpen !== false ? 'default' : 'destructive'} className="text-xs">
+                              {course.isOpen !== false ? 'Open' : 'Closed'}
+                            </Badge>
+                            <Badge variant="secondary">{course.category}</Badge>
+                          </div>
                         </div>
                         <CardTitle className="text-lg mt-2">{course.title}</CardTitle>
                         {course.shortDescription && (
@@ -507,11 +541,11 @@ export default function CoursesManagement() {
                         <div className="flex items-center justify-between text-sm text-muted-foreground mb-3">
                           <div className="flex items-center gap-1">
                             <Users className="h-3.5 w-3.5" />
-                            <span>{course.enrolledStudentIds?.length || 0} students</span>
+                            <span>{course.enrolledStudents?.length || 0} students</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <GraduationCap className="h-3.5 w-3.5" />
-                            <span>{course.tutorIds?.length || 0} tutors</span>
+                            <span>{course.tutors?.length || 0} tutors</span>
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-sm">
@@ -522,10 +556,13 @@ export default function CoursesManagement() {
                         </div>
                         {canManage && (
                           <div className="flex gap-1 mt-3 pt-3 border-t">
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEditClick(course); }}>
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleEditClick(course); }} title="Edit">
                               <Edit className="h-3.5 w-3.5" />
                             </Button>
-                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteClick(course.id); }}>
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); toggleOpenMutation.mutate(course.id); }} title={course.isOpen !== false ? 'Close enrollment' : 'Open enrollment'}>
+                              {course.isOpen !== false ? <Lock className="h-3.5 w-3.5 text-amber-500" /> : <Unlock className="h-3.5 w-3.5 text-green-500" />}
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDeleteClick(course.id); }} title="Delete">
                               <Trash2 className="h-3.5 w-3.5 text-destructive" />
                             </Button>
                           </div>
@@ -542,9 +579,9 @@ export default function CoursesManagement() {
                         <TableHead>Code</TableHead>
                         <TableHead>Title</TableHead>
                         <TableHead>Category</TableHead>
+                        <TableHead>Status</TableHead>
                         <TableHead>Price</TableHead>
                         <TableHead>Start Date</TableHead>
-                        <TableHead>End Date</TableHead>
                         <TableHead>Students</TableHead>
                         <TableHead>Tutors</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
@@ -563,6 +600,11 @@ export default function CoursesManagement() {
                             <Badge variant="secondary">{course.category}</Badge>
                           </TableCell>
                           <TableCell>
+                            <Badge variant={course.isOpen !== false ? 'default' : 'destructive'}>
+                              {course.isOpen !== false ? 'Open' : 'Closed'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center gap-1">
                               {formatPrice(course.priceCents)}
                             </div>
@@ -576,20 +618,15 @@ export default function CoursesManagement() {
                               : 'N/A'}
                           </TableCell>
                           <TableCell>
-                            {course.endDate
-                              ? format(new Date(course.endDate), 'MMM dd, yyyy')
-                              : 'N/A'}
-                          </TableCell>
-                          <TableCell>
                             <div className="flex items-center gap-1">
                               <Users className="h-3 w-3" />
-                              {course.enrolledStudentIds?.length || 0}
+                              {course.enrolledStudents?.length || 0}
                             </div>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-1">
                               <GraduationCap className="h-3 w-3" />
-                              {course.tutorIds?.length || 0}
+                              {course.tutors?.length || 0}
                             </div>
                           </TableCell>
                           <TableCell className="text-right">
@@ -607,13 +644,25 @@ export default function CoursesManagement() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleEditClick(course)}
+                                    title="Edit"
                                   >
                                     <Edit className="h-4 w-4" />
                                   </Button>
                                   <Button
                                     variant="ghost"
                                     size="sm"
+                                    onClick={() => toggleOpenMutation.mutate(course.id)}
+                                    title={course.isOpen !== false ? 'Close enrollment' : 'Open enrollment'}
+                                  >
+                                    {course.isOpen !== false
+                                      ? <Lock className="h-4 w-4 text-amber-500" />
+                                      : <Unlock className="h-4 w-4 text-green-500" />}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
                                     onClick={() => handleDeleteClick(course.id)}
+                                    title="Delete"
                                   >
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                   </Button>
@@ -1083,7 +1132,7 @@ export default function CoursesManagement() {
                   <CardHeader>
                     <CardTitle>
                       Enrolled Students (
-                      {selectedCourse.enrolledStudentIds?.length || 0})
+                      {selectedCourse.enrolledStudents?.length || 0})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1091,7 +1140,7 @@ export default function CoursesManagement() {
                       projectId={selectedCourse.id}
                       users={users}
                       members={users.filter((u) =>
-                        selectedCourse.enrolledStudentIds?.includes(u.id)
+                        selectedCourse.enrolledStudents?.some((s) => s.id === u.id)
                       )}
                       isStudents={true}
                     />
@@ -1103,7 +1152,7 @@ export default function CoursesManagement() {
                 <Card>
                   <CardHeader>
                     <CardTitle>
-                      Assigned Tutors ({selectedCourse.tutorIds?.length || 0})
+                      Assigned Tutors ({selectedCourse.tutors?.length || 0})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -1111,7 +1160,7 @@ export default function CoursesManagement() {
                       projectId={selectedCourse.id}
                       users={users}
                       members={users.filter((u) =>
-                        selectedCourse.tutorIds?.includes(u.id)
+                        selectedCourse.tutors?.some((t) => t.id === u.id)
                       )}
                       isStudents={false}
                     />
@@ -1129,7 +1178,7 @@ export default function CoursesManagement() {
                   </CardHeader>
                   <CardContent>
                     <pre className="bg-muted p-4 rounded-lg text-sm overflow-x-auto">
-                      {selectedCourse.settings || 'No settings configured'}
+                      No settings configured
                     </pre>
                   </CardContent>
                 </Card>

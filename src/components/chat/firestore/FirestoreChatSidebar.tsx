@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Plus, Search, Users, MessageCircle, Hash } from 'lucide-react';
+import { Plus, Search, Users, MessageCircle, Hash, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Skeleton } from '@/components/ui/skeleton';
 import { CreateGroupDialog } from './CreateGroupDialog';
 import { UserListDialog } from './UserListDialog';
 import { useActiveRoomStore } from '@/services/store';
@@ -28,6 +29,7 @@ export const FirestoreChatSidebar: React.FC<{ className?: string; onSelectRoom?:
     activeRoom,
     setActiveRoom,
     create1on1Chat,
+    isInitializing,
   } = useFirestoreChat();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -171,7 +173,20 @@ export const FirestoreChatSidebar: React.FC<{ className?: string; onSelectRoom?:
         {/* Chat List */}
         <ScrollArea className="flex-1">
           <div className="p-2">
-            {filteredRooms.length === 0 ? (
+            {isInitializing ? (
+              // Loading skeleton while Firebase auth + rooms are initializing
+              <div className="space-y-2 p-2">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl">
+                    <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3 w-3/4" />
+                      <Skeleton className="h-2.5 w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : filteredRooms.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
                 <MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p className="text-sm">No conversations found</p>

@@ -1,0 +1,813 @@
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiService, endpoints } from '@/lib/api';
+import { toast } from 'sonner';
+import {
+  Users,
+  BookOpen,
+  MessageSquare,
+  TrendingUp,
+  Search,
+  Filter,
+  Eye,
+  Check,
+  X,
+  UserCheck,
+  BarChart3,
+  PieChart,
+  Loader2,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+
+// Types matching backend API response
+interface UserProfile {
+  id: string;
+  educationLevel: string;
+  fieldOfStudy: string;
+  institutionName: string;
+  programmingExperience: string;
+  programmingLanguages: string;
+  techInterests: string;
+  motivation: string;
+  careerGoals: string;
+  availableHours: string;
+  portfolioLinks: string;
+  hearAboutUs: string;
+  additionalInfo: string;
+}
+
+interface ApiUser {
+  id: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  profilePicture: string;
+  createdAt: string;
+  updatedAt: string;
+  status: string;
+  userProfile: UserProfile | null;
+  role: string;
+  enabled: boolean;
+  isMentor?: boolean;
+}
+
+interface UsersResponse {
+  data: ApiUser[];
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+  pageSize: number;
+  succeeded: boolean;
+}
+
+interface ApiCourse {
+  id: string;
+  code: string;
+  title: string;
+  shortDescription: string;
+  description: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  enrolledStudentIds: string[];
+  tutorIds: string[];
+  createdAt: string;
+}
+
+export function AdminDashboard() {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [selectedUser, setSelectedUser] = useState<ApiUser | null>(null);
+
+  // Fetch all users from backend
+  const { data: usersData, isLoading: usersLoading } = useQuery<UsersResponse>({
+    queryKey: ['admin-users'],
+    queryFn: async () => {
+      const response = await apiService.getWithParams(endpoints.getAllUsers, {
+        pageNumber: 1,
+        pageSize: 500,
+      });
+      return response.data;
+    },
+  });
+
+  // Fetch all courses from backend
+  const { data: coursesData, isLoading: coursesLoading } = useQuery<ApiCourse[]>({
+    queryKey: ['admin-courses'],
+    queryFn: () =>
+      apiService.get(endpoints.getAllCourses).then((res) => res.data),
+  });
+
+  // Approve student mutation
+  const approveMutation = useMutation({
+    mutationFn: (userId: string) =>
+      apiService.post(endpoints.approveStudentApplication(userId)),
+    onSuccess: () => {
+      toast.success('Student approved successfully');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to approve student: ${error.message}`);
+    },
+  });
+
+  // Computed data from real API
+  const allUsers = usersData?.data || [];
+  const students = useMemo(
+    () => allUsers.filter((u) => u.role?.toLowerCase() === 'student'),
+    [allUsers]
+  );
+
+  const totalStudents = students.length;
+  const activeStudents = students.filter(
+    (u) => u.status?.toLowerCase() === 'active'
+  ).length;
+  const pendingStudents = students.filter(
+    (u) =>
+      u.status?.toLowerCase() === 'registered_not_confirmed' ||
+      u.status?.toLowerCase() === 'pending'
+  ).length;
+  const totalCourses = coursesData?.length || 0;
+  const engagementRate =
+    totalStudents > 0
+      ? ((activeStudents / totalStudents) * 100).toFixed(1)
+      : '0';
+
+  // Filter students for the table
+  const filteredUsers = students.filter((user) => {
+    const fullName =
+      `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
+    const matchesSearch =
+      fullName.includes(searchTerm.toLowerCase()) ||
+      (user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'pending' &&
+        (user.status?.toLowerCase() === 'registered_not_confirmed' ||
+          user.status?.toLowerCase() === 'pending')) ||
+      (statusFilter !== 'pending' &&
+        user.status?.toLowerCase() === statusFilter);
+    return matchesSearch && matchesStatus;
+  });
+
+  const getStatusBadge = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return (
+          <Badge variant="default" className="bg-success text-success-foreground">
+            Active
+          </Badge>
+        );
+      case 'registered_not_confirmed':
+        return (
+          <Badge variant="secondary" className="bg-warning text-warning-foreground">
+            Pending
+          </Badge>
+        );
+      case 'locked':
+        return (
+          <Badge variant="destructive" className="bg-destructive text-destructive-foreground">
+            Locked
+          </Badge>
+        );
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const isPending = (status: string) =>
+    status?.toLowerCase() === 'registered_not_confirmed' ||
+    status?.toLowerCase() === 'pending';
+
+  const approveUser = (userId: string) => {
+    approveMutation.mutate(userId);
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
+    try {
+      return new Date(dateStr).toLocaleDateString();
+    } catch {
+      return dateStr;
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* KPI Stats Overview - Real Data */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <Card className="bg-primary-light border-primary/20 hover:shadow-primary transition-smooth">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Total Students
+                </p>
+                {usersLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold text-primary">
+                    {totalStudents}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  across all cohorts
+                </p>
+              </div>
+              <Users className="h-8 w-8 text-primary" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-success-light border-success/20 hover:shadow-md transition-smooth">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Students
+                </p>
+                {usersLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold text-success">
+                    {activeStudents}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {engagementRate}% engagement rate
+                </p>
+              </div>
+              <UserCheck className="h-8 w-8 text-success" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-warning-light border-warning/20 hover:shadow-md transition-smooth">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Pending Approval
+                </p>
+                {usersLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold text-warning">
+                    {pendingStudents}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  Requires review
+                </p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-warning" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-accent-light border-accent/20 hover:shadow-accent transition-smooth">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  Active Courses
+                </p>
+                {coursesLoading ? (
+                  <Skeleton className="h-8 w-16 mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold text-accent-foreground">
+                    {totalCourses}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {allUsers.filter((u) => u.role?.toLowerCase() === 'tutor').length} tutors
+                </p>
+              </div>
+              <BookOpen className="h-8 w-8 text-accent-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="students" className="space-y-4 sm:space-y-6">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4">
+          <TabsTrigger value="students">Students</TabsTrigger>
+          <TabsTrigger value="courses">Courses</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
+
+        {/* Students Management Tab */}
+        <TabsContent value="students" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Student Management
+              </CardTitle>
+              <CardDescription>
+                Review, approve, and manage all student accounts
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Search and Filters */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                <div className="relative flex-1 sm:max-w-sm">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search students..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() =>
+                    setStatusFilter(
+                      statusFilter === 'pending' ? 'all' : 'pending'
+                    )
+                  }
+                  className={
+                    statusFilter === 'pending'
+                      ? 'bg-accent text-accent-foreground'
+                      : ''
+                  }
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  {statusFilter === 'pending' ? 'Pending Only' : 'All Status'}
+                </Button>
+              </div>
+
+              {/* Students Table */}
+              {usersLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <Skeleton key={i} className="h-14 w-full" />
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-md border overflow-x-auto">
+                  <Table className="min-w-[600px]">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Education</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Joined</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredUsers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            No students found
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filteredUsers.map((user) => (
+                          <TableRow key={user.id}>
+                            <TableCell className="font-medium">
+                              {user.firstName} {user.lastName}
+                            </TableCell>
+                            <TableCell>{user.email}</TableCell>
+                            <TableCell>
+                              {user.userProfile?.educationLevel || '—'}
+                            </TableCell>
+                            <TableCell>{getStatusBadge(user.status)}</TableCell>
+                            <TableCell>{formatDate(user.createdAt)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setSelectedUser(user)}
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>
+                                        Student Details - {selectedUser?.firstName}{' '}
+                                        {selectedUser?.lastName}
+                                      </DialogTitle>
+                                      <DialogDescription>
+                                        Complete application and enrollment
+                                        information
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    {selectedUser && (
+                                      <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                            <h4 className="font-semibold mb-2">
+                                              Contact Information
+                                            </h4>
+                                            <p>
+                                              <strong>Name:</strong>{' '}
+                                              {selectedUser.firstName}{' '}
+                                              {selectedUser.lastName}
+                                            </p>
+                                            <p>
+                                              <strong>Email:</strong>{' '}
+                                              {selectedUser.email}
+                                            </p>
+                                            <p>
+                                              <strong>Phone:</strong>{' '}
+                                              {selectedUser.phoneNumber || '—'}
+                                            </p>
+                                          </div>
+                                          <div>
+                                            <h4 className="font-semibold mb-2">
+                                              Enrollment Details
+                                            </h4>
+                                            <p>
+                                              <strong>Education:</strong>{' '}
+                                              {selectedUser.userProfile
+                                                ?.educationLevel || '—'}
+                                            </p>
+                                            <p>
+                                              <strong>Programming:</strong>{' '}
+                                              {selectedUser.userProfile
+                                                ?.programmingExperience || '—'}
+                                            </p>
+                                            <p>
+                                              <strong>Interests:</strong>{' '}
+                                              {selectedUser.userProfile
+                                                ?.techInterests || '—'}
+                                            </p>
+                                            <p>
+                                              <strong>Status:</strong>{' '}
+                                              {getStatusBadge(
+                                                selectedUser.status
+                                              )}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        {selectedUser.userProfile?.motivation && (
+                                          <div>
+                                            <h4 className="font-semibold mb-2">
+                                              Motivation
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                                              {selectedUser.userProfile.motivation}
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        {selectedUser.userProfile?.careerGoals && (
+                                          <div>
+                                            <h4 className="font-semibold mb-2">
+                                              Career Goals
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground bg-muted p-3 rounded">
+                                              {selectedUser.userProfile.careerGoals}
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        <div className="flex gap-3 pt-4">
+                                          {isPending(selectedUser.status) && (
+                                            <Button
+                                              className="bg-success text-success-foreground hover:bg-success/90"
+                                              onClick={() =>
+                                                approveUser(selectedUser.id)
+                                              }
+                                              disabled={
+                                                approveMutation.isPending
+                                              }
+                                            >
+                                              {approveMutation.isPending ? (
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                              ) : (
+                                                <Check className="mr-2 h-4 w-4" />
+                                              )}
+                                              Approve
+                                            </Button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </DialogContent>
+                                </Dialog>
+
+                                {isPending(user.status) && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => approveUser(user.id)}
+                                    disabled={approveMutation.isPending}
+                                    className="text-success hover:text-success hover:bg-success-light"
+                                  >
+                                    {approveMutation.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Check className="h-4 w-4" />
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Courses Tab */}
+        <TabsContent value="courses" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Course Overview
+              </CardTitle>
+              <CardDescription>
+                View statistics and manage all courses
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {coursesLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : !coursesData || coursesData.length === 0 ? (
+                <div className="text-center py-12">
+                  <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Courses Yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Create your first course to get started
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {coursesData.map((course) => (
+                    <div
+                      key={course.id}
+                      className="border rounded-lg p-4 hover:shadow-md transition-smooth bg-card"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold text-lg">
+                              {course.title}
+                            </h3>
+                            <Badge variant="outline">{course.code}</Badge>
+                            {course.category && (
+                              <Badge variant="secondary">{course.category}</Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {course.shortDescription || course.description || ''}
+                          </p>
+                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Users className="h-4 w-4" />
+                              {course.enrolledStudentIds?.length || 0} students
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <UserCheck className="h-4 w-4" />
+                              {course.tutorIds?.length || 0} tutors
+                            </span>
+                            {course.startDate && (
+                              <span>
+                                Started: {formatDate(course.startDate)}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Analytics Tab */}
+        <TabsContent value="analytics" className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  User Breakdown
+                </CardTitle>
+                <CardDescription>
+                  Distribution of users by role
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    {
+                      label: 'Students',
+                      count: students.length,
+                      total: allUsers.length,
+                    },
+                    {
+                      label: 'Tutors',
+                      count: allUsers.filter(
+                        (u) => u.role?.toLowerCase() === 'tutor'
+                      ).length,
+                      total: allUsers.length,
+                    },
+                    {
+                      label: 'Admins',
+                      count: allUsers.filter(
+                        (u) => u.role?.toLowerCase() === 'admin'
+                      ).length,
+                      total: allUsers.length,
+                    },
+                    {
+                      label: 'Mentors',
+                      count: allUsers.filter((u) => u.isMentor).length,
+                      total: allUsers.length,
+                    },
+                  ].map((item) => (
+                    <div key={item.label}>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">
+                          {item.label}
+                        </span>
+                        <span className="text-sm font-bold text-primary">
+                          {item.count}
+                        </span>
+                      </div>
+                      <Progress
+                        value={
+                          item.total > 0
+                            ? (item.count / item.total) * 100
+                            : 0
+                        }
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Course Enrollment
+                </CardTitle>
+                <CardDescription>
+                  Students enrolled per course
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {coursesLoading ? (
+                  <Skeleton className="h-48 w-full" />
+                ) : !coursesData || coursesData.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    No course data available
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {coursesData.map((course) => (
+                      <div key={course.id}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium">
+                            {course.title}
+                          </span>
+                          <span className="text-sm font-bold text-primary">
+                            {course.enrolledStudentIds?.length || 0} students
+                          </span>
+                        </div>
+                        <Progress
+                          value={
+                            totalStudents > 0
+                              ? ((course.enrolledStudentIds?.length || 0) /
+                                  totalStudents) *
+                                100
+                              : 0
+                          }
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Platform Overview
+              </CardTitle>
+              <CardDescription>
+                Key platform metrics
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
+                <div className="text-center p-6 bg-muted/50 rounded-lg">
+                  <p className="text-3xl font-bold text-primary mb-2">
+                    {usersLoading ? '—' : `${engagementRate}%`}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Active Users Rate
+                  </p>
+                </div>
+                <div className="text-center p-6 bg-muted/50 rounded-lg">
+                  <p className="text-3xl font-bold text-success mb-2">
+                    {usersLoading ? '—' : allUsers.length}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Total Platform Users
+                  </p>
+                </div>
+                <div className="text-center p-6 bg-muted/50 rounded-lg">
+                  <p className="text-3xl font-bold text-accent-foreground mb-2">
+                    {coursesLoading ? '—' : totalCourses}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Total Courses
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                System Configuration
+              </CardTitle>
+              <CardDescription>
+                Manage system settings, branding, and notifications
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">System Settings</h3>
+                <p className="text-muted-foreground mb-4">
+                  Configure branding, email templates, role permissions, and
+                  automated reports
+                </p>
+                <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                  Open Settings
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

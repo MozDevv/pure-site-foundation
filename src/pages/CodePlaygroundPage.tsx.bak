@@ -1,0 +1,586 @@
+﻿import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiService, endpoints } from '@/lib/api';
+import { motion } from 'framer-motion';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import {
+  Play, Loader2, RotateCcw, Clock, Cpu, AlertTriangle,
+  Terminal, ChevronDown, ChevronUp, Plus, X, FileCode,
+} from 'lucide-react';
+
+// Monaco Editor â€” lazy loaded so its ~2MB bundle is only fetched when this page is visited
+const MonacoEditor = lazy(() => import('@monaco-editor/react').then(m => ({ default: m.default })));
+
+// â”€â”€ Language configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+const LANGUAGES = [
+  { value: 'python',     label: 'Python',     monaco: 'python' },
+  { value: 'javascript', label: 'JavaScript', monaco: 'javascript' },
+  { value: 'typescript', label: 'TypeScript', monaco: 'typescript' },
+  { value: 'java',       label: 'Java',       monaco: 'java' },
+  { value: 'c',          label: 'C',          monaco: 'c' },
+  { value: 'cpp',        label: 'C++',        monaco: 'cpp' },
+  { value: 'go',         label: 'Go',         monaco: 'go' },
+  { value: 'rust',       label: 'Rust',       monaco: 'rust' },
+  { value: 'ruby',       label: 'Ruby',       monaco: 'ruby' },
+];
+
+const DEFAULT_CODE: Record<string, string> = {
+  python: `# Python Playground
+name = input("Enter your name: ")
+print(f"Hello, {name}!")
+`,
+  javascript: `// JavaScript Playground
+const readline = require('readline');
+const rl = readline.createInterface({ input: process.stdin });
+rl.question('', name => {
+  console.log(\`Hello, \${name}!\`);
+  rl.close();
+});
+`,
+  typescript: `// TypeScript Playground
+const greeting: string = "Hello, World!";
+console.log(greeting);
+`,
+  java: `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World!");
+    }
+}
+`,
+  c: `#include <stdio.h>
+
+int main() {
+    printf("Hello, World!\\n");
+    return 0;
+}
+`,
+  cpp: `#include <iostream>
+using namespace std;
+
+int main() {
+    cout << "Hello, World!" << endl;
+    return 0;
+}
+`,
+  go: `package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello, World!")
+}
+`,
+  rust: `fn main() {
+    println!("Hello, World!");
+}
+`,
+  ruby: `puts "Hello, World!"
+`,
+};
+
+// â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// -- Multi-file helpers --
+interface EditorFile {
+  id: string;
+  name: string;
+  content: string;
+}
+
+function getDefaultFileName(language: string): string {
+  const map: Record<string, string> = {
+    python: 'main.py', javascript: 'main.js', typescript: 'main.ts',
+    java: 'Main.java', c: 'main.c', cpp: 'main.cpp',
+    go: 'main.go', rust: 'main.rs', ruby: 'main.rb',
+  };
+  return map[language] || 'main.txt';
+}
+
+function getFileExtension(language: string): string {
+  const map: Record<string, string> = {
+    python: '.py', javascript: '.js', typescript: '.ts',
+    java: '.java', c: '.c', cpp: '.cpp',
+    go: '.go', rust: '.rs', ruby: '.rb',
+  };
+  return map[language] || '.txt';
+}
+
+/** Merge all files into a single code string for execution.
+ *  Helper files are prepended before the main (first) file. */
+function mergeFilesForExecution(files: EditorFile[]): string {
+  if (files.length <= 1) return files[0]?.content || '';
+  const [main, ...helpers] = files;
+  const helperCode = helpers
+    .filter(f => f.content.trim())
+    .map(f => `# --- ${f.name} ---\n${f.content}`)
+    .join('\n\n');
+  return helperCode ? `${helperCode}\n\n# --- ${main.name} (entry point) ---\n${main.content}` : main.content;
+}
+
+interface CodeSubmission {
+  id: string;
+  code: string;
+  language: string;
+  status: 'QUEUED' | 'RUNNING' | 'COMPLETED' | 'ERROR' | 'TIMEOUT';
+  stdout?: string;
+  stderr?: string;
+  exitCode?: number;
+  executionTimeMs?: number;
+  queuePosition?: number;
+  createdAt: string;
+}
+
+interface QueueStatus {
+  activeExecutions: number;
+  queuedWaiters: number;
+  maxConcurrent: number;
+}
+
+function getStatusBadge(status: string) {
+  const variants: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    QUEUED: 'secondary', RUNNING: 'default', COMPLETED: 'outline',
+    ERROR: 'destructive', TIMEOUT: 'destructive',
+  };
+  return <Badge variant={variants[status] ?? 'default'}>{status}</Badge>;
+}
+
+function getExitCodeColor(code?: number) {
+  if (code == null) return 'text-muted-foreground';
+  return code === 0 ? 'text-green-500' : 'text-red-500';
+}
+
+// â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export default function CodePlaygroundPage() {
+  const { toast } = useToast();
+  const [language, setLanguage]                   = useState('python');
+  const [code, setCode]                           = useState(DEFAULT_CODE.python);
+  const [stdin, setStdin]                         = useState('');
+  const [stdinExpanded, setStdinExpanded]         = useState(false);
+  const [currentSubmission, setCurrentSubmission] = useState<CodeSubmission | null>(null);
+  const [polling, setPolling]                     = useState(false);
+
+  // Multi-file state
+  const [files, setFiles] = useState<EditorFile[]>([
+    { id: '1', name: getDefaultFileName('python'), content: DEFAULT_CODE.python },
+  ]);
+  const [activeFileId, setActiveFileId] = useState('1');
+  const [editingFileName, setEditingFileName] = useState<string | null>(null);
+
+  const activeFile = files.find(f => f.id === activeFileId) || files[0];
+
+  const updateActiveFileContent = useCallback((content: string) => {
+    setFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content } : f));
+    setCode(content);
+  }, [activeFileId]);
+
+  const addFile = useCallback(() => {
+    const ext = getFileExtension(language);
+    const num = files.length + 1;
+    const newFile: EditorFile = {
+      id: Date.now().toString(),
+      name: `file${num}${ext}`,
+      content: `// ${`file${num}${ext}`}\n`,
+    };
+    setFiles(prev => [...prev, newFile]);
+    setActiveFileId(newFile.id);
+    setCode(newFile.content);
+  }, [language, files.length]);
+
+  const removeFile = useCallback((fileId: string) => {
+    if (files.length <= 1) return;
+    setFiles(prev => {
+      const next = prev.filter(f => f.id !== fileId);
+      if (activeFileId === fileId) {
+        setActiveFileId(next[0].id);
+        setCode(next[0].content);
+      }
+      return next;
+    });
+  }, [files.length, activeFileId]);
+
+  const renameFile = useCallback((fileId: string, newName: string) => {
+    if (!newName.trim()) return;
+    setFiles(prev => prev.map(f => f.id === fileId ? { ...f, name: newName.trim() } : f));
+    setEditingFileName(null);
+  }, []);
+
+  const switchToFile = useCallback((fileId: string) => {
+    // Save current file content first
+    setFiles(prev => prev.map(f => f.id === activeFileId ? { ...f, content: code } : f));
+    const target = files.find(f => f.id === fileId);
+    if (target) {
+      setActiveFileId(fileId);
+      setCode(target.content);
+    }
+  }, [activeFileId, code, files]);
+
+  const { data: queueStatus } = useQuery<QueueStatus>({
+    queryKey: ['codeQueueStatus'],
+    queryFn: () => apiService.get(endpoints.getCodeQueueStatus).then(r => r.data),
+    refetchInterval: polling ? 3000 : 60000,
+  });
+
+  const { data: submissionsData, refetch: refetchSubmissions } = useQuery({
+    queryKey: ['myCodeSubmissions'],
+    queryFn: () => apiService.get(endpoints.getMyCodeSubmissions).then(r => r.data),
+  });
+  const submissions: CodeSubmission[] = submissionsData?.content ?? submissionsData ?? [];
+
+  // Poll until execution completes
+  useEffect(() => {
+    if (!currentSubmission || !polling) return;
+    const done = ['COMPLETED', 'ERROR', 'TIMEOUT'];
+    if (done.includes(currentSubmission.status)) { setPolling(false); refetchSubmissions(); return; }
+    const id = setInterval(async () => {
+      try {
+        const res = await apiService.get(endpoints.getCodeSubmission(currentSubmission.id));
+        setCurrentSubmission(res.data);
+        if (done.includes(res.data.status)) { setPolling(false); refetchSubmissions(); }
+      } catch { /* ignore */ }
+    }, 2000);
+    return () => clearInterval(id);
+  }, [currentSubmission, polling, refetchSubmissions]);
+
+  const executeMutation = useMutation({
+    mutationFn: (payload: { code: string; language: string; stdin?: string }) =>
+      apiService.post(endpoints.executeCode, payload).then(r => r.data),
+    onSuccess: (data: CodeSubmission) => {
+      // Check if the execution engine returned an error in stderr
+      if (data.stderr?.includes('Execution engine unavailable')) {
+        toast({
+          title: 'Code execution engine offline',
+          description: 'The Piston execution service is not running. Please contact an administrator to start the code execution container.',
+          variant: 'destructive',
+        });
+      }
+      setCurrentSubmission(data);
+      if (data.status === 'QUEUED' || data.status === 'RUNNING') setPolling(true);
+      if (data.status === 'QUEUED' && (data.queuePosition ?? 0) > 1) {
+        toast({ title: 'Queued', description: `You are #${data.queuePosition} in queue. Code will run shortly.` });
+      }
+    },
+    onError: (err: any) => {
+      toast({ title: 'Error', description: err?.response?.data?.error ?? 'Execution failed', variant: 'destructive' });
+    },
+  });
+
+  const handleRun = useCallback(() => {
+    // Save current editor content to file list, then merge all files
+    const updatedFiles = files.map(f => f.id === activeFileId ? { ...f, content: code } : f);
+    const mergedCode = mergeFilesForExecution(updatedFiles);
+    executeMutation.mutate({ code: mergedCode, language, stdin: stdin.trim() || undefined });
+  }, [code, language, stdin, executeMutation, files, activeFileId]);
+
+  const handleLanguageChange = useCallback((lang: string) => {
+    setLanguage(lang);
+    const defaultCode = DEFAULT_CODE[lang] ?? '';
+    setCode(defaultCode);
+    setFiles([{ id: '1', name: getDefaultFileName(lang), content: defaultCode }]);
+    setActiveFileId('1');
+  }, []);
+
+  const handleReset = useCallback(() => {
+    const defaultCode = DEFAULT_CODE[language] ?? '';
+    setCode(defaultCode);
+    setFiles([{ id: '1', name: getDefaultFileName(language), content: defaultCode }]);
+    setActiveFileId('1');
+    setCurrentSubmission(null);
+    setStdin('');
+  }, [language]);
+
+  const isRunning   = executeMutation.isPending || polling;
+  const monacoLang  = LANGUAGES.find(l => l.value === language)?.monaco ?? language;
+  const serverLoad  = queueStatus
+    ? Math.round((queueStatus.activeExecutions / Math.max(queueStatus.maxConcurrent, 1)) * 100) : 0;
+  const loadColor   = serverLoad >= 80 ? 'text-red-500' : serverLoad >= 50 ? 'text-yellow-500' : 'text-green-500';
+
+  return (
+    <motion.div className="space-y-4" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">Code Playground</h1>
+          <p className="text-muted-foreground text-sm">Write, run, and test code in multiple languages</p>
+        </div>
+        {queueStatus && (
+          <div className={`flex items-center gap-4 text-sm ${loadColor}`}>
+            <span className="flex items-center gap-1">
+              <Cpu className="w-4 h-4" />
+              Active: {queueStatus.activeExecutions}/{queueStatus.maxConcurrent}
+            </span>
+            {queueStatus.queuedWaiters > 0 && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                Queued: {queueStatus.queuedWaiters}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        {/* â”€â”€ Editor panel â”€â”€ */}
+        <div className="flex flex-col gap-3">
+          <Card className="flex-1">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <Select value={language} onValueChange={handleLanguageChange}>
+                  <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map(l => (
+                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handleReset} title="Reset to default">
+                    <RotateCcw className="w-4 h-4" />
+                  </Button>
+                  <Button size="sm" onClick={handleRun} disabled={isRunning || !code.trim()} className="min-w-[80px]">
+                    {isRunning
+                      ? <><Loader2 className="w-4 h-4 mr-1 animate-spin" />Running</>
+                      : <><Play className="w-4 h-4 mr-1" />Run</>
+                    }
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              {/* File tabs */}
+              <div className="flex items-center gap-0.5 px-2 py-1 border-b overflow-x-auto bg-muted/30">
+                {files.map(file => (
+                  <div
+                    key={file.id}
+                    className={`group flex items-center gap-1 px-2.5 py-1 rounded-t text-xs cursor-pointer transition-colors ${
+                      activeFileId === file.id
+                        ? 'bg-background text-foreground border border-b-0 border-border'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                    }`}
+                    onClick={() => switchToFile(file.id)}
+                  >
+                    <FileCode className="w-3 h-3 shrink-0" />
+                    {editingFileName === file.id ? (
+                      <Input
+                        autoFocus
+                        defaultValue={file.name}
+                        className="h-5 w-24 text-xs px-1 py-0"
+                        onBlur={e => renameFile(file.id, e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') renameFile(file.id, (e.target as HTMLInputElement).value);
+                          if (e.key === 'Escape') setEditingFileName(null);
+                        }}
+                        onClick={e => e.stopPropagation()}
+                      />
+                    ) : (
+                      <span
+                        className="truncate max-w-[100px]"
+                        onDoubleClick={(e) => { e.stopPropagation(); setEditingFileName(file.id); }}
+                      >
+                        {file.name}
+                      </span>
+                    )}
+                    {files.length > 1 && (
+                      <button
+                        className="opacity-0 group-hover:opacity-100 hover:text-destructive transition-opacity ml-0.5"
+                        onClick={e => { e.stopPropagation(); removeFile(file.id); }}
+                        title="Remove file"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                <button
+                  className="flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                  onClick={addFile}
+                  title="Add file"
+                >
+                  <Plus className="w-3 h-3" />
+                </button>
+              </div>
+              <Suspense fallback={
+                <div className="h-[420px] flex items-center justify-center bg-[#1e1e1e] rounded-b-lg">
+                  <LoadingSpinner size="lg" />
+                </div>
+              }>
+                <MonacoEditor
+                  height="420px"
+                  language={monacoLang}
+                  value={code}
+                  onChange={val => updateActiveFileContent(val ?? '')}
+                  theme="vs-dark"
+                  options={{
+                    fontSize: 14,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    tabSize: 4,
+                    wordWrap: 'on',
+                    lineNumbersMinChars: 3,
+                    padding: { top: 8, bottom: 8 },
+                    renderLineHighlight: 'line',
+                  }}
+                />
+              </Suspense>
+            </CardContent>
+          </Card>
+
+          {/* Stdin (collapsible) */}
+          <Card>
+            <button
+              className="w-full flex items-center justify-between p-3 text-sm font-medium hover:bg-muted rounded-lg transition-colors"
+              onClick={() => setStdinExpanded(v => !v)}
+            >
+              <div className="flex items-center gap-2">
+                <Terminal className="w-4 h-4 text-muted-foreground" />
+                <span>Standard Input (stdin)</span>
+                {stdin.trim() && <Badge variant="secondary" className="text-xs">has input</Badge>}
+              </div>
+              {stdinExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+            {stdinExpanded && (
+              <div className="px-3 pb-3 space-y-1">
+                <Label className="text-xs text-muted-foreground">
+                  Data sent to your program's stdin (e.g. values read by input() in Python or Scanner in Java)
+                </Label>
+                <Textarea
+                  value={stdin}
+                  onChange={e => setStdin(e.target.value)}
+                  placeholder={'e.g.:\nAlice\n42\nhello world'}
+                  rows={4}
+                  className="font-mono text-sm bg-gray-950 text-gray-200"
+                />
+              </div>
+            )}
+          </Card>
+        </div>
+
+        {/* â”€â”€ Output panel â”€â”€ */}
+        <Card className="flex flex-col">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-lg">Output</CardTitle>
+              {currentSubmission && getStatusBadge(currentSubmission.status)}
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <Tabs defaultValue="stdout" className="flex flex-col">
+              <TabsList>
+                <TabsTrigger value="stdout">Output</TabsTrigger>
+                <TabsTrigger value="stderr">
+                  Errors
+                  {currentSubmission?.stderr?.trim() && (
+                    <span className="ml-1 w-2 h-2 rounded-full bg-red-500 inline-block" />
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="info">Info</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="stdout">
+                <pre className="h-[420px] font-mono text-sm p-3 border rounded-md bg-gray-950 text-gray-200 overflow-auto whitespace-pre-wrap">
+                  {currentSubmission?.status === 'QUEUED'
+                    ? `â³ Queued (position: ${currentSubmission.queuePosition ?? '...'})â€¦\nThe server is busy â€” your code will run shortly.`
+                    : currentSubmission?.status === 'RUNNING'
+                    ? 'âš™ï¸  Executingâ€¦'
+                    : currentSubmission?.stdout
+                    ? currentSubmission.stdout
+                    : currentSubmission?.status === 'COMPLETED'
+                    ? '(no output)'
+                    : 'â–¶ Click "Run" to execute your code'}
+                </pre>
+              </TabsContent>
+
+              <TabsContent value="stderr">
+                <pre className="h-[420px] font-mono text-sm p-3 border rounded-md bg-gray-950 text-red-400 overflow-auto whitespace-pre-wrap">
+                  {currentSubmission?.stderr?.trim() || '(no errors)'}
+                </pre>
+              </TabsContent>
+
+              <TabsContent value="info">
+                <div className="h-[420px] p-4 border rounded-md overflow-auto space-y-3 text-sm">
+                  {currentSubmission ? (
+                    <>
+                      <div className="grid grid-cols-2 gap-y-3">
+                        <span className="text-muted-foreground">Language</span>
+                        <span className="font-medium capitalize">{currentSubmission.language}</span>
+                        <span className="text-muted-foreground">Status</span>
+                        <span>{getStatusBadge(currentSubmission.status)}</span>
+                        <span className="text-muted-foreground">Exit Code</span>
+                        <span className={`font-mono font-bold ${getExitCodeColor(currentSubmission.exitCode)}`}>
+                          {currentSubmission.exitCode ?? 'N/A'}
+                        </span>
+                        <span className="text-muted-foreground">Execution Time</span>
+                        <span className="font-mono">
+                          {currentSubmission.executionTimeMs != null ? `${currentSubmission.executionTimeMs} ms` : 'N/A'}
+                        </span>
+                        <span className="text-muted-foreground">Submitted</span>
+                        <span>{new Date(currentSubmission.createdAt).toLocaleString()}</span>
+                      </div>
+                      {currentSubmission.status === 'TIMEOUT' && (
+                        <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
+                          â± Execution timed out. Check for infinite loops or heavy computations.
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-muted-foreground">Run code to see execution details</p>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* â”€â”€ Submission History â”€â”€ */}
+      {submissions.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base">Recent Runs</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1.5 max-h-[220px] overflow-auto">
+              {submissions.slice(0, 10).map((sub: CodeSubmission) => (
+                <button
+                  key={sub.id}
+                  className="w-full flex items-center justify-between p-2 border rounded-md hover:bg-muted text-left transition-colors"
+                  onClick={() => { setLanguage(sub.language); setCode(sub.code); setCurrentSubmission(sub); }}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Badge variant="outline" className="shrink-0 capitalize">{sub.language}</Badge>
+                    <span className="text-sm text-muted-foreground font-mono truncate">
+                      {sub.code.split('\n')[0]}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {sub.executionTimeMs != null && (
+                      <span className="text-xs text-muted-foreground">{sub.executionTimeMs}ms</span>
+                    )}
+                    {getStatusBadge(sub.status)}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <AlertTriangle className="w-3 h-3 shrink-0" />
+        <span>
+          Rate limited to 5 executions per 10 minutes · Max execution time: 10 seconds ·
+          Up to 5 concurrent users; others are queued automatically and notified of their position.
+        </span>
+      </div>
+    </motion.div>
+  );
+}

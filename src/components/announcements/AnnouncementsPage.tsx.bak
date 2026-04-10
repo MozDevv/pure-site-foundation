@@ -1,0 +1,515 @@
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { apiService, endpoints } from '@/lib/api';
+import { toast } from 'sonner';
+import {
+  Megaphone,
+  Plus,
+  Search,
+  Send,
+  Users,
+  Clock,
+  Trash2,
+  Edit,
+  Pin,
+  Filter,
+} from 'lucide-react';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  author: string;
+  authorAvatar?: string;
+  createdAt: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  audience: string;
+  pinned?: boolean;
+}
+
+export default function AnnouncementsPage() {
+  const queryClient = useQueryClient();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('all');
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: '',
+    content: '',
+    priority: 'medium' as const,
+    audience: 'all',
+  });
+
+  // Get current user
+  const user = localStorage.getItem('user')
+    ? JSON.parse(localStorage.getItem('user') || '{}')
+    : null;
+  const userRole = user?.role?.toLowerCase() || '';
+  const isAdmin = userRole === 'admin' || userRole === 'superadmin';
+  const isTutor = userRole === 'tutor';
+  const canCreate = isAdmin || isTutor;
+
+  // For now, we'll use a local state for announcements since there's no backend endpoint yet
+  // This can be replaced with an API call when the backend endpoint is ready
+  const [localAnnouncements, setLocalAnnouncements] = useState<Announcement[]>([
+    {
+      id: '1',
+      title: 'Welcome to TechAI Learning Platform!',
+      content:
+        'We are excited to have you on board. Please complete your profile and explore the available courses. If you need any help, feel free to reach out to your assigned mentor or visit the help center.',
+      author: 'Admin',
+      createdAt: new Date().toISOString(),
+      priority: 'high',
+      audience: 'All Users',
+      pinned: true,
+    },
+    {
+      id: '2',
+      title: 'New Course Materials Available',
+      content:
+        'New learning materials have been uploaded for Web Development and Data Science courses. Please check the Learning Hub for the latest resources.',
+      author: 'Admin',
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+      priority: 'medium',
+      audience: 'Students',
+    },
+    {
+      id: '3',
+      title: 'Upcoming Assessment Deadline',
+      content:
+        'Reminder: The mid-term assessment submissions are due by end of this week. Please ensure all your assignments are submitted on time.',
+      author: 'Tutor',
+      createdAt: new Date(Date.now() - 172800000).toISOString(),
+      priority: 'urgent',
+      audience: 'Students',
+    },
+  ]);
+
+  const filteredAnnouncements = useMemo(() => {
+    return localAnnouncements
+      .filter((a) => {
+        const matchesSearch =
+          a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          a.content.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesPriority =
+          priorityFilter === 'all' || a.priority === priorityFilter;
+        return matchesSearch && matchesPriority;
+      })
+      .sort((a, b) => {
+        // Pinned first, then by date
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      });
+  }, [localAnnouncements, searchTerm, priorityFilter]);
+
+  const handleCreate = () => {
+    if (!newAnnouncement.title.trim() || !newAnnouncement.content.trim()) {
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    const announcement: Announcement = {
+      id: Date.now().toString(),
+      title: newAnnouncement.title,
+      content: newAnnouncement.content,
+      author: user?.firstName
+        ? `${user.firstName} ${user.lastName || ''}`
+        : 'Unknown',
+      authorAvatar: user?.profilePicture,
+      createdAt: new Date().toISOString(),
+      priority: newAnnouncement.priority,
+      audience: newAnnouncement.audience === 'all' ? 'All Users' : newAnnouncement.audience,
+    };
+
+    setLocalAnnouncements((prev) => [announcement, ...prev]);
+    setNewAnnouncement({ title: '', content: '', priority: 'medium', audience: 'all' });
+    setIsCreateOpen(false);
+    toast.success('Announcement published successfully');
+  };
+
+  const handleDelete = (id: string) => {
+    setLocalAnnouncements((prev) => prev.filter((a) => a.id !== id));
+    toast.success('Announcement deleted');
+  };
+
+  const handleTogglePin = (id: string) => {
+    setLocalAnnouncements((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, pinned: !a.pinned } : a))
+    );
+  };
+
+  const getPriorityBadge = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return <Badge variant="destructive">Urgent</Badge>;
+      case 'high':
+        return (
+          <Badge className="bg-orange-500 text-white hover:bg-orange-600">
+            High
+          </Badge>
+        );
+      case 'medium':
+        return <Badge variant="secondary">Medium</Badge>;
+      case 'low':
+        return <Badge variant="outline">Low</Badge>;
+      default:
+        return <Badge variant="outline">{priority}</Badge>;
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
+    try {
+      const date = new Date(dateStr);
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+      if (diffHours < 1) return 'Just now';
+      if (diffHours < 24) return `${diffHours}h ago`;
+      if (diffDays < 7) return `${diffDays}d ago`;
+      return date.toLocaleDateString(undefined, {
+        month: 'short',
+        day: 'numeric',
+        year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+      });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+            <Megaphone className="h-6 w-6 text-primary" />
+            Announcements
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Stay updated with the latest news and important notices
+          </p>
+        </div>
+        {canCreate && (
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                <Plus className="mr-2 h-4 w-4" />
+                New Announcement
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Create Announcement</DialogTitle>
+                <DialogDescription>
+                  Publish a new announcement visible to your audience
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Announcement title..."
+                    value={newAnnouncement.title}
+                    onChange={(e) =>
+                      setNewAnnouncement((prev) => ({
+                        ...prev,
+                        title: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="content">Content *</Label>
+                  <Textarea
+                    id="content"
+                    placeholder="Write your announcement..."
+                    rows={5}
+                    value={newAnnouncement.content}
+                    onChange={(e) =>
+                      setNewAnnouncement((prev) => ({
+                        ...prev,
+                        content: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Priority</Label>
+                    <Select
+                      value={newAnnouncement.priority}
+                      onValueChange={(v: any) =>
+                        setNewAnnouncement((prev) => ({
+                          ...prev,
+                          priority: v,
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="urgent">Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Audience</Label>
+                    <Select
+                      value={newAnnouncement.audience}
+                      onValueChange={(v) =>
+                        setNewAnnouncement((prev) => ({
+                          ...prev,
+                          audience: v,
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select audience" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Users</SelectItem>
+                        <SelectItem value="Students">Students</SelectItem>
+                        <SelectItem value="Tutors">Tutors</SelectItem>
+                        <SelectItem value="Mentors">Mentors</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleCreate}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Publish
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="relative flex-1 sm:max-w-sm">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search announcements..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+          <SelectTrigger className="w-[160px]">
+            <Filter className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="All Priority" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Priority</SelectItem>
+            <SelectItem value="urgent">Urgent</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Megaphone className="h-5 w-5 text-primary" />
+              <div>
+                <p className="text-2xl font-bold">{localAnnouncements.length}</p>
+                <p className="text-xs text-muted-foreground">Total</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Pin className="h-5 w-5 text-orange-500" />
+              <div>
+                <p className="text-2xl font-bold">
+                  {localAnnouncements.filter((a) => a.pinned).length}
+                </p>
+                <p className="text-xs text-muted-foreground">Pinned</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Clock className="h-5 w-5 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold">
+                  {
+                    localAnnouncements.filter((a) => {
+                      const diffHours =
+                        (Date.now() - new Date(a.createdAt).getTime()) /
+                        (1000 * 60 * 60);
+                      return diffHours < 24;
+                    }).length
+                  }
+                </p>
+                <p className="text-xs text-muted-foreground">Today</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-green-500" />
+              <div>
+                <p className="text-2xl font-bold">
+                  {
+                    new Set(localAnnouncements.map((a) => a.audience)).size
+                  }
+                </p>
+                <p className="text-xs text-muted-foreground">Audiences</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Announcements List */}
+      <div className="space-y-4">
+        {filteredAnnouncements.length === 0 ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <Megaphone className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No Announcements</h3>
+              <p className="text-muted-foreground text-center max-w-md">
+                {searchTerm || priorityFilter !== 'all'
+                  ? 'No announcements match your filters. Try adjusting your search criteria.'
+                  : 'No announcements have been published yet.'}
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredAnnouncements.map((announcement) => (
+            <Card
+              key={announcement.id}
+              className={`transition-all hover:shadow-md ${
+                announcement.pinned ? 'border-primary/30 bg-primary/5' : ''
+              }`}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {announcement.pinned && (
+                        <Pin className="h-4 w-4 text-primary shrink-0" />
+                      )}
+                      <h3 className="font-semibold text-lg">
+                        {announcement.title}
+                      </h3>
+                      {getPriorityBadge(announcement.priority)}
+                      <Badge variant="outline" className="text-xs">
+                        {announcement.audience}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3 whitespace-pre-wrap">
+                      {announcement.content}
+                    </p>
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Avatar className="h-5 w-5">
+                          <AvatarImage src={announcement.authorAvatar} />
+                          <AvatarFallback className="text-[10px]">
+                            {announcement.author.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{announcement.author}</span>
+                      </div>
+                      <span>·</span>
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        {formatDate(announcement.createdAt)}
+                      </div>
+                    </div>
+                  </div>
+                  {canCreate && (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => handleTogglePin(announcement.id)}
+                        title={announcement.pinned ? 'Unpin' : 'Pin'}
+                      >
+                        <Pin
+                          className={`h-4 w-4 ${
+                            announcement.pinned
+                              ? 'text-primary fill-primary'
+                              : 'text-muted-foreground'
+                          }`}
+                        />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => handleDelete(announcement.id)}
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    </div>
+  );
+}

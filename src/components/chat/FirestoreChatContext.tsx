@@ -86,6 +86,7 @@ export const useFirestoreChat = () => {
   const [isTyping, setIsTyping] = useState<Record<string, string[]>>({});
   const [users, setUsers] = useState<User[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
   const [pendingMessages, setPendingMessages] = useState<Record<string, Set<string>>>({});
   const typingTimeoutRef = useRef<Record<string, NodeJS.Timeout>>({});
 
@@ -276,6 +277,7 @@ export const useFirestoreChat = () => {
         } as ChatRoom;
       });
       setRooms(roomsData);
+      setIsInitializing(false);
     });
 
     console.log('Rooms fetched:', rooms);
@@ -564,6 +566,8 @@ export const useFirestoreChat = () => {
     activeRoom,
     isTyping: activeRoom?.id ? isTyping[activeRoom.id] || [] : [],
     users,
+    isInitializing,
+    isLoadingUsers,
     setActiveRoom,
     sendMessage,
     createGroupChat,

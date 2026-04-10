@@ -130,18 +130,10 @@ interface UsersResponse {
 }
 
 function UserManagement() {
-  // Check user role - only Admin and Tutor can access
   const user = localStorage.getItem('user')
     ? JSON.parse(localStorage.getItem('user') || '{}')
     : null;
   const userRole = user?.role || '';
-  
-  // Redirect if not allowed
-  React.useEffect(() => {
-    if (userRole && !['Admin', 'ADMIN', 'Tutor', 'TUTOR'].includes(userRole)) {
-      window.location.href = '/student';
-    }
-  }, [userRole]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
@@ -597,7 +589,7 @@ function UserManagement() {
                             <CheckCircle className="h-3 w-3" /> Approve
                           </Button>
                         )}
-                      {userRole === 'Admin' && (
+                      {['Admin', 'ADMIN', 'Super_Admin', 'SUPER_ADMIN'].includes(userRole) && (
                         <Button variant="outline" size="sm" onClick={() => handleChangeRole(user)} className="gap-1">
                           <UserCog className="h-3 w-3" /> Role
                         </Button>
@@ -728,7 +720,7 @@ function UserManagement() {
                             Reactivate
                           </Button>
                         )}
-                        {userRole === 'Admin' && (
+                        {['Admin', 'ADMIN', 'Super_Admin', 'SUPER_ADMIN'].includes(userRole) && (
                           <Button
                             variant="outline"
                             size="sm"

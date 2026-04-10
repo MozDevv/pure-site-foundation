@@ -295,6 +295,7 @@ const App = () => (
                 <Route path="/admin/mentorship/matching" element={<MatchingPage />} />
                 <Route path="/admin/mentorship/groups" element={<MentorGroupsPage />} />
                 <Route path="/admin/mentorship/sessions" element={<SessionsPage />} />
+                <Route path="/admin/*" element={<AdminDashboard />} />
               </Route>
             </Route>
             </Route>

@@ -1,3 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+# Allow specific bots
 User-agent: Googlebot
 Allow: /
 
@@ -10,5 +16,10 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
+# Block authenticated dashboard paths from indexing
 User-agent: *
-Allow: /
+Disallow: /student/
+Disallow: /tutor/
+Disallow: /mentor/
+
+Sitemap: https://techaipath.com/sitemap.xml

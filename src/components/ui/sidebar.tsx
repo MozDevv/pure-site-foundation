@@ -538,9 +538,9 @@ const sidebarMenuButtonVariants = cva(
   {
     variants: {
       variant: {
-        // Modern ERP sidebar styling with white text on dark blue
+        // Modern ERP sidebar styling — active item has primary gradient + white text + left accent bar
         default:
-          'text-sidebar-foreground hover:bg-sidebar-accent data-[active=true]:bg-sidebar-accent data-[active=true]:rounded-lg data-[active=true]:shadow-lg',
+          'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground data-[active=true]:shadow-md data-[active=true]:font-semibold data-[active=true]:[&>svg]:text-primary-foreground',
         outline:
           'bg-card border border-sidebar-border text-sidebar-foreground hover:bg-primary/10 hover:text-primary hover:shadow-sm',
       },

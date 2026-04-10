@@ -207,7 +207,8 @@ export function AdminDashboard() {
       const response = await apiService.getWithParams(endpoints.getAllUsers, { pageNumber: 1, pageSize: 500 });
       return response.data;
     },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes — heavy query
+    staleTime: 30 * 1000,       // treat as stale after 30s
+    refetchInterval: 30 * 1000, // poll every 30s for real-time online count
   });
 
   const { data: coursesData, isLoading: coursesLoading } = useQuery<ApiCourse[]>({

@@ -11,12 +11,14 @@
   Clock,
   ClipboardList,
   Star,
+  X,
 } from 'lucide-react';
 import { Header } from '@/components/layout/header';
 import CountUp from 'react-countup';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FloatingAIChat } from '@/components/chat/FloatingAIChat';
 import { Footer } from '@/components/layout/Footer';
+import { useState } from 'react';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -40,9 +42,48 @@ const HIGHLIGHTS = [
 ];
 
 const PROGRAMS = [
-  { levelLabel: 'Beginner', levelColor: '#059669', levelBg: '#d1fae5', title: 'Data Fundamentals', desc: 'Master SQL, data visualization, and Python basics. Build your first end-to-end data pipeline.', topics: ['SQL & Analytics', 'Excel & Google Sheets', 'Data Visualization', 'Storytelling with Data'], barColor: '#7c3aed', duration: '8 weeks', req: 'No experience needed' },
-  { levelLabel: 'Intermediate', levelColor: '#7c3aed', levelBg: '#ede9fe', title: 'Python for AI', desc: 'Deep dive into machine learning with scikit-learn and real datasets from Kenyan industry.', topics: ['Python Basics', 'Pandas & NumPy', 'APIs & Automation', 'Intro to ML Libraries'], barColor: '#0891b2', duration: '10 weeks', req: 'Python basics' },
-  { levelLabel: 'Advanced', levelColor: '#d97706', levelBg: '#fef3c7', title: 'Machine Learning', desc: 'Production ML systems, MLOps, and model deployment. Ship models that actually run in the real world.', topics: ['Supervised Learning', 'Model Evaluation', 'NLP Basics', 'Capstone Project'], barColor: '#d97706', duration: '12 weeks', req: 'ML fundamentals' },
+  {
+    levelLabel: 'Beginner',
+    levelColor: '#059669',
+    levelBg: '#d1fae5',
+    title: 'Data Fundamentals',
+    desc: 'Master SQL, data visualization, and Python basics. Build your first end-to-end data pipeline.',
+    fullDesc: 'This track is your launchpad into the world of data. You will learn to query databases, clean messy datasets, and communicate insights clearly through compelling visualizations — all using tools actually used in Kenyan companies today.',
+    topics: ['SQL & Analytics', 'Excel & Google Sheets', 'Data Visualization', 'Storytelling with Data'],
+    benefits: ['Live weekly sessions with an assigned mentor', 'Real dataset projects from local businesses', 'Certificate of completion', 'Access to TechAI career board'],
+    barColor: '#7c3aed',
+    duration: '8 weeks',
+    req: 'No experience needed',
+    schedule: 'Weekday evenings + Saturday morning sessions',
+  },
+  {
+    levelLabel: 'Intermediate',
+    levelColor: '#7c3aed',
+    levelBg: '#ede9fe',
+    title: 'Python for AI',
+    desc: 'Deep dive into machine learning with scikit-learn and real datasets from Kenyan industry.',
+    fullDesc: 'Go beyond tutorials. This track turns foundational Python knowledge into real applied ML skills. You will build, evaluate, and deploy predictive models using datasets from healthcare, agriculture, and fintech — sectors driving East Africa\'s digital economy.',
+    topics: ['Python Basics', 'Pandas & NumPy', 'APIs & Automation', 'Intro to ML Libraries'],
+    benefits: ['1-on-1 code reviews with a senior developer', 'Participation in monthly hackathons', 'LinkedIn recommendation upon completion', 'Introduction to partner hiring companies'],
+    barColor: '#0891b2',
+    duration: '10 weeks',
+    req: 'Python basics',
+    schedule: 'Flexible self-paced + bi-weekly live labs',
+  },
+  {
+    levelLabel: 'Advanced',
+    levelColor: '#d97706',
+    levelBg: '#fef3c7',
+    title: 'Machine Learning',
+    desc: 'Production ML systems, MLOps, and model deployment. Ship models that actually run in the real world.',
+    fullDesc: 'This is the capstone track for practitioners who want to go pro. You will design, train, and deploy end-to-end ML pipelines — from raw data ingestion to a live API endpoint — following industry standards in model monitoring and CI/CD for ML.',
+    topics: ['Supervised Learning', 'Model Evaluation', 'NLP Basics', 'Capstone Project'],
+    benefits: ['Capstone project featured in Innovation Showcase', 'Direct introductions to TechAI hiring partners', 'Advanced portfolio review with industry mentors', 'Priority access to internship placements'],
+    barColor: '#d97706',
+    duration: '12 weeks',
+    req: 'ML fundamentals',
+    schedule: 'Intensive cohort with live sessions 3× per week',
+  },
 ];
 
 const TESTIMONIALS = [
@@ -52,6 +93,8 @@ const TESTIMONIALS = [
 ];
 
 const Index = () => {
+  const [selectedProgram, setSelectedProgram] = useState<typeof PROGRAMS[0] | null>(null);
+
   return (
     <div className="min-h-screen bg-[#F3F5F9] dark:bg-background">
       <Header />
@@ -301,14 +344,15 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {PROGRAMS.map((prog, i) => (
-              <motion.div
+              <motion.button
                 key={prog.title}
                 custom={i}
                 variants={fadeUp}
                 initial="hidden"
                 whileInView="show"
                 viewport={{ once: true }}
-                className="rounded-xl overflow-hidden transition-all duration-200 hover:-translate-y-1.5 hover:shadow-xl bg-white dark:bg-background border border-[#e2e8f0] dark:border-border"
+                onClick={() => setSelectedProgram(prog)}
+                className="rounded-xl overflow-hidden text-left w-full transition-all duration-200 hover:-translate-y-1.5 hover:shadow-xl bg-white dark:bg-background border border-[#e2e8f0] dark:border-border cursor-pointer group"
               >
                 <div className="p-6 pb-4 border-b border-[#e2e8f0] dark:border-border">
                   <div
@@ -329,7 +373,7 @@ const Index = () => {
                       </li>
                     ))}
                   </ul>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 mb-4">
                     <span className="flex items-center gap-1.5 text-[11px] font-semibold rounded-md px-2.5 py-1 bg-[#F3F5F9] dark:bg-muted text-[#64748b] dark:text-muted-foreground">
                       <Clock className="h-3 w-3" /> {prog.duration}
                     </span>
@@ -337,8 +381,11 @@ const Index = () => {
                       <ClipboardList className="h-3 w-3" /> {prog.req}
                     </span>
                   </div>
+                  <div className="flex items-center gap-1.5 text-xs font-bold group-hover:gap-2.5 transition-all" style={{ color: '#7c3aed' }}>
+                    View Program <ArrowRight className="h-3.5 w-3.5" />
+                  </div>
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </div>
         </div>
@@ -494,6 +541,116 @@ const Index = () => {
 
       <Footer />
       <FloatingAIChat />
+
+      {/* ── Program Detail Dialog ── */}
+      <AnimatePresence>
+        {selectedProgram && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* backdrop */}
+            <motion.div
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setSelectedProgram(null)}
+            />
+
+            {/* panel */}
+            <motion.div
+              className="relative z-10 w-full max-w-lg rounded-2xl overflow-hidden bg-white dark:bg-card shadow-2xl"
+              initial={{ scale: 0.95, opacity: 0, y: 24 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 16 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+            >
+              {/* header bar */}
+              <div className="px-7 py-5 border-b border-[#e2e8f0] dark:border-border flex items-start justify-between gap-4">
+                <div>
+                  <div
+                    className="inline-block text-[10px] font-bold tracking-[1.5px] uppercase rounded-full px-3 py-1 mb-2"
+                    style={{ background: selectedProgram.levelBg, color: selectedProgram.levelColor }}
+                  >
+                    {selectedProgram.levelLabel}
+                  </div>
+                  <h3 className="font-black text-xl text-[#0f172a] dark:text-foreground leading-tight">
+                    {selectedProgram.title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setSelectedProgram(null)}
+                  className="mt-1 p-1.5 rounded-lg text-[#94a3b8] hover:text-[#334155] hover:bg-[#f1f5f9] dark:hover:bg-muted dark:hover:text-foreground transition-colors shrink-0"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* body */}
+              <div className="px-7 py-5 max-h-[65vh] overflow-y-auto">
+                <p className="text-sm leading-relaxed text-[#64748b] dark:text-muted-foreground mb-5">
+                  {selectedProgram.fullDesc}
+                </p>
+
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <span className="flex items-center gap-1.5 text-[11px] font-semibold rounded-md px-2.5 py-1 bg-[#F3F5F9] dark:bg-muted text-[#64748b] dark:text-muted-foreground">
+                    <Clock className="h-3 w-3" /> {selectedProgram.duration}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[11px] font-semibold rounded-md px-2.5 py-1 bg-[#F3F5F9] dark:bg-muted text-[#64748b] dark:text-muted-foreground">
+                    <ClipboardList className="h-3 w-3" /> {selectedProgram.req}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-[11px] font-semibold rounded-md px-2.5 py-1 bg-[#F3F5F9] dark:bg-muted text-[#64748b] dark:text-muted-foreground">
+                    <Clock className="h-3 w-3" /> {selectedProgram.schedule}
+                  </span>
+                </div>
+
+                <h4 className="font-bold text-sm text-[#0f172a] dark:text-foreground mb-3 uppercase tracking-wide">
+                  What you'll learn
+                </h4>
+                <ul className="space-y-1.5 mb-6">
+                  {selectedProgram.topics.map(t => (
+                    <li key={t} className="flex items-center gap-2 text-sm text-[#334155] dark:text-foreground/80">
+                      <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: '#059669' }} />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+
+                <h4 className="font-bold text-sm text-[#0f172a] dark:text-foreground mb-3 uppercase tracking-wide">
+                  What's included
+                </h4>
+                <ul className="space-y-1.5">
+                  {selectedProgram.benefits.map(b => (
+                    <li key={b} className="flex items-center gap-2 text-sm text-[#334155] dark:text-foreground/80">
+                      <Star className="h-3.5 w-3.5 shrink-0" style={{ color: '#7c3aed' }} />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* footer CTAs */}
+              <div className="px-7 py-5 border-t border-[#e2e8f0] dark:border-border flex flex-col sm:flex-row gap-3">
+                <a
+                  href="/apply"
+                  className="flex-1 text-center py-2.5 rounded-lg text-sm font-bold text-white transition-opacity hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
+                >
+                  Apply Now
+                </a>
+                <a
+                  href="/signin"
+                  className="flex-1 text-center py-2.5 rounded-lg text-sm font-bold border border-[#e2e8f0] dark:border-border text-[#334155] dark:text-foreground hover:bg-[#F3F5F9] dark:hover:bg-muted transition-colors"
+                >
+                  Sign In
+                </a>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

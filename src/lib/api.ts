@@ -77,8 +77,9 @@ export const endpoints = {
   // Courses
   getAllCourses: '/courses',
   createCourse: '/courses',
-  updateCourse: `/courses`,
+  updateCourse: (courseId: string) => `/courses/${courseId}`,
   deleteCourse: (courseId: string) => `/courses/${courseId}`,
+  toggleCourseOpen: (courseId: string) => `/courses/${courseId}/toggle-open`,
   getCourseById: (courseId: string) => `/courses/${courseId}`,
   forgotPassword: (userId: string) =>
     `/v1/auth/forgot-password?userId=${userId}`,
@@ -306,6 +307,7 @@ GET
   getUserSettings: '/settings/user',
   updateUserSettings: '/settings/user',
   getSystemSettings: '/settings/system',
+  getPublicMaintenanceStatus: '/settings/system/maintenance-status',
   getSystemSettingsByCategory: (category: string) => `/settings/system/category/${category}`,
   upsertSystemSetting: '/settings/system',
   deleteSystemSetting: (key: string) => `/settings/system/${key}`,

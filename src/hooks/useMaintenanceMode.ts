@@ -8,9 +8,9 @@ interface MaintenanceStatus {
 }
 
 /**
- * Checks if the system is in maintenance mode by reading the `maintenance_mode` system setting.
- * Polls every 60 seconds. Non-authenticated; uses a public endpoint if available,
- * otherwise falls back to the authenticated system settings endpoint.
+ * Checks if the system is in maintenance mode.
+ * For unauthenticated users: calls the public /settings/system/maintenance-status endpoint.
+ * For authenticated users: same public endpoint (no token needed).
  */
 export function useMaintenanceMode() {
   const [bypassed, setBypassed] = useState(false);
@@ -19,21 +19,18 @@ export function useMaintenanceMode() {
     queryKey: ['maintenanceMode'],
     queryFn: async () => {
       try {
-        const res = await apiService.get(endpoints.getSystemSettings);
-        const settings: Array<{ settingKey: string; settingValue: string; description: string }> = res.data;
-        const modeSetting = settings.find(s => s.settingKey === 'maintenance_mode');
-        const messageSetting = settings.find(s => s.settingKey === 'maintenance_message');
+        // Public endpoint — no auth required
+        const res = await apiService.get(endpoints.getPublicMaintenanceStatus);
         return {
-          enabled: modeSetting?.settingValue === 'true',
-          message: messageSetting?.settingValue || undefined,
+          enabled: res.data?.enabled === true,
+          message: res.data?.message || undefined,
         };
       } catch {
-        // If settings endpoint fails (e.g. 401 for unauthenticated users), not in maintenance
         return { enabled: false };
       }
     },
-    refetchInterval: 5 * 60_000, // Re-check every 5 min
-    staleTime: 2 * 60_000,
+    refetchInterval: 60_000,   // Re-check every 60 seconds
+    staleTime: 30_000,
   });
 
   const bypass = useCallback(() => setBypassed(true), []);

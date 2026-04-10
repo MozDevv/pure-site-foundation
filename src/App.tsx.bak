@@ -1,0 +1,320 @@
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as Sonner } from '@/components/ui/sonner';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import Index from './pages/Index';
+import SignInPage from './pages/SignInPage';
+import ApplicationPage from './pages/ApplicationPage';
+import StudentDashboardPage from './pages/StudentDashboardPage';
+import TutorDashboardPage from './pages/TutorDashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
+import TimetablePage from './pages/TimetablePage';
+import NotFound from './pages/NotFound';
+import Activate from './components/Activate';
+import ResetPasswordPage from './pages/ResetPasswordPage';
+import CoursesManagement from './components/CoursesManagement';
+import { ModuleBuilder } from './components/module-builder/ModuleBuilder';
+import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import { ThemeProvider } from '@mui/system';
+import { CssBaseline } from '@mui/material';
+import theme from './lib/muiTheme';
+
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/signin" element={<SignInPage />} />
+            <Route path="/apply" element={<ApplicationPage />} />
+            <Route path="/activate/:userId" element={<Activate />} />
+            <Route
+              path="/reset-password/:userId"
+              element={<ResetPasswordPage />}
+            />
+
+            {/* Student Routes */}
+            <Route path="/student" element={<StudentDashboardPage />} />
+            <Route path="/student/timetable" element={<TimetablePage />} />
+            <Route
+              path="/student/mentorship"
+              element={<StudentDashboardPage menu="findMentor" />}
+            />
+            <Route
+              path="/student/mentorship/my-mentor"
+              element={<StudentDashboardPage menu="myMentor" />}
+            />
+            <Route
+              path="/student/mentorship/sessions"
+              element={<StudentDashboardPage menu="mySessions" />}
+            />
+            <Route
+              path="/student/courses"
+              element={<AdminDashboardPage menu="coursesManagement" />}
+            />
+            <Route
+              path="/student/assessments"
+              element={<AdminDashboardPage menu="assessmentsOverview" />}
+            />
+            <Route
+              path="/student/assessments/assignments"
+              element={<AdminDashboardPage menu="assignmentsPage" />}
+            />
+            <Route
+              path="/student/assessments/assignments/:id/submit"
+              element={<AdminDashboardPage menu="submitAssignment" />}
+            />
+            <Route
+              path="/student/assessments/quizzes"
+              element={<AdminDashboardPage menu="quizzesPage" />}
+            />
+            <Route
+              path="/student/assessments/submissions"
+              element={<AdminDashboardPage menu="submissionsPage" />}
+            />
+            <Route
+              path="/student/assessments/grades"
+              element={<AdminDashboardPage menu="gradesPage" />}
+            />
+            <Route
+              path="/student/chat"
+              element={<AdminDashboardPage menu="chat" />}
+            />
+            <Route
+              path="/student/innovation"
+              element={<AdminDashboardPage menu="innovationDashboard" />}
+            />
+            <Route
+              path="/student/innovation/teams"
+              element={<AdminDashboardPage menu="teamsPage" />}
+            />
+            <Route
+              path="/student/innovation/projects"
+              element={<AdminDashboardPage menu="projectsPage" />}
+            />
+            <Route
+              path="/student/module-builder"
+              element={<AdminDashboardPage menu="moduleBuilder" />}
+            />
+            <Route path="/student/*" element={<StudentDashboardPage />} />
+
+            {/* Tutor Routes */}
+            <Route path="/tutor" element={<TutorDashboardPage />} />
+            <Route path="/tutor/timetable" element={<TimetablePage />} />
+            <Route path="/tutor/*" element={<TutorDashboardPage />} />
+
+            {/* Admin Routes - Protected */}
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Tutor']}>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/*" element={
+              <ProtectedRoute allowedRoles={['Admin', 'Tutor']}>
+                <AdminDashboardPage />
+              </ProtectedRoute>
+            } />
+            <Route
+              path="/admin/courses"
+              element={
+                <ProtectedRoute allowedRoles={['Admin', 'Tutor']}>
+                  <AdminDashboardPage menu="coursesManagement" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/module-builder"
+              element={
+                <ProtectedRoute allowedRoles={['Admin', 'Tutor']}>
+                  <AdminDashboardPage menu="moduleBuilder" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/module-builder/resource-library"
+              element={
+                <ProtectedRoute allowedRoles={['Admin', 'Tutor']}>
+                  <AdminDashboardPage menu="resourceLibrary" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute allowedRoles={['Admin']}>
+                  <AdminDashboardPage menu="userManagement" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/timetable"
+              element={<AdminDashboardPage menu="timetable" />}
+            />
+            <Route
+              path="/admin/innovation"
+              element={<AdminDashboardPage menu="innovationDashboard" />}
+            />
+            <Route
+              path="/innovation/submit-project"
+              element={<AdminDashboardPage menu="submitProject" />}
+            />
+
+            <Route
+              path="/admin/innovation/teams"
+              element={<AdminDashboardPage menu="teamsPage" />}
+            />
+            <Route
+              path="/admin/innovation/projects"
+              element={<AdminDashboardPage menu="projectsPage" />}
+            />
+            <Route
+              path="/admin/innovation/projects/:id"
+              element={<AdminDashboardPage menu="projectDetailPage" />}
+            />
+            <Route
+              path="/admin/innovation/reviews"
+              element={<AdminDashboardPage menu="reviewsPage" />}
+            />
+            <Route
+              path="/admin/innovation/events"
+              element={<AdminDashboardPage menu="eventsPage" />}
+            />
+            <Route
+              path="/admin/assessments/assignments/:id/submit"
+              element={<AdminDashboardPage menu="submitAssignment" />}
+            />
+            <Route
+              path="/admin/chat"
+              element={<AdminDashboardPage menu="chat" />}
+            />
+            <Route
+              path="/admin/menu-setups"
+              element={<AdminDashboardPage menu="menuSetups" />}
+            />
+
+            {/*   {
+    label: "Assessments",
+    items: [
+      { title: "Overview", url: "/admin/assessments", icon: LayoutGrid },
+      { title: "Assignments", url: "/admin/assessments/assignments", icon: FileText },
+      { title: "Quizzes", url: "/admin/assessments/quizzes", icon: CheckSquare },
+      { title: "Submissions", url: "/admin/assessments/submissions", icon: Users },
+      { title: "Grades & Performance", url: "/admin/assessments/grades", icon: TrendingUp },
+    ],
+  },
+  
+      <Route path="/admin" element={<DashboardLayout />}>
+            <Route index element={<Navigate to="/admin/assessments" replace />} />
+            <Route path="assessments" element={<AssessmentsOverview />} />
+            <Route path="assessments/assignments" element={<AssignmentsList />} />
+            <Route path="assessments/assignments/create" element={<CreateAssignment />} />
+            <Route path="assessments/assignments/:id" element={<CreateAssignment />} />
+            <Route path="assessments/quizzes" element={<QuizzesList />} />
+            <Route path="assessments/quizzes/create" element={<CreateQuiz />} />
+            <Route path="assessments/quizzes/:id" element={<CreateQuiz />} />
+            <Route path="assessments/submissions" element={<SubmissionsList />} />
+            <Route path="assessments/submissions/:id" element={<SubmissionReview />} />
+            <Route path="assessments/grades" element={<GradesPerformance />} />
+          </Route>
+  
+  
+  */}
+            <Route
+              path="/admin/assessments"
+              element={<AdminDashboardPage menu="assessmentsOverview" />}
+            />
+            <Route
+              path="/admin/assessments/assignments"
+              element={<AdminDashboardPage menu="assignmentsPage" />}
+            />
+            <Route
+              path="/admin/assessments/quizzes"
+              element={<AdminDashboardPage menu="quizzesPage" />}
+            />
+            <Route
+              path="/admin/assessments/submissions"
+              element={<AdminDashboardPage menu="submissionsPage" />}
+            />
+            <Route
+              path="/admin/assessments/grades"
+              element={<AdminDashboardPage menu="gradesPage" />}
+            />
+            <Route
+              path="/admin/assessments/assignments/create"
+              element={<AdminDashboardPage menu="createAssignment" />}
+            />
+            <Route
+              path="/admin/assessments/assignments/:id"
+              element={<AdminDashboardPage menu="editAssignment" />}
+            />
+            <Route
+              path="/admin/assessments/quizzes/create"
+              element={<AdminDashboardPage menu="createQuiz" />}
+            />
+            <Route
+              path="/admin/assessments/quizzes/:id"
+              element={<AdminDashboardPage menu="editQuiz" />}
+            />
+            <Route
+              path="/admin/assessments/submissions/:id"
+              element={<AdminDashboardPage menu="submissionReview" />}
+            />
+
+            {/* Mentorship Routes */}
+            <Route
+              path="/admin/mentorship"
+              element={<AdminDashboardPage menu="mentorshipDashboard" />}
+            />
+            <Route
+              path="/admin/mentorship/find"
+              element={<AdminDashboardPage menu="findMentor" />}
+            />
+            <Route
+              path="/admin/mentorship/mentors"
+              element={<AdminDashboardPage menu="mentorsPage" />}
+            />
+            <Route
+              path="/admin/mentorship/requests"
+              element={<AdminDashboardPage menu="mentorRequestsPage" />}
+            />
+            <Route
+              path="/admin/mentorship/matching"
+              element={<AdminDashboardPage menu="matchingPage" />}
+            />
+            <Route
+              path="/admin/mentorship/groups"
+              element={<AdminDashboardPage menu="mentorGroupsPage" />}
+            />
+            <Route
+              path="/admin/mentorship/sessions"
+              element={<AdminDashboardPage menu="sessionsPage" />}
+            />
+            <Route
+              path="/admin/mentorship/my-mentees"
+              element={<AdminDashboardPage menu="myMenteesPage" />}
+            />
+            <Route
+              path="/admin/mentorship/my-mentor"
+              element={<AdminDashboardPage menu="myMentor" />}
+            />
+            <Route
+              path="/admin/mentorship/my-sessions"
+              element={<AdminDashboardPage menu="mySessions" />}
+            />
+
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
+  </QueryClientProvider>
+);
+
+export default App;

@@ -23,8 +23,8 @@ export function MaintenanceGuard() {
         return null;
       }
     })();
-    // User object stores role as a plain string: 'Admin', 'Tutor', 'Student'
-    const isAdmin = user?.role?.toUpperCase() === 'ADMIN';
+    // User object stores role as a plain string: 'Admin', 'Super_Admin', 'Tutor', 'Student'
+    const isAdmin = ['admin', 'super_admin'].includes(user?.role?.toLowerCase());
 
     return (
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><LoadingSpinner size="lg" /></div>}>
